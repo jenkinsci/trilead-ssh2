@@ -5,6 +5,8 @@ import java.io.CharArrayWriter;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.net.SocketTimeoutException;
 import java.security.SecureRandom;
@@ -1421,4 +1423,66 @@ public class Connection
 
 		cm.requestGlobalTrileadPing();
 	}
+
+    /**
+     * Executes a process remotely and blocks until its completion.
+     *
+     * @param output
+     *      The stdout/stderr will be sent to this stream.
+     */
+    public int exec(String command, OutputStream output) throws IOException, InterruptedException {
+        Session session = openSession();
+        try {
+            session.execCommand(command);
+            PumpThread t1 = new PumpThread(session.getStdout(), output);
+            t1.start();
+            PumpThread t2 = new PumpThread(session.getStderr(), output);
+            t2.start();
+            session.getStdin().close();
+            t1.join();
+            t2.join();
+            // I noticed that the exit status delivery often gets delayed. Wait up to 1 sec.
+            for( int i=0; i<10; i++ ) {
+                Integer r = session.getExitStatus();
+                if(r!=null) return r;
+                Thread.sleep(100);
+            }
+            return -1;
+        } finally {
+            session.close();
+        }
+    }
+
+    /**
+     * Pumps {@link InputStream} to {@link OutputStream}.
+     *
+     * @author Kohsuke Kawaguchi
+     */
+    private static final class PumpThread extends Thread {
+        private final InputStream in;
+        private final OutputStream out;
+
+        public PumpThread(InputStream in, OutputStream out) {
+            super("pump thread");
+            this.in = in;
+            this.out = out;
+        }
+
+        @Override
+        public void run() {
+            byte[] buf = new byte[1024];
+            try {
+                while(true) {
+                    int len = in.read(buf);
+                    if(len<0) {
+                        in.close();
+                        return;
+                    }
+                    out.write(buf,0,len);
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
 }
