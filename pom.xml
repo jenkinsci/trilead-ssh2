@@ -17,7 +17,7 @@
     <repository>
       <uniqueVersion>false</uniqueVersion>
       <id>local-repository</id>
-      <url>svn:https://svn.dev.java.net/svn/maven2-repository/trunk/www/repository/</url>
+      <url>svn:https://svn.dev.java.net/svn/maven2-repository/trunk/repository/</url>
     </repository>
   </distributionManagement>
   
