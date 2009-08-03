@@ -1,6 +1,13 @@
 package com.trilead.ssh2.signature;
 
 import java.math.BigInteger;
+import java.security.KeyPair;
+import java.security.KeyFactory;
+import java.security.NoSuchAlgorithmException;
+import java.security.GeneralSecurityException;
+import java.security.spec.RSAPublicKeySpec;
+import java.security.spec.RSAPrivateKeySpec;
+import java.security.spec.InvalidKeySpecException;
 
 /**
  * RSAPrivateKey.
@@ -40,4 +47,14 @@ public class RSAPrivateKey
 	{
 		return new RSAPublicKey(e, n);
 	}
+
+    /**
+     * Converts this to a JCE API representation of the RSA key pair.
+     */
+    public KeyPair toJCEKeyPair() throws GeneralSecurityException {
+        KeyFactory kf = KeyFactory.getInstance("RSA");
+        return new KeyPair(
+                kf.generatePublic(new RSAPublicKeySpec(getN(), getE())),
+                kf.generatePrivate(new RSAPrivateKeySpec(getN(), getD())));
+    }
 }
