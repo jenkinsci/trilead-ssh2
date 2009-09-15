@@ -2,6 +2,7 @@
 package com.trilead.ssh2.channel;
 
 import java.io.IOException;
+import java.io.InterruptedIOException;
 import java.util.HashMap;
 import java.util.Vector;
 
@@ -110,6 +111,7 @@ public class ChannelManager implements MessageHandler
 				}
 				catch (InterruptedException ignore)
 				{
+                    throw new InterruptedIOException();
 				}
 			}
 
@@ -144,6 +146,7 @@ public class ChannelManager implements MessageHandler
 				}
 				catch (InterruptedException ignore)
 				{
+                    throw new InterruptedIOException();
 				}
 			}
 
@@ -180,6 +183,7 @@ public class ChannelManager implements MessageHandler
 				}
 				catch (InterruptedException ignore)
 				{
+                    throw new InterruptedIOException();
 				}
 			}
 
@@ -390,6 +394,7 @@ public class ChannelManager implements MessageHandler
 					}
 					catch (InterruptedException ignore)
 					{
+                        throw new InterruptedIOException();
 					}
 				}
 
@@ -988,6 +993,7 @@ public class ChannelManager implements MessageHandler
 				}
 				catch (InterruptedException ignore)
 				{
+                    throw new InterruptedIOException();
 				}
 			}
 

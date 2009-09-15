@@ -1444,7 +1444,7 @@ public class Connection
             // I noticed that the exit status delivery often gets delayed. Wait up to 1 sec.
             for( int i=0; i<10; i++ ) {
                 Integer r = session.getExitStatus();
-                if(r!=null) return r;
+                if(r!=null) return r.intValue();
                 Thread.sleep(100);
             }
             return -1;
@@ -1468,7 +1468,6 @@ public class Connection
             this.out = out;
         }
 
-        @Override
         public void run() {
             byte[] buf = new byte[1024];
             try {

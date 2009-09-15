@@ -2,6 +2,7 @@
 package com.trilead.ssh2.channel;
 
 import java.io.IOException;
+import java.io.InterruptedIOException;
 import java.net.Socket;
 
 import com.trilead.ssh2.log.Logger;
@@ -71,6 +72,7 @@ public class RemoteAcceptThread extends Thread
 				}
 				catch (InterruptedException e)
 				{
+                    throw new InterruptedIOException();
 				}
 			}
 

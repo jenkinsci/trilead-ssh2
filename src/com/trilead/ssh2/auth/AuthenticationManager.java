@@ -2,6 +2,7 @@
 package com.trilead.ssh2.auth;
 
 import java.io.IOException;
+import java.io.InterruptedIOException;
 import java.security.SecureRandom;
 import java.util.Vector;
 
@@ -84,6 +85,7 @@ public class AuthenticationManager implements MessageHandler
 				}
 				catch (InterruptedException ign)
 				{
+                    throw new InterruptedIOException();
 				}
 			}
 			/* This sequence works with J2ME */

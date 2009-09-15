@@ -2,6 +2,7 @@
 package com.trilead.ssh2.transport;
 
 import java.io.IOException;
+import java.io.InterruptedIOException;
 import java.security.SecureRandom;
 
 import com.trilead.ssh2.ConnectionInfo;
@@ -98,6 +99,7 @@ public class KexManager
 				}
 				catch (InterruptedException e)
 				{
+                    throw new InterruptedIOException();
 				}
 			}
 		}

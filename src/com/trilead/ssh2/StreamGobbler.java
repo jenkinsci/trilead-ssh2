@@ -3,6 +3,7 @@ package com.trilead.ssh2;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InterruptedIOException;
 
 /**
  * A <code>StreamGobbler</code> is an InputStream that uses an internal worker
@@ -103,9 +104,9 @@ public class StreamGobbler extends InputStream
 	}
 
 	private InputStream is;
-	private GobblerThread t;
+	private final GobblerThread t;
 
-	private Object synchronizer = new Object();
+	private final Object synchronizer = new Object();
 
 	private boolean isEOF = false;
 	private boolean isClosed = false;
@@ -144,6 +145,7 @@ public class StreamGobbler extends InputStream
 				}
 				catch (InterruptedException e)
 				{
+                    throw new InterruptedIOException();
 				}
 			}
 
@@ -212,6 +214,7 @@ public class StreamGobbler extends InputStream
 				}
 				catch (InterruptedException e)
 				{
+                    throw new InterruptedIOException();
 				}
 			}
 
