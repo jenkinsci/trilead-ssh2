@@ -363,8 +363,7 @@ public class Session
 	 *             interface and therefore acts only as a wrapper.
 	 * 
 	 */
-	public int waitUntilDataAvailable(long timeout) throws IOException
-	{
+	public int waitUntilDataAvailable(long timeout) throws IOException, InterruptedException {
 		if (timeout < 0)
 			throw new IllegalArgumentException("timeout must not be negative!");
 
@@ -409,8 +408,7 @@ public class Session
 	 * @return all bitmask specifying all current conditions that are true
 	 */
 
-	public int waitForCondition(int condition_set, long timeout)
-	{
+	public int waitForCondition(int condition_set, long timeout) throws InterruptedException {
 		if (timeout < 0)
 			throw new IllegalArgumentException("timeout must be non-negative!");
 

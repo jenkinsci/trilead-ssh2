@@ -874,8 +874,7 @@ public class ChannelManager implements MessageHandler
 	 * @return all current events
 	 * 
 	 */
-	public int waitForCondition(Channel c, long timeout, int condition_mask)
-	{
+	public int waitForCondition(Channel c, long timeout, int condition_mask) throws InterruptedException {
 		long end_time = 0;
 		boolean end_time_set = false;
 
@@ -925,16 +924,10 @@ public class ChannelManager implements MessageHandler
 					}
 				}
 
-				try
-				{
-					if (timeout > 0)
-						c.wait(timeout);
-					else
-						c.wait();
-				}
-				catch (InterruptedException e)
-				{
-				}
+                if (timeout > 0)
+                    c.wait(timeout);
+                else
+                    c.wait();
 			}
 		}
 	}

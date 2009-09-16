@@ -1441,12 +1441,11 @@ public class Connection
             session.getStdin().close();
             t1.join();
             t2.join();
-            // I noticed that the exit status delivery often gets delayed. Wait up to 1 sec.
-            for( int i=0; i<10; i++ ) {
-                Integer r = session.getExitStatus();
-                if(r!=null) return r.intValue();
-                Thread.sleep(100);
-            }
+
+            // wait for some time since the delivery of the exit status often gets delayed
+            session.waitForCondition(ChannelCondition.EXIT_STATUS,3000);
+            Integer r = session.getExitStatus();
+            if(r!=null) return r.intValue();
             return -1;
         } finally {
             session.close();
