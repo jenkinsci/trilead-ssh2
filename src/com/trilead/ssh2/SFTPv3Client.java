@@ -1481,7 +1481,7 @@ public class SFTPv3Client
 
     public void chmod(String path, int permissions) throws IOException {
         SFTPv3FileAttributes atts = new SFTPv3FileAttributes();
-        atts.permissions = permissions;
+        atts.permissions = Integer.valueOf(permissions);
         setstat(path, atts);
     }
 }
