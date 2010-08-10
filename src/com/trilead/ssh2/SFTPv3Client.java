@@ -1438,13 +1438,11 @@ public class SFTPv3Client
                 write(new byte[]{(byte)b});
             }
 
-            @Override
             public void write(byte[] b, int off, int len) throws IOException {
                 SFTPv3Client.this.write(h,offset,b,off,len);
                 offset += len;
             }
 
-            @Override
             public void close() throws IOException {
                 closeFile(h);
             }
@@ -1463,7 +1461,6 @@ public class SFTPv3Client
                 return b[0];
             }
 
-            @Override
             public int read(byte[] b, int off, int len) throws IOException {
                 int r = SFTPv3Client.this.read(h,offset,b,off,len);
                 if (r<0)    return -1;
@@ -1471,13 +1468,11 @@ public class SFTPv3Client
                 return r;
             }
 
-            @Override
             public long skip(long n) throws IOException {
                 offset += n;
                 return n;
             }
 
-            @Override
             public void close() throws IOException {
                 closeFile(h);
             }
