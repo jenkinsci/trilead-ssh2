@@ -1,4 +1,3 @@
-
 package com.trilead.ssh2;
 
 import java.io.BufferedOutputStream;
@@ -56,7 +55,7 @@ import com.trilead.ssh2.sftp.Packet;
  * {@link #setCharset(String)}.
  * 
  * @author Christian Plattner, plattner@trilead.com
- * @version $Id: SFTPv3Client.java,v 1.2 2008/03/03 07:01:36 cplattne Exp $
+ * @version $Id: SFTPv3Client.java,v 1.3 2008/04/01 12:38:09 cplattne Exp $
  */
 public class SFTPv3Client
 {
@@ -319,8 +318,8 @@ public class SFTPv3Client
 		{
 			if (debug != null)
 				debug.println("SSH_FILEXFER_ATTR_V3_ACMODTIME");
-			fa.atime = new Integer(tr.readUINT32());
-			fa.mtime = new Integer(tr.readUINT32());
+			fa.atime = new Long(((long)tr.readUINT32()) & 0xffffffffl);
+			fa.mtime = new Long(((long)tr.readUINT32()) & 0xffffffffl);
 
 		}
 
