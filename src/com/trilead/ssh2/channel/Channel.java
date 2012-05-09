@@ -42,7 +42,7 @@ public class Channel
 
 	static final int CHANNEL_BUFFER_SIZE = Integer.getInteger(
 			Channel.class.getName()+".bufferSize",
-			30000).intValue();
+			128*1024 + 16*1024).intValue();
 
 	/*
 	 * To achieve correctness, the following rules have to be respected when
