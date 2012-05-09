@@ -40,7 +40,9 @@ public class Channel
 	static final int STATE_OPEN = 2;
 	static final int STATE_CLOSED = 4;
 
-	static final int CHANNEL_BUFFER_SIZE = 30000;
+	static final int CHANNEL_BUFFER_SIZE = Integer.getInteger(
+			Channel.class.getName()+".bufferSize",
+			128*1024 + 16*1024).intValue();
 
 	/*
 	 * To achieve correctness, the following rules have to be respected when
