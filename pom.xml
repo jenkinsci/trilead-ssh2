@@ -1,8 +1,8 @@
 <project>
   <modelVersion>4.0.0</modelVersion>
-  <groupId>org.jvnet.hudson</groupId>
+  <groupId>org.jenkins-ci</groupId>
   <artifactId>trilead-ssh2</artifactId>
-  <version>build214-hudson-1</version>
+  <version>build214-jenkins-1-SNAPSHOT</version>
   <name>Ganymed SSH2 for Java</name>
   <description>Ganymed SSH2 for Java is a library which implements the SSH-2 protocol in pure Java</description>
   <url>http://www.ganymed.ethz.ch/ssh2/</url>
@@ -30,6 +30,11 @@
       <url>http://repo.jenkins-ci.org/public/</url>
     </repository>
   </repositories>
+
+  <scm>
+    <developerConnection>scm:git:ssh://git@github.com/jenkinsci/trilead-ssh2.git</developerConnection>
+    <connection>scm:git:https://kohsuke@github.com/jenkinsci/trilead-ssh2.git</connection>
+  </scm>
 
 
 </project>
