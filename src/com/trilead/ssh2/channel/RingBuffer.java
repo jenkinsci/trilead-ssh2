@@ -3,70 +3,140 @@ package com.trilead.ssh2.channel;
 import java.io.InputStream;
 
 /**
+ * FIFO buffer for a reader thread and a writer thread to collaborate.
+ *
+ * Unlike a ring buffer, which uses a fixed memory regardless of the number of bytes currently in the buffer,
+ * this implementation uses a single linked list to reduce the memory footprint when the reader
+ * closely follows the writer, regardless of the capacity limit set in the constructor.
+ *
+ * In trilead, the writer puts the data we receive from the network, and the user code acts as a reader.
+ * A user code normally drains the buffer more quickly than what the network delivers, so this implementation
+ * saves memory while simultaneously allowing us to advertise a bigger window size for a large latency network.
  *
  * @author Kohsuke Kawaguchi
  */
 class RingBuffer {
-    private byte[] ring;
-    private final int sz;
+    /**
+     * Unit of buffer, singly linked and lazy created as needed.
+     */
+    static final class Page {
+        final byte[] buf;
+        Page next;
+
+        Page(int sz) {
+            this.buf = new byte[sz];
+        }
+    }
+
+    /**
+     * Points to a specific byte in a {@link Page}.
+     */
+    class Pointer {
+        Page p;
+        /**
+         * [0,p.buf.size)
+         */
+        int off;
+
+        Pointer(Page p, int off) {
+            this.p = p;
+            this.off = off;
+        }
+
+        /**
+         * Figure out the number of bytes that can be read/written in one array copy.
+         */
+        private int chunk() {
+            int sz = pageSize-off;
+            assert sz>=0;
+
+            if (sz>0)   return sz;
+
+            Page q = p.next;
+            if (q==null)
+                q = p.next = newPage();
+            p = q;
+            off = 0;
+            return pageSize;
+        }
+
+        public void write(byte[] buf, int start, int len) {
+            while (len>0) {
+                int chunk = Math.min(len,chunk());
+                System.arraycopy(buf,start,p.buf,off,chunk);
+
+                off+=chunk;
+                len-=chunk;
+                start+=chunk;
+            }
+        }
+
+        public void read(byte[] buf, int start, int len) {
+            while (len>0) {
+                int chunk = Math.min(len,chunk());
+                System.arraycopy(p.buf,off,buf,start,chunk);
+
+                off+=chunk;
+                len-=chunk;
+                start+=chunk;
+            }
+        }
+    }
+
     private final Object lock;
 
     /**
-     * Point to the position in the array where the next read/write would occur.
-     *
-     * r==w means the buffer is empty.
+     * Number of bytes currently in this ring buffer
      */
-    private int w,r;
+    private int sz;
+    /**
+     * Cap to the # of bytes that we can hold.
+     */
+    private final int limit;
+    private final int pageSize;
+
+    /**
+     * The position at which the next read/write will happen.
+     */
+    private Pointer r,w;
 
     /**
      * Set to true when the writer closes the write end.
      */
     private boolean closed;
 
-    RingBuffer(int len) {
-        this(null,len);
+    RingBuffer(int pageSize, int limit) {
+        this(null,pageSize,limit);
     }
 
-    RingBuffer(Object lock, int len) {
-        // to differentiate empty buffer vs full buffer, we need one more byte
-        sz = len + 1;
-        this.ring = new byte[sz];
+    RingBuffer(Object lock, int pageSize, int limit) {
         this.lock = lock==null ? this : lock;
+        this.limit = limit;
+        this.pageSize = pageSize;
+
+        Page p = newPage();
+        r = new Pointer(p,0);
+        w = new Pointer(p,0);
+    }
+
+    private Page newPage() {
+        return new Page(pageSize);
     }
 
     /**
      * Number of bytes readable
-     *
-     * @return [0,sz) = [0,len]
      */
     int readable() {
         synchronized (lock) {
-            return mod(w - r);
+            return sz;
         }
     }
 
     /**
      * Number of bytes writable
-     *
-     * @return [0,sz) = [0,len]
      */
     int writable() {
-        synchronized (lock) {
-            return (sz-1)-readable(); // we can't fill the last byte to differentiate full buffer vs empty buffer
-        }
-    }
-
-    private int mod(int i) {
-        assert i>=-sz;
-        return i>=0 ? i%sz : (i+sz)%sz;
-    }
-
-    /**
-     * Like {@link #mod(int)}, except we know the parameter is never negative.
-     */
-    private int modp(int i) {
-        assert i>=0;
-        return i%sz;
+        return limit-readable();
     }
 
     public void write(byte[] buf, int start, int len) throws InterruptedException {
@@ -77,16 +147,14 @@ class RingBuffer {
                 while ((chunk = Math.min(len,writable()))==0)
                     lock.wait();
 
-                chunk = Math.min(chunk,sz-w);   // limit the write to one continuous region
+                w.write(buf, start, chunk);
 
-                System.arraycopy(buf,start,ring,w,chunk);
-                w=modp(w+chunk);
+                start += chunk;
+                len -= chunk;
+                sz += chunk;
 
                 lock.notifyAll();
             }
-
-            start += chunk;
-            len -= chunk;
         }
     }
 
@@ -105,7 +173,7 @@ class RingBuffer {
      */
     private void releaseRing() {
         if (closed &&  readable()==0)
-            ring = null;
+            r = w = null;
     }
 
     /**
@@ -136,17 +204,15 @@ class RingBuffer {
                     lock.wait(); // wait until the writer gives us something
                 }
 
-                chunk = Math.min(chunk,sz-r);   // limit the read to one continuous region
+                r.read(buf,start,chunk);
 
-                System.arraycopy(ring,r,buf,start,chunk);
-                r=modp(r+chunk);
+                start += chunk;
+                len -= chunk;
+                read += chunk;
+                sz -= chunk;
 
                 lock.notifyAll();
             }
-
-            start += chunk;
-            len -= chunk;
-            read += chunk;
         }
     }
 }
