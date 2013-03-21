@@ -53,9 +53,9 @@ import com.trilead.ssh2.util.Tokenizer;
  */
 public class TransportManager
 {
-	private static final Logger log = Logger.getLogger(TransportManager.class);
+    private static final Logger log = Logger.getLogger(TransportManager.class);
 
-	class HandlerEntry
+    class HandlerEntry
 	{
 		MessageHandler mh;
 		int low;
@@ -670,7 +670,7 @@ public class TransportManager
 
 	public void receiveLoop() throws IOException
 	{
-		byte[] msg = new byte[35000];
+		byte[] msg = new byte[MAX_PACKET_SIZE];
 
 		while (true)
 		{
@@ -780,4 +780,6 @@ public class TransportManager
 			mh.handleMessage(msg, msglen);
 		}
 	}
+
+    public static final int MAX_PACKET_SIZE = 35000;
 }

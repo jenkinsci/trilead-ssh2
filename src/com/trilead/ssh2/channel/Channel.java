@@ -1,6 +1,8 @@
 
 package com.trilead.ssh2.channel;
 
+import com.trilead.ssh2.transport.TransportManager;
+
 /**
  * Channel.
  * 
@@ -153,7 +155,7 @@ public class Channel
 		this.cm = cm;
 
 		this.localWindow = CHANNEL_BUFFER_SIZE;
-		this.localMaxPacketSize = 35000 - 1024; // leave enough slack
+		this.localMaxPacketSize = TransportManager.MAX_PACKET_SIZE - 1024; // leave enough slack
 
 		this.stdinStream = new ChannelOutputStream(this);
 		this.stdoutStream = new ChannelInputStream(this, false);
