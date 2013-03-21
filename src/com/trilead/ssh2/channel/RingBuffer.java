@@ -92,7 +92,7 @@ class RingBuffer {
     /**
      * Cap to the # of bytes that we can hold.
      */
-    private final int limit;
+    private int limit;
     private final int pageSize;
 
     /**
@@ -119,6 +119,12 @@ class RingBuffer {
         w = new Pointer(p,0);
     }
 
+    public void setLimit(int newLimit) {
+        synchronized (lock) {
+            limit = newLimit;
+        }
+    }
+
     private Page newPage() {
         return new Page(pageSize);
     }
@@ -136,7 +142,7 @@ class RingBuffer {
      * Number of bytes writable
      */
     int writable() {
-        return limit-readable();
+        return Math.max(0,limit-readable());
     }
 
     public void write(byte[] buf, int start, int len) throws InterruptedException {
