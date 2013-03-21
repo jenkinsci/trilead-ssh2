@@ -127,8 +127,8 @@ public class Channel
 	int localMaxPacketSize = -1;
 	int remoteMaxPacketSize = -1;
 
-	final RingBuffer stdoutBuffer = new RingBuffer(this,2048,channelBufferSize);
-	final RingBuffer stderrBuffer = new RingBuffer(this,2048,channelBufferSize);
+	final FifoBuffer stdoutBuffer = new FifoBuffer(this,2048,channelBufferSize);
+	final FifoBuffer stderrBuffer = new FifoBuffer(this,2048,channelBufferSize);
 
     private boolean eof = false;
     synchronized void eof() {

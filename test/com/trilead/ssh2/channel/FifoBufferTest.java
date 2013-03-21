@@ -15,8 +15,8 @@ import static org.junit.Assert.*;
 /**
  * @author Kohsuke Kawaguchi
  */
-public class RingBufferTest {
-    final RingBuffer rb = new RingBuffer(9,115);  // use strange number to make buffer mod op interesting
+public class FifoBufferTest {
+    final FifoBuffer rb = new FifoBuffer(9,115);  // use strange number to make buffer mod op interesting
     final byte[] buf = new byte[1024];
 
     @Test

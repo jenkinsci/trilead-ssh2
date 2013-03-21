@@ -15,7 +15,7 @@ import java.io.InputStream;
  *
  * @author Kohsuke Kawaguchi
  */
-class RingBuffer {
+class FifoBuffer {
     /**
      * Unit of buffer, singly linked and lazy created as needed.
      */
@@ -105,11 +105,11 @@ class RingBuffer {
      */
     private boolean closed;
 
-    RingBuffer(int pageSize, int limit) {
+    FifoBuffer(int pageSize, int limit) {
         this(null,pageSize,limit);
     }
 
-    RingBuffer(Object lock, int pageSize, int limit) {
+    FifoBuffer(Object lock, int pageSize, int limit) {
         this.lock = lock==null ? this : lock;
         this.limit = limit;
         this.pageSize = pageSize;
