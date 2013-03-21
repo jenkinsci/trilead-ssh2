@@ -42,9 +42,15 @@ public class Channel
 	static final int STATE_OPEN = 2;
 	static final int STATE_CLOSED = 4;
 
-	static final int CHANNEL_BUFFER_SIZE = Integer.getInteger(
+	private static final int CHANNEL_BUFFER_SIZE = Integer.getInteger(
 			Channel.class.getName()+".bufferSize",
 			1024*1024 + 16*1024).intValue();
+
+    /**
+     * This channel's session size.
+     */
+    // @GuarydedBy("this")
+    int channelBufferSize = CHANNEL_BUFFER_SIZE;
 
 	/*
 	 * To achieve correctness, the following rules have to be respected when
@@ -121,8 +127,8 @@ public class Channel
 	int localMaxPacketSize = -1;
 	int remoteMaxPacketSize = -1;
 
-	final RingBuffer stdoutBuffer = new RingBuffer(this,2048,CHANNEL_BUFFER_SIZE);
-	final RingBuffer stderrBuffer = new RingBuffer(this,2048,CHANNEL_BUFFER_SIZE);
+	final RingBuffer stdoutBuffer = new RingBuffer(this,2048,channelBufferSize);
+	final RingBuffer stderrBuffer = new RingBuffer(this,2048,channelBufferSize);
 
     private boolean eof = false;
     synchronized void eof() {
@@ -154,7 +160,7 @@ public class Channel
 	{
 		this.cm = cm;
 
-		this.localWindow = CHANNEL_BUFFER_SIZE;
+		this.localWindow = channelBufferSize;
 		this.localMaxPacketSize = TransportManager.MAX_PACKET_SIZE - 1024; // leave enough slack
 
 		this.stdinStream = new ChannelOutputStream(this);
@@ -163,6 +169,12 @@ public class Channel
 	}
 
 	/* Methods to allow access from classes outside of this package */
+
+    public synchronized void setWindowSize(int newSize) {
+        if (newSize<=0)  throw new IllegalArgumentException("Invalid value: "+newSize);
+        this.channelBufferSize = newSize;
+        // next time when the other side sends us something, we'll issue SSH_MSG_CHANNEL_WINDOW_ADJUST
+    }
 
 	public ChannelInputStream getStderrStream()
 	{

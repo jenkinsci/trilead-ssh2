@@ -22,11 +22,18 @@ public class Receiver {
         byte[] buf = new byte[10*1024*1024];
         DataInputStream in = new DataInputStream(session.getStdout());
 
+        int j=0;
         while (true) {
-            long start = System.nanoTime();
-            in.readFully(buf);
-            long end = System.nanoTime();
-            System.out.println("Took "+ TimeUnit.NANOSECONDS.toMillis(end-start));
+            for (int i=0; i<5; i++) {
+                long start = System.nanoTime();
+                in.readFully(buf);
+                long end = System.nanoTime();
+                System.out.println("Took "+ TimeUnit.NANOSECONDS.toMillis(end-start));
+            }
+
+            int sz = 1024 * 1024 * (j++ % 2 == 0 ? 4 : 1);
+            session.setWindowSize(sz);
+            System.out.println("Adjusting size to "+sz);
         }
     }
 }

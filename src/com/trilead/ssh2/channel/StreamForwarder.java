@@ -19,7 +19,7 @@ public class StreamForwarder extends Thread
 {
 	OutputStream os;
 	InputStream is;
-	byte[] buffer = new byte[Channel.CHANNEL_BUFFER_SIZE];
+	byte[] buffer;
 	Channel c;
 	StreamForwarder sibling;
 	Socket s;
@@ -34,7 +34,10 @@ public class StreamForwarder extends Thread
 		this.c = c;
 		this.sibling = sibling;
 		this.s = s;
-	}
+        // window size is for the other side of the network with some latency.
+        // we don't need such a big buffer for a copy stream tight loop
+        this.buffer = new byte[8192/*c.channelBufferSize*/];
+    }
 
 	public void run()
 	{

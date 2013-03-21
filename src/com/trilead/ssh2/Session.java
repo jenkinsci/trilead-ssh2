@@ -474,4 +474,20 @@ public class Session
 			}
 		}
 	}
+
+    /**
+     * Sets the receive window size.
+     *
+     * The receive window is a maximum number of bytes that the remote side can send to this channel without
+     * waiting for us to consume them (AKA "in-flight bytes").
+     *
+     * When your connection is over a large-latency/high-bandiwdth network, specifying a bigger value
+     * allows the network to be efficiently utilized. OTOH, if you don't drain this channel quickly enough
+     * all those bytes in flight can end up getting buffered.
+     *
+     * This value can be adjusted at runtime.
+     */
+    public synchronized void setWindowSize(int newSize) {
+        cn.setWindowSize(newSize);
+    }
 }

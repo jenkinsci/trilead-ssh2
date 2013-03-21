@@ -964,11 +964,11 @@ public class ChannelManager implements MessageHandler
             }
             if (copylen<=0)    return copylen;
 
-            if (c.localWindow < ((Channel.CHANNEL_BUFFER_SIZE*3) / 4)) {
+            if (c.localWindow <= ((c.channelBufferSize*3) / 4)) {
                 // have enough local window been consumed? if so, we'll send Ack
 
                 // the window control is on the combined bytes of stdout & stderr
-                int space = Channel.CHANNEL_BUFFER_SIZE - c.stdoutBuffer.readable() - c.stderrBuffer.readable();
+                int space = c.channelBufferSize - c.stdoutBuffer.readable() - c.stderrBuffer.readable();
 
                 increment = space - c.localWindow;
                 if (increment>0)    // increment<0 can't happen, but be defensive
