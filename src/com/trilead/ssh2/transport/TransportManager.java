@@ -781,5 +781,10 @@ public class TransportManager
 		}
 	}
 
-    public static final int MAX_PACKET_SIZE = 35000;
+    /**
+     * Advertised maximum SSH packet size that the other side can send to us.
+     */
+    public static final int MAX_PACKET_SIZE = Integer.getInteger(
+    			TransportManager.class.getName()+".maxPacketSize",
+    			64*1024);
 }
