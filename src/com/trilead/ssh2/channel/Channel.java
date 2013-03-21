@@ -119,15 +119,18 @@ public class Channel
 	int localMaxPacketSize = -1;
 	int remoteMaxPacketSize = -1;
 
-	final byte[] stdoutBuffer = new byte[CHANNEL_BUFFER_SIZE];
-	final byte[] stderrBuffer = new byte[CHANNEL_BUFFER_SIZE];
+	final RingBuffer stdoutBuffer = new RingBuffer(this,CHANNEL_BUFFER_SIZE);
+	final RingBuffer stderrBuffer = new RingBuffer(this,CHANNEL_BUFFER_SIZE);
 
-	int stdoutReadpos = 0;
-	int stdoutWritepos = 0;
-	int stderrReadpos = 0;
-	int stderrWritepos = 0;
-
-	boolean EOF = false;
+    private boolean eof = false;
+    synchronized void eof() {
+        stdoutBuffer.close();
+        stderrBuffer.close();
+        eof = true;
+    }
+    boolean isEOF() {
+        return eof;
+    }
 
 	Integer exit_status;
 

@@ -293,7 +293,7 @@ public class ChannelManager implements MessageHandler
 			if (force)
 			{
 				c.state = Channel.STATE_CLOSED;
-				c.EOF = true;
+				c.eof();
 			}
 
 			c.setReasonClosed(reason);
@@ -855,10 +855,11 @@ public class ChannelManager implements MessageHandler
 
 			c.localWindow -= len;
 
-			System.arraycopy(msg, 13, c.stderrBuffer, c.stderrWritepos, len);
-			c.stderrWritepos += len;
-
-			c.notifyAll();
+            try {
+                c.stderrBuffer.write(msg,13,len);
+            } catch (InterruptedException e) {
+                throw new InterruptedIOException();
+            }
 		}
 	}
 
@@ -884,8 +885,8 @@ public class ChannelManager implements MessageHandler
 			{
 				int current_cond = 0;
 
-				int stdoutAvail = c.stdoutWritepos - c.stdoutReadpos;
-				int stderrAvail = c.stderrWritepos - c.stderrReadpos;
+				int stdoutAvail = c.stdoutBuffer.readable();
+				int stderrAvail = c.stderrBuffer.readable();
 
 				if (stdoutAvail > 0)
 					current_cond = current_cond | ChannelCondition.STDOUT_DATA;
@@ -893,7 +894,7 @@ public class ChannelManager implements MessageHandler
 				if (stderrAvail > 0)
 					current_cond = current_cond | ChannelCondition.STDERR_DATA;
 
-				if (c.EOF)
+				if (c.isEOF())
 					current_cond = current_cond | ChannelCondition.EOF;
 
 				if (c.getExitStatus() != null)
@@ -939,11 +940,11 @@ public class ChannelManager implements MessageHandler
 			int avail;
 
 			if (extended)
-				avail = c.stderrWritepos - c.stderrReadpos;
+				avail = c.stderrBuffer.readable();
 			else
-				avail = c.stdoutWritepos - c.stdoutReadpos;
+				avail = c.stdoutBuffer.readable();
 
-			return ((avail > 0) ? avail : (c.EOF ? -1 : 0));
+			return ((avail > 0) ? avail : (c.isEOF() ? -1 : 0));
 		}
 	}
 
@@ -954,88 +955,30 @@ public class ChannelManager implements MessageHandler
 		int remoteID = 0;
 		int localID = 0;
 
-		synchronized (c)
-		{
-			int stdoutAvail = 0;
-			int stderrAvail = 0;
 
-			while (true)
-			{
-				/*
-				 * Data available? We have to return remaining data even if the
-				 * channel is already closed.
-				 */
+        synchronized (c) {
+            try {
+                copylen = (extended ? c.stderrBuffer : c.stdoutBuffer).read(target, off, len);
+            } catch (InterruptedException e) {
+                throw new InterruptedIOException();
+            }
+            if (copylen<=0)    return copylen;
 
-				stdoutAvail = c.stdoutWritepos - c.stdoutReadpos;
-				stderrAvail = c.stderrWritepos - c.stderrReadpos;
+            if (c.localWindow < ((Channel.CHANNEL_BUFFER_SIZE*3) / 4)) {
+                // have enough local window been consumed? if so, we'll send Ack
 
-				if ((!extended) && (stdoutAvail != 0))
-					break;
+                // the window control is on the combined bytes of stdout & stderr
+                int space = Channel.CHANNEL_BUFFER_SIZE - c.stdoutBuffer.readable() - c.stderrBuffer.readable();
 
-				if ((extended) && (stderrAvail != 0))
-					break;
+                increment = space - c.localWindow;
+                if (increment>0)    // increment<0 can't happen, but be defensive
+                    c.localWindow += increment;
+            }
 
-				/* Do not wait if more data will never arrive (EOF or CLOSED) */
+            remoteID = c.remoteID; /* read while holding the lock */
+            localID = c.localID; /* read while holding the lock */
 
-				if ((c.EOF) || (c.state != Channel.STATE_OPEN))
-					return -1;
-
-				try
-				{
-					c.wait();
-				}
-				catch (InterruptedException ignore)
-				{
-                    throw new InterruptedIOException();
-				}
-			}
-
-			/* OK, there is some data. Return it. */
-
-			if (!extended)
-			{
-				copylen = (stdoutAvail > len) ? len : stdoutAvail;
-				System.arraycopy(c.stdoutBuffer, c.stdoutReadpos, target, off, copylen);
-				c.stdoutReadpos += copylen;
-
-				if (c.stdoutReadpos != c.stdoutWritepos)
-
-					System.arraycopy(c.stdoutBuffer, c.stdoutReadpos, c.stdoutBuffer, 0, c.stdoutWritepos
-							- c.stdoutReadpos);
-
-				c.stdoutWritepos -= c.stdoutReadpos;
-				c.stdoutReadpos = 0;
-			}
-			else
-			{
-				copylen = (stderrAvail > len) ? len : stderrAvail;
-				System.arraycopy(c.stderrBuffer, c.stderrReadpos, target, off, copylen);
-				c.stderrReadpos += copylen;
-
-				if (c.stderrReadpos != c.stderrWritepos)
-
-					System.arraycopy(c.stderrBuffer, c.stderrReadpos, c.stderrBuffer, 0, c.stderrWritepos
-							- c.stderrReadpos);
-
-				c.stderrWritepos -= c.stderrReadpos;
-				c.stderrReadpos = 0;
-			}
-
-			if (c.state != Channel.STATE_OPEN)
-				return copylen;
-
-			if (c.localWindow < ((Channel.CHANNEL_BUFFER_SIZE + 1) / 2))
-			{
-				int minFreeSpace = Math.min(Channel.CHANNEL_BUFFER_SIZE - c.stdoutWritepos, Channel.CHANNEL_BUFFER_SIZE
-						- c.stderrWritepos);
-
-				increment = minFreeSpace - c.localWindow;
-				c.localWindow = minFreeSpace;
-			}
-
-			remoteID = c.remoteID; /* read while holding the lock */
-			localID = c.localID; /* read while holding the lock */
-		}
+        }
 
 		/*
 		 * If a consumer reads stdout and stdin in parallel, we may end up with
@@ -1103,11 +1046,12 @@ public class ChannelManager implements MessageHandler
 
 			c.localWindow -= len;
 
-			System.arraycopy(msg, 9, c.stdoutBuffer, c.stdoutWritepos, len);
-			c.stdoutWritepos += len;
-
-			c.notifyAll();
-		}
+            try {
+                c.stdoutBuffer.write(msg,9,len);
+            } catch (InterruptedException e) {
+                throw new InterruptedIOException();
+            }
+        }
 	}
 
 	public void msgChannelWindowAdjust(byte[] msg, int msglen) throws IOException
@@ -1357,11 +1301,7 @@ public class ChannelManager implements MessageHandler
 		if (c == null)
 			throw new IOException("Unexpected SSH_MSG_CHANNEL_EOF message for non-existent channel " + id);
 
-		synchronized (c)
-		{
-			c.EOF = true;
-			c.notifyAll();
-		}
+        c.eof();
 
 		if (log.isEnabled())
 			log.log(50, "Got SSH_MSG_CHANNEL_EOF (channel " + id + ")");
@@ -1381,7 +1321,7 @@ public class ChannelManager implements MessageHandler
 
 		synchronized (c)
 		{
-			c.EOF = true;
+            c.eof();
 			c.state = Channel.STATE_CLOSED;
 			c.setReasonClosed("Close requested by remote");
 			c.closeMessageRecv = true;
@@ -1519,7 +1459,7 @@ public class ChannelManager implements MessageHandler
 
 		synchronized (c)
 		{
-			c.EOF = true;
+            c.eof();
 			c.state = Channel.STATE_CLOSED;
 			c.setReasonClosed("The server refused to open the channel (" + reasonCodeSymbolicName + ", '"
 					+ descriptionBuffer.toString() + "')");
@@ -1604,7 +1544,7 @@ public class ChannelManager implements MessageHandler
 					Channel c = (Channel) channels.elementAt(i);
 					synchronized (c)
 					{
-						c.EOF = true;
+                        c.eof();
 						c.state = Channel.STATE_CLOSED;
 						c.setReasonClosed("The connection is being shutdown");
 						c.closeMessageRecv = true; /*

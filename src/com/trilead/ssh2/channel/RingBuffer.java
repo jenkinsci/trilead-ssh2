@@ -7,8 +7,9 @@ import java.io.InputStream;
  * @author Kohsuke Kawaguchi
  */
 class RingBuffer {
-    private final byte[] ring;
+    private byte[] ring;
     private final int sz;
+    private final Object lock;
 
     /**
      * Point to the position in the array where the next read/write would occur.
@@ -23,9 +24,14 @@ class RingBuffer {
     private boolean closed;
 
     RingBuffer(int len) {
+        this(null,len);
+    }
+
+    RingBuffer(Object lock, int len) {
         // to differentiate empty buffer vs full buffer, we need one more byte
         sz = len + 1;
         this.ring = new byte[sz];
+        this.lock = lock==null ? this : lock;
     }
 
     /**
@@ -33,8 +39,10 @@ class RingBuffer {
      *
      * @return [0,sz) = [0,len]
      */
-    private int readable() {
-        return mod(w - r);
+    int readable() {
+        synchronized (lock) {
+            return mod(w - r);
+        }
     }
 
     /**
@@ -42,8 +50,10 @@ class RingBuffer {
      *
      * @return [0,sz) = [0,len]
      */
-    private int writable() {
-        return (sz-1)-readable(); // we can't fill the last byte to differentiate full buffer vs empty buffer
+    int writable() {
+        synchronized (lock) {
+            return (sz-1)-readable(); // we can't fill the last byte to differentiate full buffer vs empty buffer
+        }
     }
 
     private int mod(int i) {
@@ -63,16 +73,16 @@ class RingBuffer {
         while (len>0) {
             int chunk;
 
-            synchronized (this) {
+            synchronized (lock) {
                 while ((chunk = Math.min(len,writable()))==0)
-                    wait();
+                    lock.wait();
 
                 chunk = Math.min(chunk,sz-w);   // limit the write to one continuous region
 
                 System.arraycopy(buf,start,ring,w,chunk);
                 w=modp(w+chunk);
 
-                notifyAll();
+                lock.notifyAll();
             }
 
             start += chunk;
@@ -80,11 +90,22 @@ class RingBuffer {
         }
     }
 
-    public synchronized void close() {
-        if (!closed) {
-            closed = true;
-            notifyAll();
+    public void close() {
+        synchronized (lock) {
+            if (!closed) {
+                closed = true;
+                releaseRing();
+                lock.notifyAll();
+            }
         }
+    }
+
+    /**
+     * If the ring is no longer needed, release the buffer.
+     */
+    private void releaseRing() {
+        if (closed &&  readable()==0)
+            ring = null;
     }
 
     /**
@@ -99,7 +120,7 @@ class RingBuffer {
         while (true) {
             int chunk;
 
-            synchronized (this) {
+            synchronized (lock) {
                 while (true) {
                     chunk = Math.min(len,readable());
                     if (chunk>0)    break;
@@ -108,8 +129,11 @@ class RingBuffer {
 
                     if (read>0)     return read;    // we've already read some
 
-                    if (closed)     return -1;  // no more data
-                    wait(); // wait until the writer gives us something
+                    if (closed) {
+                        releaseRing();
+                        return -1;  // no more data
+                    }
+                    lock.wait(); // wait until the writer gives us something
                 }
 
                 chunk = Math.min(chunk,sz-r);   // limit the read to one continuous region
@@ -117,7 +141,7 @@ class RingBuffer {
                 System.arraycopy(ring,r,buf,start,chunk);
                 r=modp(r+chunk);
 
-                notifyAll();
+                lock.notifyAll();
             }
 
             start += chunk;
