@@ -48,7 +48,7 @@ public class ClientServerHello
 
 			len++;
 			if (pos >= buffer.length)
-				throw new IOException("The server sent a too long line.");
+				throw new IOException("The server sent a too long line: "+new String(buffer, "ISO-8859-1"));
 		}
 
 		return len;
