@@ -40,7 +40,7 @@ public class ChannelManager implements MessageHandler
 
 	private HashMap x11_magic_cookies = new HashMap();
 
-	private TransportManager tm;
+	/*package*/ TransportManager tm;
 
 	private Vector channels = new Vector();
 	private int nextLocalChannel = 100;
@@ -855,11 +855,7 @@ public class ChannelManager implements MessageHandler
 
 			c.localWindow -= len;
 
-            try {
-                c.stderrBuffer.write(msg,13,len);
-            } catch (InterruptedException e) {
-                throw new InterruptedIOException();
-            }
+            c.stderr.write(msg,13,len);
 		}
 	}
 
@@ -885,8 +881,8 @@ public class ChannelManager implements MessageHandler
 			{
 				int current_cond = 0;
 
-				int stdoutAvail = c.stdoutBuffer.readable();
-				int stderrAvail = c.stderrBuffer.readable();
+				int stdoutAvail = c.stdout.readable();
+				int stderrAvail = c.stderr.readable();
 
 				if (stdoutAvail > 0)
 					current_cond = current_cond | ChannelCondition.STDOUT_DATA;
@@ -937,78 +933,24 @@ public class ChannelManager implements MessageHandler
 	{
 		synchronized (c)
 		{
-			int avail;
-
-			if (extended)
-				avail = c.stderrBuffer.readable();
-			else
-				avail = c.stdoutBuffer.readable();
-
-			return ((avail > 0) ? avail : (c.isEOF() ? -1 : 0));
+            return (extended ? c.stderr : c.stdout ).available();
 		}
 	}
 
 	public int getChannelData(Channel c, boolean extended, byte[] target, int off, int len) throws IOException
 	{
-		int copylen = 0;
-		int increment = 0;
-		int remoteID = 0;
-		int localID = 0;
-
+		int copylen;
 
         synchronized (c) {
             try {
-                copylen = (extended ? c.stderrBuffer : c.stdoutBuffer).read(target, off, len);
+                copylen = (extended ? c.stderr : c.stdout).read(target, off, len);
             } catch (InterruptedException e) {
                 throw new InterruptedIOException();
             }
             if (copylen<=0)    return copylen;
-
-            if (c.localWindow <= ((c.channelBufferSize*3) / 4)) {
-                // have enough local window been consumed? if so, we'll send Ack
-
-                // the window control is on the combined bytes of stdout & stderr
-                int space = c.channelBufferSize - c.stdoutBuffer.readable() - c.stderrBuffer.readable();
-
-                increment = space - c.localWindow;
-                if (increment>0)    // increment<0 can't happen, but be defensive
-                    c.localWindow += increment;
-            }
-
-            remoteID = c.remoteID; /* read while holding the lock */
-            localID = c.localID; /* read while holding the lock */
-
         }
 
-		/*
-		 * If a consumer reads stdout and stdin in parallel, we may end up with
-		 * sending two msgWindowAdjust messages. Luckily, it
-		 * does not matter in which order they arrive at the server.
-		 */
-
-		if (increment > 0)
-		{
-			if (log.isEnabled())
-				log.log(80, "Sending SSH_MSG_CHANNEL_WINDOW_ADJUST (channel " + localID + ", " + increment + ")");
-
-			synchronized (c.channelSendLock)
-			{
-				byte[] msg = c.msgWindowAdjust;
-
-				msg[0] = Packets.SSH_MSG_CHANNEL_WINDOW_ADJUST;
-				msg[1] = (byte) (remoteID >> 24);
-				msg[2] = (byte) (remoteID >> 16);
-				msg[3] = (byte) (remoteID >> 8);
-				msg[4] = (byte) (remoteID);
-				msg[5] = (byte) (increment >> 24);
-				msg[6] = (byte) (increment >> 16);
-				msg[7] = (byte) (increment >> 8);
-				msg[8] = (byte) (increment);
-
-				if (c.closeMessageSent == false)
-					tm.sendMessage(msg);
-			}
-		}
+        c.freeupWindow(copylen);
 
 		return copylen;
 	}
@@ -1046,11 +988,7 @@ public class ChannelManager implements MessageHandler
 
 			c.localWindow -= len;
 
-            try {
-                c.stdoutBuffer.write(msg,9,len);
-            } catch (InterruptedException e) {
-                throw new InterruptedIOException();
-            }
+            c.stdout.write(msg,9,len);
         }
 	}
 

@@ -1,6 +1,8 @@
 package com.trilead.ssh2.channel;
 
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 
 /**
  * FIFO buffer for a reader thread and a writer thread to collaborate.
@@ -219,6 +221,24 @@ class FifoBuffer {
 
                 lock.notifyAll();
             }
+        }
+    }
+
+    /**
+     * Write whatever readable to the specified OutputStream, then return.
+     */
+    public int writeTo(OutputStream out) throws IOException {
+        try {
+            int total = 0;
+            while (readable()>0) {
+                byte[] buf = new byte[1024];    // most often this method gets called before we have any data, so this is a win
+                int read = read(buf, 0, buf.length);
+                out.write(buf,0,read);
+                total += read;
+            }
+            return total;
+        } catch (InterruptedException e) {
+            throw new AssertionError(e); // we carefully read only what we can read without blocking
         }
     }
 }
