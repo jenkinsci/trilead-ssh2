@@ -82,7 +82,7 @@ public class Channel
      */
     class Output {
         ChannelInputStream stream;
-        FifoBuffer buffer = new FifoBuffer(this, 2048, channelBufferSize);
+        FifoBuffer buffer = new FifoBuffer(Channel.this, 2048, channelBufferSize);
         OutputStream sink;
 
         public void write(byte[] buf, int start, int len) throws IOException {
