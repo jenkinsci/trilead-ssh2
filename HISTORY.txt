@@ -2,6 +2,37 @@
 Release Notes:
 ==============
 
+build217, 2013-06-03:
+
+- Support for SSH agent based authentication.
+
+build216, 2013-03-04:
+
+- Support of unencrypted entries in the known_hosts file.
+- Improved timeout handling. 
+
+build214, 2011-04-25:
+
+- Project build procedure uses Gradle; project artifacts from now on 
+  are available at TMate Software Maven repository at http://maven.tmatesoft.com/
+
+build213, 2008-04-01:
+
+- Added a workaround for servers that violate RFC4253 when sending the
+  SSH_MSG_SERVICE_ACCEPT and the SSH_MSG_KEXDH_REPLY messages.
+  Thanks to Gordon Brockway.
+
+- Fixed encodings for alien platforms (e.g., EBCDIC based). Use "ISO-8859-1" in
+  most places where we used the default platform encoding so far.
+
+- API change: atime and mtime attributes in SFTPv3FileAttributes are now
+  of type Long (not Integer). Makes it easier to properly handle values > 2^31.
+
+- Fixed the blowfish-ctr cipher, it could not be instantiated (a typo that
+  got in during the move to the trilead namespace). Thanks to Roelof Kemp.
+
+- Still in the queue: SSH server support.
+
 build212, 2008-03-03:
 
 - Added possibility to enable debugging output without recompiling the library.
