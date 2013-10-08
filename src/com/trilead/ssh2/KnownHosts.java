@@ -8,6 +8,8 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.io.Reader;
+import java.io.UnsupportedEncodingException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.security.SecureRandom;
@@ -20,6 +22,7 @@ import com.trilead.ssh2.crypto.digest.Digest;
 import com.trilead.ssh2.crypto.digest.HMAC;
 import com.trilead.ssh2.crypto.digest.MD5;
 import com.trilead.ssh2.crypto.digest.SHA1;
+import com.trilead.ssh2.log.Logger;
 import com.trilead.ssh2.signature.DSAPublicKey;
 import com.trilead.ssh2.signature.DSASHA1Verify;
 import com.trilead.ssh2.signature.RSAPublicKey;
@@ -39,11 +42,13 @@ import com.trilead.ssh2.signature.RSASHA1Verify;
  * <code>KnownHosts</code> for your whole application.
  * 
  * @author Christian Plattner, plattner@trilead.com
- * @version $Id: KnownHosts.java,v 1.1 2007/10/15 12:49:56 cplattne Exp $
+ * @version $Id: KnownHosts.java,v 1.2 2008/04/01 12:38:09 cplattne Exp $
  */
 
 public class KnownHosts
 {
+	private static final Logger LOGGER = Logger.getLogger(KnownHosts.class);
+
 	public static final int HOSTKEY_IS_OK = 0;
 	public static final int HOSTKEY_IS_NEW = 1;
 	public static final int HOSTKEY_HAS_CHANGED = 2;
@@ -87,31 +92,28 @@ public class KnownHosts
 	 * @param serverHostKey as passed to the {@link ServerHostKeyVerifier}.
 	 * @throws IOException
 	 */
-	public void addHostkey(String hostnames[], String serverHostKeyAlgorithm, byte[] serverHostKey) throws IOException
-	{
-		if (hostnames == null)
+	public void addHostkey(String[] hostnames, String serverHostKeyAlgorithm, byte[] serverHostKey) throws IOException {
+		if (hostnames == null) {
 			throw new IllegalArgumentException("hostnames may not be null");
+		}
 
-		if ("ssh-rsa".equals(serverHostKeyAlgorithm))
-		{
-			RSAPublicKey rpk = RSASHA1Verify.decodeSSHRSAPublicKey(serverHostKey);
+		if ("ssh-rsa".equals(serverHostKeyAlgorithm)) {
+			final RSAPublicKey rpk = RSASHA1Verify.decodeSSHRSAPublicKey(serverHostKey);
 
-			synchronized (publicKeys)
-			{
+			synchronized (publicKeys) {
 				publicKeys.add(new KnownHostsEntry(hostnames, rpk));
 			}
 		}
-		else if ("ssh-dss".equals(serverHostKeyAlgorithm))
-		{
-			DSAPublicKey dpk = DSASHA1Verify.decodeSSHDSAPublicKey(serverHostKey);
+		else if ("ssh-dss".equals(serverHostKeyAlgorithm)) {
+			final DSAPublicKey dpk = DSASHA1Verify.decodeSSHDSAPublicKey(serverHostKey);
 
-			synchronized (publicKeys)
-			{
+			synchronized (publicKeys) {
 				publicKeys.add(new KnownHostsEntry(hostnames, dpk));
 			}
 		}
-		else
-			throw new IOException("Unknwon host key type (" + serverHostKeyAlgorithm + ")");
+		else {
+			throw new IOWarningException("Unknwon host key type (" + serverHostKeyAlgorithm + ")");
+		}
 	}
 
 	/**
@@ -168,8 +170,16 @@ public class KnownHosts
 
 		HMAC hmac = new HMAC(sha1, salt, salt.length);
 
-		hmac.update(hostname.getBytes());
-
+		try
+		{
+			hmac.update(hostname.getBytes("ISO-8859-1"));
+		}catch(UnsupportedEncodingException ignore)
+		{
+			/* Actually, ISO-8859-1 is supported by all correct
+			 * Java implementations. But... you never know. */
+			hmac.update(hostname.getBytes());
+		}
+		
 		byte[] dig = new byte[hmac.getDigestLength()];
 
 		hmac.digest(dig);
@@ -370,65 +380,80 @@ public class KnownHosts
 						return false;
 					isMatch = true;
 				}
+				else
+				{
+					final int indexColon = pattern.indexOf(':');
+					final int indexLastColon = pattern.indexOf(':');
+					if (indexColon > 0 && indexColon < pattern.length() - 2 && indexColon == indexLastColon)
+					{
+						final String bracketizedHost = '[' + hostname + ']';
+						if (pattern.startsWith(bracketizedHost))
+						{
+							if (negate)
+								return false;
+							isMatch = true;
+						}
+					}
+				}
 			}
 		}
 
 		return isMatch;
 	}
 
-	private void initialize(char[] knownHostsData) throws IOException
-	{
-		BufferedReader br = new BufferedReader(new CharArrayReader(knownHostsData));
-
-		while (true)
-		{
-			String line = br.readLine();
-
-			if (line == null)
-				break;
-
+	private void initialize(char[] knownHostsData) throws IOException {
+		final BufferedReader br = new BufferedReader(new CharArrayReader(knownHostsData));
+		for (String line = br.readLine(); line != null; line = br.readLine()) {
 			line = line.trim();
-
-			if (line.startsWith("#"))
+			if (line.startsWith("#")) {
 				continue;
+			}
 
-			String[] arr = line.split(" ");
+			final String[] arr = line.split(" "); 
+			if (arr.length < 3) {
+				continue;
+			}
 
-			if (arr.length >= 3)
-			{
-				if ((arr[1].compareTo("ssh-rsa") == 0) || (arr[1].compareTo("ssh-dss") == 0))
-				{
-					String[] hostnames = arr[0].split(",");
+			final String serverHostKeyAlgorithm = arr[1];
+			if (!"ssh-rsa".equals(serverHostKeyAlgorithm) && !"ssh-dss".equals(serverHostKeyAlgorithm)) {
+				continue;
+			}
 
-					byte[] msg = Base64.decode(arr[2].toCharArray());
+			final String[] hostnames = arr[0].split(",");
+			final byte[] msg = Base64.decode(arr[2].toCharArray());
 
-					addHostkey(hostnames, arr[1], msg);
-				}
+			try {
+				addHostkey(hostnames, serverHostKeyAlgorithm, msg);
+			}
+			catch (IOWarningException ex) {
+				LOGGER.log(20, "Ignored invalid line '" + line + "'");
 			}
 		}
 	}
 
-	private void initialize(File knownHosts) throws IOException
-	{
-		char[] buff = new char[512];
+	private void initialize(File knownHosts) throws IOException {
+		final char[] buffer = new char[512];
 
-		CharArrayWriter cw = new CharArrayWriter();
+		final CharArrayWriter charWriter = new CharArrayWriter();
 
 		knownHosts.createNewFile();
 
-		FileReader fr = new FileReader(knownHosts);
+		final Reader reader = new FileReader(knownHosts);
+		try {
+			while (true) {
+				final int readCharCount = reader.read(buffer);
+				if (readCharCount < 0) {
+					break;
+				}
 
-		while (true)
-		{
-			int len = fr.read(buff);
-			if (len < 0)
-				break;
-			cw.write(buff, 0, len);
+				charWriter.write(buffer, 0, readCharCount);
+			}
+		}
+		finally {
+			reader.close();
 		}
 
-		fr.close();
-
-		initialize(cw.toCharArray());
+		initialize(charWriter.toCharArray());
 	}
 
 	private final boolean matchKeys(Object key1, Object key2)
@@ -684,7 +709,7 @@ public class KnownHosts
 				raf.write('\n');
 		}
 		
-		raf.write(new String(entry).getBytes());
+		raf.write(new String(entry).getBytes("ISO-8859-1"));
 		raf.close();
 	}
 

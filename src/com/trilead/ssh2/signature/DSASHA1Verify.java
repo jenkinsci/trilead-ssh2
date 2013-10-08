@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.security.SecureRandom;
 
+import com.trilead.ssh2.IOWarningException;
 import com.trilead.ssh2.crypto.digest.SHA1;
 import com.trilead.ssh2.log.Logger;
 import com.trilead.ssh2.packets.TypesReader;
@@ -15,28 +16,28 @@ import com.trilead.ssh2.packets.TypesWriter;
  * DSASHA1Verify.
  * 
  * @author Christian Plattner, plattner@trilead.com
- * @version $Id: DSASHA1Verify.java,v 1.1 2007/10/15 12:49:57 cplattne Exp $
+ * @version $Id: DSASHA1Verify.java,v 1.2 2008/04/01 12:38:09 cplattne Exp $
  */
 public class DSASHA1Verify
 {
 	private static final Logger log = Logger.getLogger(DSASHA1Verify.class);
 
-	public static DSAPublicKey decodeSSHDSAPublicKey(byte[] key) throws IOException
-	{
-		TypesReader tr = new TypesReader(key);
+	public static DSAPublicKey decodeSSHDSAPublicKey(byte[] key) throws IOException {
+		final TypesReader tr = new TypesReader(key);
 
-		String key_format = tr.readString();
+		final String key_format = tr.readString();
+		if (!key_format.equals("ssh-dss")) {
+			throw new IOWarningException("Unsupported key format found '" + key_format + "' while expecting ssh-dss");
+		}
 
-		if (key_format.equals("ssh-dss") == false)
-			throw new IllegalArgumentException("This is not a ssh-dss public key!");
+		final BigInteger p = tr.readMPINT();
+		final BigInteger q = tr.readMPINT();
+		final BigInteger g = tr.readMPINT();
+		final BigInteger y = tr.readMPINT();
 
-		BigInteger p = tr.readMPINT();
-		BigInteger q = tr.readMPINT();
-		BigInteger g = tr.readMPINT();
-		BigInteger y = tr.readMPINT();
-
-		if (tr.remain() != 0)
+		if (tr.remain() != 0) {
 			throw new IOException("Padding in DSA public key!");
+		}
 
 		return new DSAPublicKey(p, q, g, y);
 	}
@@ -80,20 +81,31 @@ public class DSASHA1Verify
 
 	public static DSASignature decodeSSHDSASignature(byte[] sig) throws IOException
 	{
-		TypesReader tr = new TypesReader(sig);
+		byte[] rsArray = null;
+		
+		if (sig.length == 40)
+		{
+			/* OK, another broken SSH server. */
+			rsArray = sig;	
+		}
+		else
+		{
+			/* Hopefully a server obeing the standard... */
+			TypesReader tr = new TypesReader(sig);
 
-		String sig_format = tr.readString();
+			String sig_format = tr.readString();
 
-		if (sig_format.equals("ssh-dss") == false)
-			throw new IOException("Peer sent wrong signature format");
+			if (sig_format.equals("ssh-dss") == false)
+				throw new IOException("Peer sent wrong signature format");
 
-		byte[] rsArray = tr.readByteString();
+			rsArray = tr.readByteString();
 
-		if (rsArray.length != 40)
-			throw new IOException("Peer sent corrupt signature");
+			if (rsArray.length != 40)
+				throw new IOException("Peer sent corrupt signature");
 
-		if (tr.remain() != 0)
-			throw new IOException("Padding in DSA signature!");
+			if (tr.remain() != 0)
+				throw new IOException("Padding in DSA signature!");
+		}
 
 		/* Remember, s and r are unsigned ints. */
 

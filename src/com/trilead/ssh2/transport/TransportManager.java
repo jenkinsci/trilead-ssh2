@@ -49,7 +49,7 @@ import com.trilead.ssh2.util.Tokenizer;
  * TransportManager.
  * 
  * @author Christian Plattner, plattner@trilead.com
- * @version $Id: TransportManager.java,v 1.1 2007/10/15 12:49:56 cplattne Exp $
+ * @version $Id: TransportManager.java,v 1.2 2008/04/01 12:38:09 cplattne Exp $
  */
 public class TransportManager
 {
@@ -142,6 +142,7 @@ public class TransportManager
 
 	Vector connectionMonitors = new Vector();
 	boolean monitorsWereInformed = false;
+	private ClientServerHello versions;
 
 	/**
 	 * There were reports that there are JDKs which use
@@ -228,6 +229,10 @@ public class TransportManager
 	public ConnectionInfo getConnectionInfo(int kexNumber) throws IOException
 	{
 		return km.getOrWaitForConnectionInfo(kexNumber);
+	}
+	
+	public ClientServerHello getVersionInfo() {
+		return versions;
 	}
 
 	public Throwable getReasonClosedCause()
@@ -331,7 +336,7 @@ public class TransportManager
 		}
 	}
 
-	private void establishConnection(ProxyData proxyData, int connectTimeout) throws IOException
+	private void establishConnection(ProxyData proxyData, int connectTimeout, int readTimeout) throws IOException
 	{
 		/* See the comment for createInetAddress() */
 
@@ -339,7 +344,7 @@ public class TransportManager
 		{
 			InetAddress addr = createInetAddress(hostname);
 			sock.connect(new InetSocketAddress(addr, port), connectTimeout);
-			sock.setSoTimeout(0);
+			sock.setSoTimeout(readTimeout);
 			return;
 		}
 
@@ -351,7 +356,7 @@ public class TransportManager
 
 			InetAddress addr = createInetAddress(pd.proxyHost);
 			sock.connect(new InetSocketAddress(addr, pd.proxyPort), connectTimeout);
-			sock.setSoTimeout(0);
+			sock.setSoTimeout(readTimeout);
 
 			/* OK, now tell the proxy where we actually want to connect to */
 
@@ -366,7 +371,7 @@ public class TransportManager
 			if ((pd.proxyUser != null) && (pd.proxyPass != null))
 			{
 				String credentials = pd.proxyUser + ":" + pd.proxyPass;
-				char[] encoded = Base64.encode(credentials.getBytes());
+				char[] encoded = Base64.encode(credentials.getBytes("ISO-8859-1"));
 				sb.append("Proxy-Authorization: Basic ");
 				sb.append(encoded);
 				sb.append("\r\n");
@@ -388,7 +393,7 @@ public class TransportManager
 
 			OutputStream out = sock.getOutputStream();
 
-			out.write(sb.toString().getBytes());
+			out.write(sb.toString().getBytes("ISO-8859-1"));
 			out.flush();
 
 			/* Now parse the HTTP response */
@@ -398,7 +403,7 @@ public class TransportManager
 
 			int len = ClientServerHello.readLineRN(in, buffer);
 
-			String httpReponse = new String(buffer, 0, len);
+			String httpReponse = new String(buffer, 0, len, "ISO-8859-1");
 
 			if (httpReponse.startsWith("HTTP/") == false)
 				throw new IOException("The proxy did not send back a valid HTTP response.");
@@ -441,12 +446,17 @@ public class TransportManager
 		throw new IOException("Unsupported ProxyData");
 	}
 
-	public void initialize(CryptoWishList cwl, ServerHostKeyVerifier verifier, DHGexParameters dhgex,
-			int connectTimeout, SecureRandom rnd, ProxyData proxyData) throws IOException
+    public void initialize(CryptoWishList cwl, ServerHostKeyVerifier verifier, DHGexParameters dhgex,
+            int connectTimeout, SecureRandom rnd, ProxyData proxyData) throws IOException {
+        initialize(cwl, verifier, dhgex, connectTimeout, 0, rnd, proxyData);
+    }
+    
+    public void initialize(CryptoWishList cwl, ServerHostKeyVerifier verifier, DHGexParameters dhgex,
+			int connectTimeout, int readTimeout, SecureRandom rnd, ProxyData proxyData) throws IOException
 	{
 		/* First, establish the TCP connection to the SSH-2 server */
 
-		establishConnection(proxyData, connectTimeout);
+		establishConnection(proxyData, connectTimeout, readTimeout);
 
 		/* Parse the server line and say hello - important: this information is later needed for the
 		 * key exchange (to stop man-in-the-middle attacks) - that is why we wrap it into an object
@@ -454,6 +464,7 @@ public class TransportManager
 		 */
 
 		ClientServerHello csh = new ClientServerHello(sock.getInputStream(), sock.getOutputStream());
+		versions = csh;
 
 		tc = new TransportConnection(sock.getInputStream(), sock.getOutputStream(), rnd);
 

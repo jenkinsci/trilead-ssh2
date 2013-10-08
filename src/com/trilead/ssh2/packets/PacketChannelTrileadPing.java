@@ -1,11 +1,12 @@
-package com.trilead.ssh2.packets;
 
+package com.trilead.ssh2.packets;
 
 /**
  * PacketChannelTrileadPing.
  * 
  * @author Christian Plattner, plattner@trilead.com
- * @version $Id: PacketChannelTrileadPing.java,v 1.1 2008/03/03 07:01:36 cplattne Exp $
+ * @version $Id: PacketChannelTrileadPing.java,v 1.1 2008/03/03 07:01:36
+ *          cplattne Exp $
  */
 public class PacketChannelTrileadPing
 {
@@ -13,12 +14,11 @@ public class PacketChannelTrileadPing
 
 	public int recipientChannelID;
 
-
 	public PacketChannelTrileadPing(int recipientChannelID)
 	{
 		this.recipientChannelID = recipientChannelID;
 	}
-	
+
 	public byte[] getPayload()
 	{
 		if (payload == null)

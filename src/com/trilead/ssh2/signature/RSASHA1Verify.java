@@ -4,6 +4,7 @@ package com.trilead.ssh2.signature;
 import java.io.IOException;
 import java.math.BigInteger;
 
+import com.trilead.ssh2.IOWarningException;
 import com.trilead.ssh2.crypto.SimpleDERReader;
 import com.trilead.ssh2.crypto.digest.SHA1;
 import com.trilead.ssh2.log.Logger;
@@ -21,20 +22,20 @@ public class RSASHA1Verify
 {
 	private static final Logger log = Logger.getLogger(RSASHA1Verify.class);
 
-	public static RSAPublicKey decodeSSHRSAPublicKey(byte[] key) throws IOException
-	{
-		TypesReader tr = new TypesReader(key);
+	public static RSAPublicKey decodeSSHRSAPublicKey(byte[] key) throws IOException {
+		final TypesReader tr = new TypesReader(key);
 
-		String key_format = tr.readString();
+		final String key_format = tr.readString();
+		if (!key_format.equals("ssh-rsa")) {
+			throw new IOWarningException("Unsupported key format found '" + key_format + "' while expecting ssh-rsa");
+		}
 
-		if (key_format.equals("ssh-rsa") == false)
-			throw new IllegalArgumentException("This is not a ssh-rsa public key");
+		final BigInteger e = tr.readMPINT();
+		final BigInteger n = tr.readMPINT();
 
-		BigInteger e = tr.readMPINT();
-		BigInteger n = tr.readMPINT();
-
-		if (tr.remain() != 0)
+		if (tr.remain() != 0) {
 			throw new IOException("Padding in RSA public key!");
+		}
 
 		return new RSAPublicKey(e, n);
 	}
