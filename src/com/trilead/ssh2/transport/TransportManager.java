@@ -336,7 +336,7 @@ public class TransportManager
 		}
 	}
 
-	private void establishConnection(ProxyData proxyData, int connectTimeout) throws IOException
+	private void establishConnection(ProxyData proxyData, int connectTimeout, int readTimeout) throws IOException
 	{
 		/* See the comment for createInetAddress() */
 
@@ -344,7 +344,7 @@ public class TransportManager
 		{
 			InetAddress addr = createInetAddress(hostname);
 			sock.connect(new InetSocketAddress(addr, port), connectTimeout);
-			sock.setSoTimeout(0);
+			sock.setSoTimeout(readTimeout);
 			return;
 		}
 
@@ -356,7 +356,7 @@ public class TransportManager
 
 			InetAddress addr = createInetAddress(pd.proxyHost);
 			sock.connect(new InetSocketAddress(addr, pd.proxyPort), connectTimeout);
-			sock.setSoTimeout(0);
+			sock.setSoTimeout(readTimeout);
 
 			/* OK, now tell the proxy where we actually want to connect to */
 
@@ -446,12 +446,17 @@ public class TransportManager
 		throw new IOException("Unsupported ProxyData");
 	}
 
-	public void initialize(CryptoWishList cwl, ServerHostKeyVerifier verifier, DHGexParameters dhgex,
-			int connectTimeout, SecureRandom rnd, ProxyData proxyData) throws IOException
+    public void initialize(CryptoWishList cwl, ServerHostKeyVerifier verifier, DHGexParameters dhgex,
+            int connectTimeout, SecureRandom rnd, ProxyData proxyData) throws IOException {
+        initialize(cwl, verifier, dhgex, connectTimeout, 0, rnd, proxyData);
+    }
+    
+    public void initialize(CryptoWishList cwl, ServerHostKeyVerifier verifier, DHGexParameters dhgex,
+			int connectTimeout, int readTimeout, SecureRandom rnd, ProxyData proxyData) throws IOException
 	{
 		/* First, establish the TCP connection to the SSH-2 server */
 
-		establishConnection(proxyData, connectTimeout);
+		establishConnection(proxyData, connectTimeout, readTimeout);
 
 		/* Parse the server line and say hello - important: this information is later needed for the
 		 * key exchange (to stop man-in-the-middle attacks) - that is why we wrap it into an object

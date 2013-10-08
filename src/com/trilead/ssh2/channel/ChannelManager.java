@@ -111,7 +111,7 @@ public class ChannelManager implements MessageHandler
 				}
 				catch (InterruptedException ignore)
 				{
-                    throw new InterruptedIOException();
+					throw new InterruptedIOException();
 				}
 			}
 
@@ -146,8 +146,8 @@ public class ChannelManager implements MessageHandler
 				}
 				catch (InterruptedException ignore)
 				{
-                    throw new InterruptedIOException();
-				}
+					throw new InterruptedIOException();
+        }
 			}
 
 			if ((globalFailedCounter == 0) && (globalSuccessCounter == 1))
@@ -183,7 +183,7 @@ public class ChannelManager implements MessageHandler
 				}
 				catch (InterruptedException ignore)
 				{
-                    throw new InterruptedIOException();
+					throw new InterruptedIOException();
 				}
 			}
 
@@ -394,7 +394,7 @@ public class ChannelManager implements MessageHandler
 					}
 					catch (InterruptedException ignore)
 					{
-                        throw new InterruptedIOException();
+						throw new InterruptedIOException();
 					}
 				}
 

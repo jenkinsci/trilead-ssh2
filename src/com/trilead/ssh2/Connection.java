@@ -1,16 +1,6 @@
 package com.trilead.ssh2;
 
-import java.io.CharArrayWriter;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.InputStream;
-import java.net.InetSocketAddress;
-import java.net.SocketTimeoutException;
-import java.security.SecureRandom;
-import java.util.Vector;
-
+import com.trilead.ssh2.auth.AgentProxy;
 import com.trilead.ssh2.auth.AuthenticationManager;
 import com.trilead.ssh2.channel.ChannelManager;
 import com.trilead.ssh2.crypto.CryptoWishList;
@@ -23,6 +13,17 @@ import com.trilead.ssh2.transport.KexManager;
 import com.trilead.ssh2.transport.TransportManager;
 import com.trilead.ssh2.util.TimeoutService;
 import com.trilead.ssh2.util.TimeoutService.TimeoutToken;
+
+import java.io.CharArrayWriter;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.InetSocketAddress;
+import java.net.SocketTimeoutException;
+import java.security.SecureRandom;
+import java.util.Vector;
 
 /**
  * A <code>Connection</code> is used to establish an encrypted TCP/IP
@@ -213,6 +214,27 @@ public class Connection
 			throws IOException
 	{
 		return authenticateWithKeyboardInteractive(user, null, cb);
+	}
+
+	public synchronized boolean authenticateWithAgent(String user, AgentProxy proxy) throws IOException {
+		if (tm == null)
+			throw new IllegalStateException("Connection is not established!");
+
+		if (authenticated)
+			throw new IllegalStateException("Connection is already authenticated!");
+
+		if (am == null)
+			am = new AuthenticationManager(tm);
+
+		if (cm == null)
+			cm = new ChannelManager(tm);
+
+		if (user == null)
+			throw new IllegalArgumentException("user argument is null");
+
+		authenticated = am.authenticatePublicKey(user, proxy);
+
+		return authenticated;
 	}
 
 	/**
@@ -661,9 +683,12 @@ public class Connection
 	 *             proxy is buggy and does not return a proper HTTP response,
 	 *             then a normal IOException is thrown instead.
 	 */
-	public synchronized ConnectionInfo connect(ServerHostKeyVerifier verifier, int connectTimeout, int kexTimeout)
-			throws IOException
-	{
+	public synchronized ConnectionInfo connect(ServerHostKeyVerifier verifier, int connectTimeout, int kexTimeout) throws IOException {
+			return connect(verifier, connectTimeout, 0, kexTimeout);
+    }
+
+    public synchronized ConnectionInfo connect(ServerHostKeyVerifier verifier, int connectTimeout, int readTimeout, int kexTimeout)
+		            throws IOException {
 		final class TimeoutState
 		{
 			boolean isCancelled = false;
@@ -682,7 +707,7 @@ public class Connection
 		final TimeoutState state = new TimeoutState();
 
 		tm = new TransportManager(hostname, port);
-
+		
 		tm.setConnectionMonitors(connectionMonitors);
 
 		/*
@@ -730,7 +755,7 @@ public class Connection
 
 			try
 			{
-				tm.initialize(cryptoWishList, verifier, dhgexpara, connectTimeout, getOrCreateSecureRND(), proxyData);
+				tm.initialize(cryptoWishList, verifier, dhgexpara, connectTimeout, readTimeout, getOrCreateSecureRND(), proxyData);
 			}
 			catch (SocketTimeoutException se)
 			{

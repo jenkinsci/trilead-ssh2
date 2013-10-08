@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.security.SecureRandom;
 
+import com.trilead.ssh2.IOWarningException;
 import com.trilead.ssh2.crypto.digest.SHA1;
 import com.trilead.ssh2.log.Logger;
 import com.trilead.ssh2.packets.TypesReader;
@@ -21,22 +22,22 @@ public class DSASHA1Verify
 {
 	private static final Logger log = Logger.getLogger(DSASHA1Verify.class);
 
-	public static DSAPublicKey decodeSSHDSAPublicKey(byte[] key) throws IOException
-	{
-		TypesReader tr = new TypesReader(key);
+	public static DSAPublicKey decodeSSHDSAPublicKey(byte[] key) throws IOException {
+		final TypesReader tr = new TypesReader(key);
 
-		String key_format = tr.readString();
+		final String key_format = tr.readString();
+		if (!key_format.equals("ssh-dss")) {
+			throw new IOWarningException("Unsupported key format found '" + key_format + "' while expecting ssh-dss");
+		}
 
-		if (key_format.equals("ssh-dss") == false)
-			throw new IllegalArgumentException("This is not a ssh-dss public key!");
+		final BigInteger p = tr.readMPINT();
+		final BigInteger q = tr.readMPINT();
+		final BigInteger g = tr.readMPINT();
+		final BigInteger y = tr.readMPINT();
 
-		BigInteger p = tr.readMPINT();
-		BigInteger q = tr.readMPINT();
-		BigInteger g = tr.readMPINT();
-		BigInteger y = tr.readMPINT();
-
-		if (tr.remain() != 0)
+		if (tr.remain() != 0) {
 			throw new IOException("Padding in DSA public key!");
+		}
 
 		return new DSAPublicKey(p, q, g, y);
 	}
