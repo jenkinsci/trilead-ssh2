@@ -1,4 +1,3 @@
-
 package com.trilead.ssh2.channel;
 
 import java.io.IOException;

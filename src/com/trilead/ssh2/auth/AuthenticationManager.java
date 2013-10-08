@@ -1,4 +1,3 @@
-
 package com.trilead.ssh2.auth;
 
 import com.trilead.ssh2.InteractiveCallback;
