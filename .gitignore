@@ -1,1 +1,15 @@
-target
+# Maven build files
+target/
+
+# IntelliJ project files
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# Eclipse project files
+.settings/
+.classpath
+.project
+.metadata
+.loadpath
