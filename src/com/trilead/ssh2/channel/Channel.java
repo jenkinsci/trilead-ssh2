@@ -94,7 +94,6 @@ public class Channel
                 }
             } else {
                 sink.write(buf,start,len);
-                freeupWindow(len);
             }
         }
 
