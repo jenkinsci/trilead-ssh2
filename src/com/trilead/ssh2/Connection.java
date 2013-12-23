@@ -99,6 +99,7 @@ public class Connection
 	private DHGexParameters dhgexpara = new DHGexParameters();
 
 	private final String hostname;
+	private final String sourceAddress;
 
 	private final int port;
 
@@ -137,6 +138,23 @@ public class Connection
 	{
 		this.hostname = hostname;
 		this.port = port;
+		this.sourceAddress = null;
+	}
+	
+	/**
+	 * Prepares a fresh <code>Connection</code> object which can then be used
+	 * to establish a connection to the specified SSH-2 server.
+	 * 
+	 * @param hostname
+	 *            the host where we later want to connect to.
+	 * @param port
+	 *            port on the server, normally 22.
+	 */
+	public Connection(String hostname, int port, String sourceAddress)
+	{
+		this.hostname = hostname;
+		this.port = port;
+		this.sourceAddress = sourceAddress;
 	}
 
 	/**
@@ -706,7 +724,7 @@ public class Connection
 
 		final TimeoutState state = new TimeoutState();
 
-		tm = new TransportManager(hostname, port);
+		tm = new TransportManager(hostname, port, sourceAddress);
 		
 		tm.setConnectionMonitors(connectionMonitors);
 
