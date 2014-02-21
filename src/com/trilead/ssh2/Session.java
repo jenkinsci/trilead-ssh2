@@ -160,7 +160,7 @@ public class Session
    				throw new IOException("A PTY was not requested.");
    		}
 
-   		cm.requestWindowChange(cn, term_width_characters, term_height_characters, term_width_pixels, term_height_pixels);
+   		cn.requestWindowChange(term_width_characters, term_height_characters, term_width_pixels, term_height_pixels);
    	}
 
     /**

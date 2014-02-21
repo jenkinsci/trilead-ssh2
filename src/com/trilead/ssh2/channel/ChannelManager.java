@@ -681,25 +681,6 @@ public class ChannelManager implements MessageHandler
 		}
 	}
 
-    public void requestWindowChange(Channel c, int term_width_characters, int term_height_characters,
-                                    int term_width_pixels, int term_height_pixels) throws IOException {
-        PacketWindowChange pwc;
-
-        synchronized (c) {
-            if (c.state != Channel.STATE_OPEN)
-                throw new IOException("Cannot request window-change on this channel (" + c.getReasonClosed() + ")");
-
-            pwc = new PacketWindowChange(c.remoteID, term_width_characters, term_height_characters,
-                    term_width_pixels, term_height_pixels);
-        }
-
-        synchronized (c.channelSendLock) {
-            if (c.closeMessageSent)
-                throw new IOException("Cannot request window-change on this channel (" + c.getReasonClosed() + ")");
-            tm.sendMessage(pwc.getPayload());
-        }
-    }
-
     public void requestX11(Channel c, boolean singleConnection, String x11AuthenticationProtocol,
 			String x11AuthenticationCookie, int x11ScreenNumber) throws IOException
 	{

@@ -3,6 +3,7 @@ package com.trilead.ssh2.channel;
 
 import com.trilead.ssh2.log.Logger;
 import com.trilead.ssh2.packets.PacketSignal;
+import com.trilead.ssh2.packets.PacketWindowChange;
 import com.trilead.ssh2.packets.Packets;
 import com.trilead.ssh2.transport.TransportManager;
 
@@ -377,6 +378,25 @@ public class Channel
                 if (closeMessageSent == false)
                     cm.tm.sendMessage(msg);
             }
+        }
+    }
+
+    public void requestWindowChange(int term_width_characters, int term_height_characters,
+                                    int term_width_pixels, int term_height_pixels) throws IOException {
+        PacketWindowChange pwc;
+
+        synchronized (this) {
+            if (state != Channel.STATE_OPEN)
+                throw new IOException("Cannot request window-change on this channel (" + getReasonClosed() + ")");
+
+            pwc = new PacketWindowChange(remoteID, term_width_characters, term_height_characters,
+                    term_width_pixels, term_height_pixels);
+        }
+
+        synchronized (channelSendLock) {
+            if (closeMessageSent)
+                throw new IOException("Cannot request window-change on this channel (" + getReasonClosed() + ")");
+            cm.tm.sendMessage(pwc.getPayload());
         }
     }
 
