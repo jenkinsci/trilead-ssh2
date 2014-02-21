@@ -10,6 +10,7 @@ import java.security.SecureRandom;
 import com.trilead.ssh2.channel.Channel;
 import com.trilead.ssh2.channel.ChannelManager;
 import com.trilead.ssh2.channel.X11ServerData;
+import com.trilead.ssh2.packets.PacketSignal;
 
 
 /**
@@ -162,7 +163,31 @@ public class Session
    		cm.requestWindowChange(cn, term_width_characters, term_height_characters, term_width_pixels, term_height_pixels);
    	}
 
-	/**
+    /**
+     * Sends a signal to the remote process.
+     */
+    public void signal(String name) throws IOException {
+        synchronized (this) {
+            /* The following is just a nicer error, we would catch it anyway later in the channel code */
+            if (flag_closed)
+                throw new IOException("This session is closed.");
+        }
+
+        cn.signal(name);
+    }
+
+    /**
+     * Sends a signal to the remote process.
+     *
+     * For better portability, specify signal by name, not by its number.
+     */
+    public void signal(int code) throws IOException {
+        String sig = PacketSignal.strsignal(code);
+        if (sig==null)  throw new IllegalArgumentException("Unrecognized signal code: "+code);
+        signal(sig);
+    }
+
+    /**
 	 * Request X11 forwarding for the current session.
 	 * <p>
 	 * You have to supply the name and port of your X-server.

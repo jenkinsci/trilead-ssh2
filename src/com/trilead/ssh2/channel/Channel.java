@@ -2,6 +2,7 @@
 package com.trilead.ssh2.channel;
 
 import com.trilead.ssh2.log.Logger;
+import com.trilead.ssh2.packets.PacketSignal;
 import com.trilead.ssh2.packets.Packets;
 import com.trilead.ssh2.transport.TransportManager;
 
@@ -376,6 +377,23 @@ public class Channel
                 if (closeMessageSent == false)
                     cm.tm.sendMessage(msg);
             }
+        }
+    }
+
+    public void signal(String name) throws IOException {
+        PacketSignal p;
+
+        synchronized (this) {
+            if (state != Channel.STATE_OPEN)
+                throw new IOException("Cannot send signal on this channel (" + getReasonClosed() + ")");
+
+            p = new PacketSignal(remoteID, name);
+        }
+
+        synchronized (channelSendLock) {
+            if (closeMessageSent)
+                throw new IOException("Cannot request window-change on this channel (" + getReasonClosed() + ")");
+            cm.tm.sendMessage(p.getPayload());
         }
     }
 
