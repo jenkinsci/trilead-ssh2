@@ -96,6 +96,7 @@ public class Channel
                 }
             } else {
                 sink.write(buf,start,len);
+                freeupWindow(len, true);
             }
         }
 
@@ -327,6 +328,14 @@ public class Channel
      * let it send more data.
      */
     void freeupWindow(int copylen) throws IOException {
+        freeupWindow(copylen, false);
+	}
+
+    /**
+     * Update the flow control couner and if necessary, sends ACK to the other end to
+     * let it send more data.
+     */
+    void freeupWindow(int copylen, boolean sendAsync) throws IOException {
         if (copylen <= 0) return;
 
         int increment = 0;
@@ -375,8 +384,13 @@ public class Channel
                 msg[7] = (byte) (increment >> 8);
                 msg[8] = (byte) (increment);
 
-                if (closeMessageSent == false)
-                    cm.tm.sendMessage(msg);
+                if (closeMessageSent == false) {
+                    if (sendAsync) {
+                        cm.tm.sendAsynchronousMessage(msg);
+                    } else {
+                        cm.tm.sendMessage(msg);
+                    }
+                }
             }
         }
     }
