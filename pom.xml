@@ -1,8 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
+
   <groupId>org.jenkins-ci</groupId>
   <artifactId>trilead-ssh2</artifactId>
   <version>build217-jenkins-5-SNAPSHOT</version>
+
   <name>Ganymed SSH2 for Java</name>
   <description>Ganymed SSH2 for Java is a library which implements the SSH-2 protocol in pure Java</description>
   <url>http://svn.svnkit.com/repos/3rdparty/com.trilead.ssh2/tags/1.0.0-build217/trilead-ssh2/</url>
@@ -12,17 +15,25 @@
       <url>http://www.ganymed.ethz.ch/ssh2/LICENSE.txt</url>        
     </license>
   </licenses>
-  
+
+  <scm>
+    <developerConnection>scm:git:ssh://git@github.com/jenkinsci/trilead-ssh2.git</developerConnection>
+    <connection>scm:git:https://kohsuke@github.com/jenkinsci/trilead-ssh2.git</connection>
+    <tag>HEAD</tag>
+  </scm>
   <distributionManagement>
     <repository>
       <id>maven.jenkins-ci.org</id>
       <url>http://maven.jenkins-ci.org/content/repositories/releases/</url>
     </repository>
   </distributionManagement>
-  
-  <build>
-    <sourceDirectory>src</sourceDirectory>
-  </build>
+
+  <repositories>
+    <repository>
+      <id>repo.jenkins-ci.org</id>
+      <url>http://repo.jenkins-ci.org/public/</url>
+    </repository>
+  </repositories>
 
   <dependencies>
 
@@ -40,18 +51,8 @@
     </dependency>
   </dependencies>
 
-  <repositories>
-    <repository>
-      <id>repo.jenkins-ci.org</id>
-      <url>http://repo.jenkins-ci.org/public/</url>
-    </repository>
-  </repositories>
-
-  <scm>
-    <developerConnection>scm:git:ssh://git@github.com/jenkinsci/trilead-ssh2.git</developerConnection>
-    <connection>scm:git:https://kohsuke@github.com/jenkinsci/trilead-ssh2.git</connection>
-    <tag>HEAD</tag>
-  </scm>
-
+  <build>
+    <sourceDirectory>src</sourceDirectory>
+  </build>
 
 </project>
