@@ -486,7 +486,7 @@ public class TransportManager
                     cause = e;
 					close(e, false);
 
-					if (log.isEnabled())
+					if (log.isEnabled() && !connectionClosed)
 						log.log(10, "Receive thread: error in receiveLoop",e);
 				}
 
