@@ -52,9 +52,8 @@ public class Logger
    	}
 
     private Level level(int lv) {
-        if (lv<=10)     return Level.WARNING;
-        if (lv<=20)     return Level.INFO;
-        if (lv<=50)     return Level.FINE;
-        return Level.FINER;
+        if (lv<=20)     return Level.FINE;
+        if (lv<=50)     return Level.FINER;
+        return Level.FINEST;
     }
 }
