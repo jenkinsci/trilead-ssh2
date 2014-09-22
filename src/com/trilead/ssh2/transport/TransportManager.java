@@ -487,7 +487,7 @@ public class TransportManager
 					close(e, false);
 
 					if (log.isEnabled())
-						log.log(10, "Receive thread: error in receiveLoop: " + e.getMessage());
+						log.log(10, "Receive thread: error in receiveLoop",e);
 				}
 
 				if (log.isEnabled())

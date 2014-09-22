@@ -83,7 +83,7 @@ public class RemoteAcceptThread extends Thread
 		}
 		catch (IOException e)
 		{
-			log.log(50, "IOException in proxy code: " + e.getMessage());
+			log.log(50, "IOException in proxy code",e);
 
 			try
 			{
