@@ -1476,6 +1476,8 @@ public class Connection
 	 *            a {@link DebugLogger DebugLogger} instance, <code>null</code>
 	 *            means logging using the simple logger which logs all messages
 	 *            to to stderr. Ignored if enabled is <code>false</code>
+     * @deprecated
+     *      Logging is now sent automatically to java.util.logging, and never to the {@link DebugLogger}.
 	 */
 	public synchronized void enableDebugging(boolean enable, DebugLogger logger)
 	{
