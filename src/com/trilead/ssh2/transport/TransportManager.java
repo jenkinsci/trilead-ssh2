@@ -483,11 +483,11 @@ public class TransportManager
 				}
 				catch (IOException e)
 				{
+                    if (log.isEnabled() && !connectionClosed)
+                        log.log(10, "Receive thread: error in receiveLoop",e);
+
                     cause = e;
 					close(e, false);
-
-					if (log.isEnabled() && !connectionClosed)
-						log.log(10, "Receive thread: error in receiveLoop",e);
 				}
 
 				if (log.isEnabled())
