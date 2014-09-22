@@ -41,7 +41,7 @@ public class RemoteAcceptThread extends Thread
 		this.targetPort = targetPort;
 
 		if (log.isEnabled())
-			log.log(20, "RemoteAcceptThread: " + remoteConnectedAddress + "/" + remoteConnectedPort + ", R: "
+			log.log(30, "RemoteAcceptThread: " + remoteConnectedAddress + "/" + remoteConnectedPort + ", R: "
 					+ remoteOriginatorAddress + "/" + remoteOriginatorPort);
 	}
 

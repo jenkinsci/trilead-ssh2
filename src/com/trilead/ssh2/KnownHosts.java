@@ -426,7 +426,7 @@ public class KnownHosts
 				addHostkey(hostnames, serverHostKeyAlgorithm, msg);
 			}
 			catch (IOWarningException ex) {
-				LOGGER.log(20, "Ignored invalid line '" + line + "'");
+				LOGGER.log(30, "Ignored invalid line '" + line + "'");
 			}
 		}
 	}
