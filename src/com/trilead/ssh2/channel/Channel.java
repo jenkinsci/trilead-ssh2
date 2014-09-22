@@ -245,7 +245,7 @@ public class Channel
 	// We protect it with a private short term lock.
 
 	private final Object reasonClosedLock = new Object();
-	private String reasonClosed = null;
+	private Throwable reasonClosed = null;
 
 	public Channel(ChannelManager cm)
 	{
@@ -306,22 +306,38 @@ public class Channel
 		}
 	}
 
+    /**
+     * @deprecated
+     *      Use {@link #getReasonClosedCause()}
+     */
 	public String getReasonClosed()
 	{
 		synchronized (reasonClosedLock)
 		{
-			return reasonClosed;
+			return reasonClosed!=null ? reasonClosed.getMessage() : null;
 		}
 	}
 
+    public Throwable getReasonClosedCause()
+   	{
+   		synchronized (reasonClosedLock)
+   		{
+   			return reasonClosed;
+   		}
+   	}
+
 	public void setReasonClosed(String reasonClosed)
 	{
-		synchronized (reasonClosedLock)
-		{
-			if (this.reasonClosed == null)
-				this.reasonClosed = reasonClosed;
-		}
+        setReasonClosed(new IOException(reasonClosed));
 	}
+
+    public void setReasonClosed(Throwable reasonClosed) {
+        synchronized (reasonClosedLock)
+      		{
+      			if (this.reasonClosed == null)
+      				this.reasonClosed = reasonClosed;
+      		}
+    }
 
     /**
      * Update the flow control couner and if necessary, sends ACK to the other end to
@@ -401,7 +417,7 @@ public class Channel
 
         synchronized (this) {
             if (state != Channel.STATE_OPEN)
-                throw new IOException("Cannot request window-change on this channel (" + getReasonClosed() + ")");
+                throw (IOException)new IOException("Cannot request window-change on this channel").initCause(getReasonClosedCause());
 
             pwc = new PacketWindowChange(remoteID, term_width_characters, term_height_characters,
                     term_width_pixels, term_height_pixels);
@@ -409,7 +425,7 @@ public class Channel
 
         synchronized (channelSendLock) {
             if (closeMessageSent)
-                throw new IOException("Cannot request window-change on this channel (" + getReasonClosed() + ")");
+                throw (IOException)new IOException("Cannot request window-change on this channel").initCause(getReasonClosedCause());
             cm.tm.sendMessage(pwc.getPayload());
         }
     }
@@ -419,14 +435,14 @@ public class Channel
 
         synchronized (this) {
             if (state != Channel.STATE_OPEN)
-                throw new IOException("Cannot send signal on this channel (" + getReasonClosed() + ")");
+                throw (IOException)new IOException("Cannot send signal on this channel").initCause(getReasonClosedCause());
 
             p = new PacketSignal(remoteID, name);
         }
 
         synchronized (channelSendLock) {
             if (closeMessageSent)
-                throw new IOException("Cannot request window-change on this channel (" + getReasonClosed() + ")");
+                throw (IOException)new IOException("Cannot request window-change on this channel").initCause(getReasonClosedCause());
             cm.tm.sendMessage(p.getPayload());
         }
     }

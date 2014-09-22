@@ -40,7 +40,7 @@ import com.trilead.ssh2.signature.RSASignature;
  * @author Christian Plattner, plattner@trilead.com
  * @version $Id: KexManager.java,v 1.1 2007/10/15 12:49:56 cplattne Exp $
  */
-public class KexManager
+public class KexManager implements MessageHandler
 {
 	private static final Logger log = Logger.getLogger(KexManager.class);
 
@@ -369,16 +369,6 @@ public class KexManager
 	{
 		PacketKexInit kip;
 
-		if (msg == null)
-		{
-			synchronized (accessLock)
-			{
-				connectionClosed = true;
-				accessLock.notifyAll();
-				return;
-			}
-		}
-
 		if ((kxs == null) && (msg[0] != Packets.SSH_MSG_KEXINIT))
 			throw new IOException("Unexpected KEX message (type " + msg[0] + ")");
 
@@ -628,4 +618,11 @@ public class KexManager
 
 		throw new IllegalStateException("Unkown KEX method! (" + kxs.np.kex_algo + ")");
 	}
+
+    public void handleEndMessage(Throwable cause) throws IOException {
+        synchronized (accessLock) {
+            connectionClosed = true;
+            accessLock.notifyAll();
+        }
+    }
 }

@@ -119,12 +119,7 @@ public class ChannelManager implements MessageHandler
 			{
 				removeChannel(c.localID);
 
-				String detail = c.getReasonClosed();
-
-				if (detail == null)
-					detail = "state: " + c.state;
-
-				throw new IOException("Could not open channel (" + detail + ")");
+				throw ioException("Could not open channel (state:" + c.state + ")", c);
 			}
 		}
 	}
@@ -169,12 +164,7 @@ public class ChannelManager implements MessageHandler
 			{
 				if (c.state != Channel.STATE_OPEN)
 				{
-					String detail = c.getReasonClosed();
-
-					if (detail == null)
-						detail = "state: " + c.state;
-
-					throw new IOException("This SSH2 channel is not open (" + detail + ")");
+                    throw ioException("This SSH2 channel is not open. state: "+c.state,c);
 				}
 
 				try
@@ -380,7 +370,7 @@ public class ChannelManager implements MessageHandler
 				while (true)
 				{
 					if (c.state == Channel.STATE_CLOSED)
-						throw new IOException("SSH channel is closed. (" + c.getReasonClosed() + ")");
+                        throw ioException("SSH channel is closed",c);
 
 					if (c.state != Channel.STATE_OPEN)
 						throw new IOException("SSH channel in strange state. (" + c.state + ")");
@@ -434,7 +424,7 @@ public class ChannelManager implements MessageHandler
 			synchronized (c.channelSendLock)
 			{
 				if (c.closeMessageSent == true)
-					throw new IOException("SSH channel is closed. (" + c.getReasonClosed() + ")");
+                    throw ioException("SSH channel is closed",c);
 
 				tm.sendMessage(msg);
 			}
@@ -620,7 +610,7 @@ public class ChannelManager implements MessageHandler
 		synchronized (c)
 		{
 			if (c.state != Channel.STATE_OPEN)
-				throw new IOException("Cannot ping this channel (" + c.getReasonClosed() + ")");
+				throw ioException("Cannot ping this channel",c);
 
 			pctp = new PacketChannelTrileadPing(c.remoteID);
 
@@ -630,7 +620,7 @@ public class ChannelManager implements MessageHandler
 		synchronized (c.channelSendLock)
 		{
 			if (c.closeMessageSent)
-				throw new IOException("Cannot ping this channel (" + c.getReasonClosed() + ")");
+                throw ioException("Cannot ping this channel",c);
 			tm.sendMessage(pctp.getPayload());
 		}
 
@@ -655,7 +645,7 @@ public class ChannelManager implements MessageHandler
 		synchronized (c)
 		{
 			if (c.state != Channel.STATE_OPEN)
-				throw new IOException("Cannot request PTY on this channel (" + c.getReasonClosed() + ")");
+                throw ioException("Cannot request PTY on this channel",c);
 
 			spr = new PacketSessionPtyRequest(c.remoteID, true, term, term_width_characters, term_height_characters,
 					term_width_pixels, term_height_pixels, terminal_modes);
@@ -666,7 +656,7 @@ public class ChannelManager implements MessageHandler
 		synchronized (c.channelSendLock)
 		{
 			if (c.closeMessageSent)
-				throw new IOException("Cannot request PTY on this channel (" + c.getReasonClosed() + ")");
+                throw ioException("Cannot request PTY on this channel",c);
 			tm.sendMessage(spr.getPayload());
 		}
 
@@ -689,7 +679,7 @@ public class ChannelManager implements MessageHandler
 		synchronized (c)
 		{
 			if (c.state != Channel.STATE_OPEN)
-				throw new IOException("Cannot request X11 on this channel (" + c.getReasonClosed() + ")");
+                throw ioException("Cannot request X11 on this channel",c);
 
 			psr = new PacketSessionX11Request(c.remoteID, true, singleConnection, x11AuthenticationProtocol,
 					x11AuthenticationCookie, x11ScreenNumber);
@@ -700,7 +690,7 @@ public class ChannelManager implements MessageHandler
 		synchronized (c.channelSendLock)
 		{
 			if (c.closeMessageSent)
-				throw new IOException("Cannot request X11 on this channel (" + c.getReasonClosed() + ")");
+                throw ioException("Cannot request X11 on this channel",c);
 			tm.sendMessage(psr.getPayload());
 		}
 
@@ -725,7 +715,7 @@ public class ChannelManager implements MessageHandler
 		synchronized (c)
 		{
 			if (c.state != Channel.STATE_OPEN)
-				throw new IOException("Cannot request subsystem on this channel (" + c.getReasonClosed() + ")");
+                throw ioException("Cannot request subsystem on this channel",c);
 
 			ssr = new PacketSessionSubsystemRequest(c.remoteID, true, subSystemName);
 
@@ -735,7 +725,7 @@ public class ChannelManager implements MessageHandler
 		synchronized (c.channelSendLock)
 		{
 			if (c.closeMessageSent)
-				throw new IOException("Cannot request subsystem on this channel (" + c.getReasonClosed() + ")");
+                throw ioException("Cannot request subsystem on this channel",c);
 			tm.sendMessage(ssr.getPayload());
 		}
 
@@ -757,7 +747,7 @@ public class ChannelManager implements MessageHandler
 		synchronized (c)
 		{
 			if (c.state != Channel.STATE_OPEN)
-				throw new IOException("Cannot execute command on this channel (" + c.getReasonClosed() + ")");
+                throw ioException("Cannot execute command on this channel",c);
 
 			sm = new PacketSessionExecCommand(c.remoteID, true, cmd);
 
@@ -767,7 +757,7 @@ public class ChannelManager implements MessageHandler
 		synchronized (c.channelSendLock)
 		{
 			if (c.closeMessageSent)
-				throw new IOException("Cannot execute command on this channel (" + c.getReasonClosed() + ")");
+                throw ioException("Cannot execute command on this channel",c);
 			tm.sendMessage(sm.getPayload());
 		}
 
@@ -792,7 +782,7 @@ public class ChannelManager implements MessageHandler
 		synchronized (c)
 		{
 			if (c.state != Channel.STATE_OPEN)
-				throw new IOException("Cannot start shell on this channel (" + c.getReasonClosed() + ")");
+                throw ioException("Cannot start shell on this channel",c);
 
 			sm = new PacketSessionStartShell(c.remoteID, true);
 
@@ -802,7 +792,7 @@ public class ChannelManager implements MessageHandler
 		synchronized (c.channelSendLock)
 		{
 			if (c.closeMessageSent)
-				throw new IOException("Cannot start shell on this channel (" + c.getReasonClosed() + ")");
+                throw ioException("Cannot start shell on this channel",c);
 			tm.sendMessage(sm.getPayload());
 		}
 
@@ -1458,50 +1448,6 @@ public class ChannelManager implements MessageHandler
 
 	public void handleMessage(byte[] msg, int msglen) throws IOException
 	{
-		if (msg == null)
-		{
-			if (log.isEnabled())
-				log.log(50, "HandleMessage: got shutdown");
-
-			synchronized (listenerThreads)
-			{
-				for (int i = 0; i < listenerThreads.size(); i++)
-				{
-					IChannelWorkerThread lat = (IChannelWorkerThread) listenerThreads.elementAt(i);
-					lat.stopWorking();
-				}
-				listenerThreadsAllowed = false;
-			}
-
-			synchronized (channels)
-			{
-				shutdown = true;
-
-				for (int i = 0; i < channels.size(); i++)
-				{
-					Channel c = (Channel) channels.elementAt(i);
-					synchronized (c)
-					{
-                        c.eof();
-						c.state = Channel.STATE_CLOSED;
-						c.setReasonClosed("The connection is being shutdown");
-						c.closeMessageRecv = true; /*
-																															 * You never know, perhaps
-																															 * we are waiting for a
-																															 * pending close message
-																															 * from the server...
-																															 */
-						c.notifyAll();
-					}
-				}
-				/* Works with J2ME */
-				channels.setSize(0);
-				channels.trimToSize();
-				channels.notifyAll(); /* Notify global response waiters */
-				return;
-			}
-		}
-
 		switch (msg[0])
 		{
 		case Packets.SSH_MSG_CHANNEL_OPEN_CONFIRMATION:
@@ -1550,4 +1496,50 @@ public class ChannelManager implements MessageHandler
 			throw new IOException("Cannot handle unknown channel message " + (msg[0] & 0xff));
 		}
 	}
+
+    public void handleEndMessage(Throwable cause) throws IOException {
+        if (log.isEnabled())
+            log.log(50, "HandleMessage: got shutdown");
+
+        synchronized (listenerThreads)
+        {
+            for (int i = 0; i < listenerThreads.size(); i++)
+            {
+                IChannelWorkerThread lat = (IChannelWorkerThread) listenerThreads.elementAt(i);
+                lat.stopWorking();
+            }
+            listenerThreadsAllowed = false;
+        }
+
+        synchronized (channels)
+        {
+            shutdown = true;
+
+            for (int i = 0; i < channels.size(); i++)
+            {
+                Channel c = (Channel) channels.elementAt(i);
+                synchronized (c)
+                {
+                      c.eof();
+                    c.state = Channel.STATE_CLOSED;
+                    c.setReasonClosed(new IOException("The connection is being shutdown").initCause(cause));
+                    c.closeMessageRecv = true; /*
+                                                                                                                         * You never know, perhaps
+                                                                                                                         * we are waiting for a
+                                                                                                                         * pending close message
+                                                                                                                         * from the server...
+                                                                                                                         */
+                    c.notifyAll();
+                }
+            }
+            /* Works with J2ME */
+            channels.setSize(0);
+            channels.trimToSize();
+            channels.notifyAll(); /* Notify global response waiters */
+        }
+    }
+
+    private IOException ioException(String msg, Channel c) {
+        return (IOException)new IOException(msg).initCause(c.getReasonClosedCause());
+    }
 }

@@ -799,7 +799,7 @@ public class Connection
 		catch (IOException e1)
 		{
 			/* This will also invoke any registered connection monitors */
-			close(new Throwable("There was a problem during connect."), false);
+			close(new Throwable("There was a problem during connect.").initCause(e1), false);
 
 			synchronized (state)
 			{

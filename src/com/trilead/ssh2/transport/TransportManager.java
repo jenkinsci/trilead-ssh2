@@ -475,12 +475,15 @@ public class TransportManager
 		{
 			public void run()
 			{
+                Throwable cause;
 				try
 				{
 					receiveLoop();
+                    cause = new AssertionError();   // receiveLoop never returns normally
 				}
 				catch (IOException e)
 				{
+                    cause = e;
 					close(e, false);
 
 					if (log.isEnabled())
@@ -496,7 +499,7 @@ public class TransportManager
 				{
 					try
 					{
-						km.handleMessage(null, 0);
+						km.handleEndMessage(cause);
 					}
 					catch (IOException e)
 					{
@@ -508,7 +511,7 @@ public class TransportManager
 					HandlerEntry he = (HandlerEntry) messageHandlers.elementAt(i);
 					try
 					{
-						he.mh.handleMessage(null, 0);
+						he.mh.handleEndMessage(cause);
 					}
 					catch (Exception ignore)
 					{

@@ -449,16 +449,9 @@ public class AuthenticationManager implements MessageHandler
 	{
 		synchronized (packets)
 		{
-			if (msg == null)
-			{
-				connectionClosed = true;
-			}
-			else
-			{
-				byte[] tmp = new byte[msglen];
-				System.arraycopy(msg, 0, tmp, 0, msglen);
-				packets.addElement(tmp);
-			}
+            byte[] tmp = new byte[msglen];
+            System.arraycopy(msg, 0, tmp, 0, msglen);
+            packets.addElement(tmp);
 
 			packets.notifyAll();
 
@@ -469,4 +462,11 @@ public class AuthenticationManager implements MessageHandler
 			}
 		}
 	}
+
+    public void handleEndMessage(Throwable cause) throws IOException {
+        synchronized (packets) {
+            connectionClosed = true;
+            packets.notifyAll();
+        }
+    }
 }
