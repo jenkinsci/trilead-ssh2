@@ -22,6 +22,7 @@ import java.io.OutputStream;
 import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.net.SocketTimeoutException;
+import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.Vector;
 
@@ -1105,7 +1106,7 @@ public class Connection
 	private final SecureRandom getOrCreateSecureRND()
 	{
 		if (generator == null)
-			generator = new SecureRandom();
+            generator = RandomFactory.create();
 
 		return generator;
 	}
