@@ -22,7 +22,6 @@ import java.io.OutputStream;
 import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.net.SocketTimeoutException;
-import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.Vector;
 
@@ -1533,6 +1532,14 @@ public class Connection
 
 		cm.requestGlobalTrileadPing();
 	}
+
+    /**
+     * If the socket connection is lost (either by this side closing down or the other side closing down),
+     * return a non-null object indicating the cause of the connection loss.
+     */
+    public Throwable getReasonClosedCause() {
+        return tm.getReasonClosedCause();
+    }
 
     /**
      * Executes a process remotely and blocks until its completion.
