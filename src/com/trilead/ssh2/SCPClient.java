@@ -507,10 +507,12 @@ public class SCPClient
 			if (Character.isDigit(mode.charAt(i)) == false)
 				throw new IllegalArgumentException("Invalid mode.");
 
-		remoteTargetDirectory = remoteTargetDirectory.trim();
 		remoteTargetDirectory = (remoteTargetDirectory.length() > 0) ? remoteTargetDirectory : ".";
 
-		String cmd = "scp -t -d " + remoteTargetDirectory;
+		// Escape special characters in remote directory
+		remoteTargetDirectory = remoteTargetDirectory.replace("'", "'\\''");
+
+		String cmd = "scp -t -d '" + remoteTargetDirectory + "'";
 
 		try
 		{
@@ -570,10 +572,12 @@ public class SCPClient
 		if (localFiles.length == 0)
 			return;
 
-		remoteTargetDirectory = remoteTargetDirectory.trim();
 		remoteTargetDirectory = (remoteTargetDirectory.length() > 0) ? remoteTargetDirectory : ".";
 
-		String cmd = "scp -t -d " + remoteTargetDirectory;
+		// Escape special characters in remote directory
+		remoteTargetDirectory = remoteTargetDirectory.replace("'", "'\\''");
+
+		String cmd = "scp -t -d '" + remoteTargetDirectory + "'";
 
 		for (int i = 0; i < localFiles.length; i++)
 		{
