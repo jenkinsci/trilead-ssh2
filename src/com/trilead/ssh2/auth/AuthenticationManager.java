@@ -57,7 +57,7 @@ public class AuthenticationManager implements MessageHandler
 	{
 		synchronized (packets)
 		{
-			while (packets.size() == 0)
+			if (packets.size() == 0)
 			{
 				if (connectionClosed)
 					throw (IOException) new IOException("The connection is closed.").initCause(tm
@@ -65,11 +65,14 @@ public class AuthenticationManager implements MessageHandler
 
 				try
 				{
-					packets.wait();
+					packets.wait(1000*60*2);
 				}
 				catch (InterruptedException ign)
 				{
-                    throw new InterruptedIOException();
+                    throw new InterruptedIOException(ign.getMessage());
+				}
+				if(packets.size()==0){
+					throw new IOException("WAIT 2 MINUTES,WAIT TIMEOUT");
 				}
 			}
 			/* This sequence works with J2ME */
