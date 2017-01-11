@@ -11,12 +11,4 @@ import java.io.IOException;
 public interface MessageHandler
 {
 	public void handleMessage(byte[] msg, int msglen) throws IOException;
-
-    /**
-     * Called to inform that no more messages will be delivered.
-     *
-     * @param cause
-     *      For diagnosis, the reason that caused the transport to close down.
-     */
-    public void handleEndMessage(Throwable cause) throws IOException;
 }

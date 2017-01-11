@@ -4,13 +4,11 @@ package com.trilead.ssh2;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.Socket;
 import java.security.SecureRandom;
 
 import com.trilead.ssh2.channel.Channel;
 import com.trilead.ssh2.channel.ChannelManager;
 import com.trilead.ssh2.channel.X11ServerData;
-import com.trilead.ssh2.packets.PacketSignal;
 
 
 /**
@@ -131,63 +129,38 @@ public class Session
 		cm.requestPTY(cn, term, term_width_characters, term_height_characters, term_width_pixels, term_height_pixels,
 				terminal_modes);
 	}
+	
+	/**
+	 * Inform other side of connection that our PTY has resized.
+	 * <p>
+	 * Zero dimension parameters are ignored. The character/row dimensions
+     * override the pixel dimensions (when nonzero). Pixel dimensions refer to
+     * the drawable area of the window. The dimension parameters are only
+     * informational.
+     * 
+     * @param term_width_characters
+     *            terminal width, characters (e.g., 80)
+     * @param term_height_characters
+     *            terminal height, rows (e.g., 24)
+     * @param term_width_pixels
+     *            terminal width, pixels (e.g., 640)
+     * @param term_height_pixels
+     *            terminal height, pixels (e.g., 480)
+	 * @throws IOException
+	 */
+	public void resizePTY(int term_width_characters, int term_height_characters, int term_width_pixels,
+			int term_height_pixels) throws IOException {
+		synchronized (this)
+		{
+			/* The following is just a nicer error, we would catch it anyway later in the channel code */
+			if (flag_closed)
+				throw new IOException("This session is closed.");
+		}
+		
+		cm.resizePTY(cn, term_width_characters, term_height_characters, term_width_pixels, term_height_pixels);
+	}
 
-    /**
-     * Tells the server that the size of the terminal has changed.
-     *
-     * See {@link #requestPTY(String, int, int, int, int, byte[])} for more details about how parameters are interpreted.
-   	 *
-   	 * @param term_width_characters
-   	 *            terminal width, characters (e.g., 80)
-   	 * @param term_height_characters
-   	 *            terminal height, rows (e.g., 24)
-   	 * @param term_width_pixels
-   	 *            terminal width, pixels (e.g., 640)
-   	 * @param term_height_pixels
-   	 *            terminal height, pixels (e.g., 480)
-   	 * @throws IOException
-   	 */
-   	public void requestWindowChange(int term_width_characters, int term_height_characters, int term_width_pixels,
-   			int term_height_pixels) throws IOException
-   	{
-   		synchronized (this)
-   		{
-   			/* The following is just a nicer error, we would catch it anyway later in the channel code */
-   			if (flag_closed)
-   				throw new IOException("This session is closed.");
-
-   			if (!flag_pty_requested)
-   				throw new IOException("A PTY was not requested.");
-   		}
-
-   		cn.requestWindowChange(term_width_characters, term_height_characters, term_width_pixels, term_height_pixels);
-   	}
-
-    /**
-     * Sends a signal to the remote process.
-     */
-    public void signal(String name) throws IOException {
-        synchronized (this) {
-            /* The following is just a nicer error, we would catch it anyway later in the channel code */
-            if (flag_closed)
-                throw new IOException("This session is closed.");
-        }
-
-        cn.signal(name);
-    }
-
-    /**
-     * Sends a signal to the remote process.
-     *
-     * For better portability, specify signal by name, not by its number.
-     */
-    public void signal(int code) throws IOException {
-        String sig = PacketSignal.strsignal(code);
-        if (sig==null)  throw new IllegalArgumentException("Unrecognized signal code: "+code);
-        signal(sig);
-    }
-
-    /**
+	/**
 	 * Request X11 forwarding for the current session.
 	 * <p>
 	 * You have to supply the name and port of your X-server.
@@ -380,7 +353,28 @@ public class Session
 
 		cm.requestChannelTrileadPing(cn);
 	}
-	
+
+	/**
+	 * Request authentication agent forwarding.
+	 * @param agent object that implements the callbacks
+	 *
+	 * @throws IOException in case of any problem or when the session is closed
+	 */
+	public synchronized boolean requestAuthAgentForwarding(AuthAgentCallback agent) throws IOException
+	{
+		synchronized (this)
+		{
+			/*
+			 * The following is just a nicer error, we would catch it anyway
+			 * later in the channel code
+			 */
+			if (flag_closed)
+				throw new IOException("This session is closed.");
+		}
+
+		return cm.requestChannelAgentForwarding(cn, agent);
+	}
+
 	public InputStream getStdout()
 	{
 		return cn.getStdoutStream();
@@ -395,44 +389,6 @@ public class Session
 	{
 		return cn.getStdinStream();
 	}
-
-    /**
-     * Write stdout received from the other side to the specified {@link OutputStream}.
-     *
-     * <p>
-     * By default, when data arrives from the other side, trilead buffers them and lets
-     * you read it at your convenience from {@link #getStdout()}. This is normally convenient,
-     * but if all you are doing is to send the data to another {@link OutputStream} by
-     * copying a stream, then you'll be end up wasting a thread just for this.
-     * In such a situation, you can call this method and let the I/O handling thread of trilead
-     * directly pass the received data to the output stream. This also eliminates the internal
-     * buffer used for spooling.
-     *
-     * <p>
-     * When you do this, beware of a blocking write! If a write blocks, it'll affect
-     * all the other channels and sessions that are sharing the same SSH connection,
-     * as there's only one I/O thread. For example, this can happen if you are writing to
-     * {@link Socket}.
-     *
-     * <p>
-     * If any data has already been received and spooled before calling this method,
-     * the data will be sent to the given stream immediately.
-     *
-     * <p>
-     * To signal the end of the stream, when the other side notifies us of EOF or when
-     * the channel closes, the output stream gets closed. If this is not desirable,
-     * you must wrap the output stream and ignore the {@link OutputStream#close()} call.
-     */
-    public void pipeStdout(OutputStream os) throws IOException {
-        cn.pipeStdoutStream(os);
-    }
-
-    /**
-     * The same as {@link #pipeStdout(OutputStream)} except for stderr, not for stdout.
-     */
-    public void pipeStderr(OutputStream os) throws IOException {
-        cn.pipeStderrStream(os);
-    }
 
 	/**
 	 * This method blocks until there is more data available on either the
@@ -458,7 +414,8 @@ public class Session
 	 *             interface and therefore acts only as a wrapper.
 	 * 
 	 */
-	public int waitUntilDataAvailable(long timeout) throws IOException, InterruptedException {
+	public int waitUntilDataAvailable(long timeout) throws IOException
+	{
 		if (timeout < 0)
 			throw new IllegalArgumentException("timeout must not be negative!");
 
@@ -485,8 +442,8 @@ public class Session
 	 * This method returns as soon as one of the following happens:
 	 * <ul>
 	 * <li>at least of the specified conditions (see {@link ChannelCondition}) holds true</li>
-	 * <li>timeout > 0 and a timeout occured (TIMEOUT will be set in result conditions)</a> 
-	 * <li>the underlying channel was closed (CLOSED will be set in result conditions)</a>
+	 * <li>timeout &gt; 0 and a timeout occured (TIMEOUT will be set in result conditions)</li> 
+	 * <li>the underlying channel was closed (CLOSED will be set in result conditions)</li>
 	 * </ul>
 	 * <p>
 	 * In any case, the result value contains ALL current conditions, which may be more
@@ -503,7 +460,8 @@ public class Session
 	 * @return all bitmask specifying all current conditions that are true
 	 */
 
-	public int waitForCondition(int condition_set, long timeout) throws InterruptedException {
+	public int waitForCondition(int condition_set, long timeout)
+	{
 		if (timeout < 0)
 			throw new IllegalArgumentException("timeout must be non-negative!");
 
@@ -514,7 +472,7 @@ public class Session
 	 * Get the exit code/status from the remote command - if available. Be
 	 * careful - not all server implementations return this value. It is
 	 * generally a good idea to call this method only when all data from the
-	 * remote side has been consumed (see also the <code<WaitForCondition</code> method).
+	 * remote side has been consumed (see also the <code>WaitForCondition</code> method).
 	 * 
 	 * @return An <code>Integer</code> holding the exit code, or
 	 *         <code>null</code> if no exit code is (yet) available.
@@ -569,20 +527,4 @@ public class Session
 			}
 		}
 	}
-
-    /**
-     * Sets the receive window size.
-     *
-     * The receive window is a maximum number of bytes that the remote side can send to this channel without
-     * waiting for us to consume them (AKA "in-flight bytes").
-     *
-     * When your connection is over a large-latency/high-bandiwdth network, specifying a bigger value
-     * allows the network to be efficiently utilized. OTOH, if you don't drain this channel quickly enough
-     * all those bytes in flight can end up getting buffered.
-     *
-     * This value can be adjusted at runtime.
-     */
-    public synchronized void setWindowSize(int newSize) {
-        cn.setWindowSize(newSize);
-    }
 }

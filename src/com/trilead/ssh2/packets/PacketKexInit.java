@@ -20,10 +20,10 @@ public class PacketKexInit
 
 	KexParameters kp = new KexParameters();
 
-	public PacketKexInit(CryptoWishList cwl, SecureRandom rnd)
+	public PacketKexInit(CryptoWishList cwl)
 	{
 		kp.cookie = new byte[16];
-		rnd.nextBytes(kp.cookie);
+		new SecureRandom().nextBytes(kp.cookie);
 
 		kp.kex_algorithms = cwl.kexAlgorithms;
 		kp.server_host_key_algorithms = cwl.serverHostKeyAlgorithms;
@@ -31,8 +31,8 @@ public class PacketKexInit
 		kp.encryption_algorithms_server_to_client = cwl.s2c_enc_algos;
 		kp.mac_algorithms_client_to_server = cwl.c2s_mac_algos;
 		kp.mac_algorithms_server_to_client = cwl.s2c_mac_algos;
-		kp.compression_algorithms_client_to_server = new String[] { "none" };
-		kp.compression_algorithms_server_to_client = new String[] { "none" };
+		kp.compression_algorithms_client_to_server = cwl.c2s_comp_algos;
+		kp.compression_algorithms_server_to_client = cwl.s2c_comp_algos;
 		kp.languages_client_to_server = new String[] {};
 		kp.languages_server_to_client = new String[] {};
 		kp.first_kex_packet_follows = false;

@@ -1,3 +1,4 @@
+
 package com.trilead.ssh2;
 
 import java.io.BufferedOutputStream;
@@ -1208,8 +1209,8 @@ public class SFTPv3Client
 	 * <ul>
 	 * <li>The server will read as many bytes as it can from the file (up to <code>len</code>),
 	 * and return them.</li>
-	 * <li>If EOF is encountered before reading any data, <code>-1</code> is returned.
-	 * <li>If an error occurs, an exception is thrown</li>.
+	 * <li>If EOF is encountered before reading any data, <code>-1</code> is returned.</li>
+	 * <li>If an error occurs, an exception is thrown.</li>
 	 * <li>For normal disk files, it is guaranteed that the server will return the specified
 	 * number of bytes, or up to end of file. For, e.g., device files this may return
 	 * fewer bytes than requested.</li>
@@ -1384,103 +1385,4 @@ public class SFTPv3Client
 			handle.isClosed = true;
 		}
 	}
-
-    /**
-     * Checks if the given path exists.
-     */
-    public boolean exists(String path) throws IOException {
-        return _stat(path)!=null;
-    }
-
-    /**
-     * Graceful {@link #stat(String)} that returns null if the path doesn't exist.
-     */
-    public SFTPv3FileAttributes _stat(String path) throws IOException {
-        try {
-            return stat(path);
-        } catch (SFTPException e) {
-            int c = e.getServerErrorCode();
-            if (c== ErrorCodes.SSH_FX_NO_SUCH_FILE || c==ErrorCodes.SSH_FX_NO_SUCH_PATH)
-                return null;
-            else
-                throw e;
-        }
-    }
-
-    /**
-     * Makes sure that the directory exists, by creating it if necessary.
-     */
-    public void mkdirs(String path, int posixPermission) throws IOException {
-        SFTPv3FileAttributes atts = _stat(path);
-        if (atts!=null && atts.isDirectory())
-            return;
-
-        int idx = path.lastIndexOf("/");
-        if (idx>0)
-            mkdirs(path.substring(0,idx), posixPermission);
-
-        try {
-            mkdir(path, posixPermission);
-        } catch (IOException e) {
-            throw (IOException)new IOException("Failed to mkdir "+path).initCause(e);
-        }
-    }
-
-    /**
-     * Creates a new file and writes to it.
-     */
-    public OutputStream writeToFile(String path) throws IOException {
-        final SFTPv3FileHandle h = createFile(path);
-        return new OutputStream() {
-            private long offset = 0;
-            public void write(int b) throws IOException {
-                write(new byte[]{(byte)b});
-            }
-
-            public void write(byte[] b, int off, int len) throws IOException {
-                SFTPv3Client.this.write(h,offset,b,off,len);
-                offset += len;
-            }
-
-            public void close() throws IOException {
-                closeFile(h);
-            }
-        };
-    }
-
-    public InputStream read(String file) throws IOException {
-        final SFTPv3FileHandle h = openFileRO(file);
-        return new InputStream() {
-            private long offset = 0;
-
-            public int read() throws IOException {
-                byte[] b = new byte[1];
-                if(read(b)<0)
-                    return -1;
-                return b[0];
-            }
-
-            public int read(byte[] b, int off, int len) throws IOException {
-                int r = SFTPv3Client.this.read(h,offset,b,off,len);
-                if (r<0)    return -1;
-                offset += r;
-                return r;
-            }
-
-            public long skip(long n) throws IOException {
-                offset += n;
-                return n;
-            }
-
-            public void close() throws IOException {
-                closeFile(h);
-            }
-        };
-    }
-
-    public void chmod(String path, int permissions) throws IOException {
-        SFTPv3FileAttributes atts = new SFTPv3FileAttributes();
-        atts.permissions = Integer.valueOf(permissions);
-        setstat(path, atts);
-    }
 }

@@ -27,7 +27,7 @@ public class BlockCipherFactory
 		}
 	}
 
-	static Vector ciphers = new Vector();
+	static Vector<CipherEntry> ciphers = new Vector<CipherEntry>();
 
 	static
 	{
@@ -52,7 +52,7 @@ public class BlockCipherFactory
 		String list[] = new String[ciphers.size()];
 		for (int i = 0; i < ciphers.size(); i++)
 		{
-			CipherEntry ce = (CipherEntry) ciphers.elementAt(i);
+			CipherEntry ce = ciphers.elementAt(i);
 			list[i] = new String(ce.type);
 		}
 		return list;
@@ -94,7 +94,7 @@ public class BlockCipherFactory
 	{
 		for (int i = 0; i < ciphers.size(); i++)
 		{
-			CipherEntry ce = (CipherEntry) ciphers.elementAt(i);
+			CipherEntry ce = ciphers.elementAt(i);
 			if (ce.type.equals(type))
 				return ce;
 		}

@@ -66,13 +66,13 @@ public class KeyMaterial
 		return res;
 	}
 
-	public static KeyMaterial create(String hashType, byte[] H, BigInteger K, byte[] SessionID, int keyLengthCS,
+	public static KeyMaterial create(String hashAlgo, byte[] H, BigInteger K, byte[] SessionID, int keyLengthCS,
 			int blockSizeCS, int macLengthCS, int keyLengthSC, int blockSizeSC, int macLengthSC)
 			throws IllegalArgumentException
 	{
 		KeyMaterial km = new KeyMaterial();
 
-		HashForSSH2Types sh = new HashForSSH2Types(hashType);
+		HashForSSH2Types sh = new HashForSSH2Types(hashAlgo);
 
 		km.initial_iv_client_to_server = calculateKey(sh, K, H, (byte) 'A', SessionID, blockSizeCS);
 

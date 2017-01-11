@@ -1,12 +1,13 @@
+
 package com.trilead.ssh2.transport;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.InterruptedIOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.security.SecureRandom;
 import java.util.Vector;
@@ -18,6 +19,7 @@ import com.trilead.ssh2.HTTPProxyData;
 import com.trilead.ssh2.HTTPProxyException;
 import com.trilead.ssh2.ProxyData;
 import com.trilead.ssh2.ServerHostKeyVerifier;
+import com.trilead.ssh2.compression.ICompressor;
 import com.trilead.ssh2.crypto.Base64;
 import com.trilead.ssh2.crypto.CryptoWishList;
 import com.trilead.ssh2.crypto.cipher.BlockCipher;
@@ -53,16 +55,16 @@ import com.trilead.ssh2.util.Tokenizer;
  */
 public class TransportManager
 {
-    private static final Logger log = Logger.getLogger(TransportManager.class);
+	private static final Logger log = Logger.getLogger(TransportManager.class);
 
-    class HandlerEntry
+	class HandlerEntry
 	{
 		MessageHandler mh;
 		int low;
 		int high;
 	}
 
-	private final Vector asynchronousQueue = new Vector();
+	private final Vector<byte[]> asynchronousQueue = new Vector<byte[]>();
 	private Thread asynchronousThread = null;
 
 	class AsynchronousWorker extends Thread
@@ -95,7 +97,7 @@ public class TransportManager
 						}
 					}
 
-					msg = (byte[]) asynchronousQueue.remove(0);
+					msg = asynchronousQueue.remove(0);
 				}
 
 				/* The following invocation may throw an IOException.
@@ -126,83 +128,22 @@ public class TransportManager
 	int port;
 	final Socket sock = new Socket();
 
-	final Object connectionSemaphore = new Object();
+	Object connectionSemaphore = new Object();
 
 	boolean flagKexOngoing = false;
+	boolean connectionClosed = false;
 
 	Throwable reasonClosedCause = null;
 
 	TransportConnection tc;
 	KexManager km;
 
-	Vector messageHandlers = new Vector();
+	Vector<HandlerEntry> messageHandlers = new Vector<HandlerEntry>();
 
 	Thread receiveThread;
 
 	Vector connectionMonitors = new Vector();
 	boolean monitorsWereInformed = false;
-	private ClientServerHello versions;
-
-	/**
-	 * There were reports that there are JDKs which use
-	 * the resolver even though one supplies a dotted IP
-	 * address in the Socket constructor. That is why we
-	 * try to generate the InetAdress "by hand".
-	 * 
-	 * @param host
-	 * @return the InetAddress
-	 * @throws UnknownHostException
-	 */
-	private InetAddress createInetAddress(String host) throws UnknownHostException
-	{
-		/* Check if it is a dotted IP4 address */
-
-		InetAddress addr = parseIPv4Address(host);
-
-		if (addr != null)
-			return addr;
-
-		return InetAddress.getByName(host);
-	}
-
-	private InetAddress parseIPv4Address(String host) throws UnknownHostException
-	{
-		if (host == null)
-			return null;
-
-		String[] quad = Tokenizer.parseTokens(host, '.');
-
-		if ((quad == null) || (quad.length != 4))
-			return null;
-
-		byte[] addr = new byte[4];
-
-		for (int i = 0; i < 4; i++)
-		{
-			int part = 0;
-
-			if ((quad[i].length() == 0) || (quad[i].length() > 3))
-				return null;
-
-			for (int k = 0; k < quad[i].length(); k++)
-			{
-				char c = quad[i].charAt(k);
-
-				/* No, Character.isDigit is not the same */
-				if ((c < '0') || (c > '9'))
-					return null;
-
-				part = part * 10 + (c - '0');
-			}
-
-			if (part > 255) /* 300.1.2.3 is invalid =) */
-				return null;
-
-			addr[i] = (byte) part;
-		}
-
-		return InetAddress.getByAddress(host, addr);
-	}
 
 	public TransportManager(String host, int port) throws IOException
 	{
@@ -229,15 +170,7 @@ public class TransportManager
 	{
 		return km.getOrWaitForConnectionInfo(kexNumber);
 	}
-	
-	public ClientServerHello getVersionInfo() {
-		return versions;
-	}
 
-    /**
-     * If the socket connection is lost (either by this side closing down or the other side closing down),
-     * return a non-null object indicating the cause of the connection loss.
-     */
 	public Throwable getReasonClosedCause()
 	{
 		synchronized (connectionSemaphore)
@@ -245,10 +178,6 @@ public class TransportManager
 			return reasonClosedCause;
 		}
 	}
-
-    public boolean isConnectionClosed() {
-        return getReasonClosedCause()!=null;
-    }
 
 	public byte[] getSessionIdentifier()
 	{
@@ -279,7 +208,7 @@ public class TransportManager
 
 		synchronized (connectionSemaphore)
 		{
-			if (reasonClosedCause==null)
+			if (connectionClosed == false)
 			{
 				if (useDisconnectPacket == true)
 				{
@@ -303,9 +232,8 @@ public class TransportManager
 					}
 				}
 
-                if (cause==null)
-                    cause = new Exception("Unknown cause");
-				reasonClosedCause = cause;
+				connectionClosed = true;
+				reasonClosedCause = cause; /* may be null */
 			}
 			connectionSemaphore.notifyAll();
 		}
@@ -344,15 +272,24 @@ public class TransportManager
 		}
 	}
 
-	private void establishConnection(ProxyData proxyData, int connectTimeout, int readTimeout) throws IOException
-	{
-		/* See the comment for createInetAddress() */
+	private static void tryAllAddresses(Socket sock, String host, int port, int connectTimeout) throws IOException {
+		InetAddress[] addresses = InetAddress.getAllByName(host);
+		for (InetAddress addr : addresses) {
+			try {
+				sock.connect(new InetSocketAddress(addr, port), connectTimeout);
+				return;
+			} catch (SocketTimeoutException e) {
+			}
+		}
+		throw new SocketTimeoutException("Could not connect; socket timed out");
+	}
 
+	private void establishConnection(ProxyData proxyData, int connectTimeout) throws IOException
+	{
 		if (proxyData == null)
 		{
-			InetAddress addr = createInetAddress(hostname);
-			sock.connect(new InetSocketAddress(addr, port), connectTimeout);
-			sock.setSoTimeout(readTimeout);
+			tryAllAddresses(sock, hostname, port, connectTimeout);
+			sock.setSoTimeout(0);
 			return;
 		}
 
@@ -362,9 +299,8 @@ public class TransportManager
 
 			/* At the moment, we only support HTTP proxies */
 
-			InetAddress addr = createInetAddress(pd.proxyHost);
-			sock.connect(new InetSocketAddress(addr, pd.proxyPort), connectTimeout);
-			sock.setSoTimeout(readTimeout);
+			tryAllAddresses(sock, pd.proxyHost, pd.proxyPort, connectTimeout);
+			sock.setSoTimeout(0);
 
 			/* OK, now tell the proxy where we actually want to connect to */
 
@@ -454,17 +390,12 @@ public class TransportManager
 		throw new IOException("Unsupported ProxyData");
 	}
 
-    public void initialize(CryptoWishList cwl, ServerHostKeyVerifier verifier, DHGexParameters dhgex,
-            int connectTimeout, SecureRandom rnd, ProxyData proxyData) throws IOException {
-        initialize(cwl, verifier, dhgex, connectTimeout, 0, rnd, proxyData);
-    }
-    
-    public void initialize(CryptoWishList cwl, ServerHostKeyVerifier verifier, DHGexParameters dhgex,
-			int connectTimeout, int readTimeout, SecureRandom rnd, ProxyData proxyData) throws IOException
+	public void initialize(CryptoWishList cwl, ServerHostKeyVerifier verifier, DHGexParameters dhgex,
+			int connectTimeout, SecureRandom rnd, ProxyData proxyData) throws IOException
 	{
 		/* First, establish the TCP connection to the SSH-2 server */
 
-		establishConnection(proxyData, connectTimeout, readTimeout);
+		establishConnection(proxyData, connectTimeout);
 
 		/* Parse the server line and say hello - important: this information is later needed for the
 		 * key exchange (to stop man-in-the-middle attacks) - that is why we wrap it into an object
@@ -472,7 +403,6 @@ public class TransportManager
 		 */
 
 		ClientServerHello csh = new ClientServerHello(sock.getInputStream(), sock.getOutputStream());
-		versions = csh;
 
 		tc = new TransportConnection(sock.getInputStream(), sock.getOutputStream(), rnd);
 
@@ -483,19 +413,16 @@ public class TransportManager
 		{
 			public void run()
 			{
-                Throwable cause;
 				try
 				{
 					receiveLoop();
-                    cause = new AssertionError();   // receiveLoop never returns normally
 				}
 				catch (IOException e)
 				{
-                    if (log.isEnabled() && !isConnectionClosed())
-                        log.log(10, "Receive thread: error in receiveLoop",e);
-
-                    cause = e;
 					close(e, false);
+
+					if (log.isEnabled())
+						log.log(10, "Receive thread: error in receiveLoop: " + e.getMessage());
 				}
 
 				if (log.isEnabled())
@@ -507,7 +434,7 @@ public class TransportManager
 				{
 					try
 					{
-						km.handleEndMessage(cause);
+						km.handleMessage(null, 0);
 					}
 					catch (IOException e)
 					{
@@ -516,10 +443,10 @@ public class TransportManager
 
 				for (int i = 0; i < messageHandlers.size(); i++)
 				{
-					HandlerEntry he = (HandlerEntry) messageHandlers.elementAt(i);
+					HandlerEntry he = messageHandlers.elementAt(i);
 					try
 					{
-						he.mh.handleEndMessage(cause);
+						he.mh.handleMessage(null, 0);
 					}
 					catch (Exception ignore)
 					{
@@ -551,7 +478,7 @@ public class TransportManager
 		{
 			for (int i = 0; i < messageHandlers.size(); i++)
 			{
-				HandlerEntry he = (HandlerEntry) messageHandlers.elementAt(i);
+				HandlerEntry he = messageHandlers.elementAt(i);
 				if ((he.mh == mh) && (he.low == low) && (he.high == high))
 				{
 					messageHandlers.removeElementAt(i);
@@ -565,9 +492,12 @@ public class TransportManager
 	{
 		synchronized (connectionSemaphore)
 		{
-            ensureConnected();
+			if (connectionClosed)
+			{
+				throw (IOException) new IOException("Sorry, this connection is closed.").initCause(reasonClosedCause);
+			}
 
-            flagKexOngoing = true;
+			flagKexOngoing = true;
 
 			try
 			{
@@ -581,14 +511,7 @@ public class TransportManager
 		}
 	}
 
-    private void ensureConnected() throws IOException {
-        if (reasonClosedCause!=null)
-        {
-            throw (IOException) new IOException("Sorry, this connection is closed.").initCause(reasonClosedCause);
-        }
-    }
-
-    public void kexFinished() throws IOException
+	public void kexFinished() throws IOException
 	{
 		synchronized (connectionSemaphore)
 		{
@@ -610,6 +533,27 @@ public class TransportManager
 	public void changeSendCipher(BlockCipher bc, MAC mac)
 	{
 		tc.changeSendCipher(bc, mac);
+	}
+
+	/**
+	 * @param comp
+	 */
+	public void changeRecvCompression(ICompressor comp) {
+		tc.changeRecvCompression(comp);
+	}
+
+	/**
+	 * @param comp
+	 */
+	public void changeSendCompression(ICompressor comp) {
+		tc.changeSendCompression(comp);
+	}
+
+	/**
+	 * 
+	 */
+	public void startCompression() {
+		tc.startCompression();
 	}
 
 	public void sendAsynchronousMessage(byte[] msg) throws IOException
@@ -657,9 +601,13 @@ public class TransportManager
 		{
 			while (true)
 			{
-                ensureConnected();
+				if (connectionClosed)
+				{
+					throw (IOException) new IOException("Sorry, this connection is closed.")
+							.initCause(reasonClosedCause);
+				}
 
-                if (flagKexOngoing == false)
+				if (flagKexOngoing == false)
 					break;
 
 				try
@@ -668,7 +616,6 @@ public class TransportManager
 				}
 				catch (InterruptedException e)
 				{
-					throw new InterruptedIOException();
 				}
 			}
 
@@ -686,7 +633,7 @@ public class TransportManager
 
 	public void receiveLoop() throws IOException
 	{
-		byte[] msg = new byte[MAX_PACKET_SIZE];
+		byte[] msg = new byte[35000];
 
 		while (true)
 		{
@@ -778,11 +725,15 @@ public class TransportManager
 				continue;
 			}
 
+			if (type == Packets.SSH_MSG_USERAUTH_SUCCESS) {
+				tc.startCompression();
+			}
+			
 			MessageHandler mh = null;
 
 			for (int i = 0; i < messageHandlers.size(); i++)
 			{
-				HandlerEntry he = (HandlerEntry) messageHandlers.elementAt(i);
+				HandlerEntry he = messageHandlers.elementAt(i);
 				if ((he.low <= type) && (type <= he.high))
 				{
 					mh = he.mh;
@@ -796,11 +747,4 @@ public class TransportManager
 			mh.handleMessage(msg, msglen);
 		}
 	}
-
-    /**
-     * Advertised maximum SSH packet size that the other side can send to us.
-     */
-    public static final int MAX_PACKET_SIZE = Integer.getInteger(
-    			TransportManager.class.getName()+".maxPacketSize",
-    			64*1024);
 }
