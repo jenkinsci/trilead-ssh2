@@ -12,8 +12,8 @@ import com.trilead.ssh2.crypto.CryptoWishList;
 import com.trilead.ssh2.crypto.KeyMaterial;
 import com.trilead.ssh2.crypto.cipher.BlockCipher;
 import com.trilead.ssh2.crypto.cipher.BlockCipherFactory;
-import com.trilead.ssh2.crypto.dh.DhExchange;
 import com.trilead.ssh2.crypto.dh.DhGroupExchange;
+import com.trilead.ssh2.crypto.dh.GenericDhExchange;
 import com.trilead.ssh2.crypto.digest.MAC;
 import com.trilead.ssh2.log.Logger;
 import com.trilead.ssh2.packets.PacketKexDHInit;
@@ -243,7 +243,7 @@ public class KexManager implements MessageHandler
 			kxs = new KexState();
 
 			kxs.dhgexParameters = nextKEXdhgexParameters;
-			PacketKexInit kp = new PacketKexInit(nextKEXcryptoWishList, rnd);
+			PacketKexInit kp = new PacketKexInit(nextKEXcryptoWishList);
 			kxs.localKEX = kp;
 			tm.sendKexMessage(kp.getPayload());
 		}
@@ -261,7 +261,7 @@ public class KexManager implements MessageHandler
 			int enc_sc_key_len = BlockCipherFactory.getKeySize(kxs.np.enc_algo_server_to_client);
 			int enc_sc_block_len = BlockCipherFactory.getBlockSize(kxs.np.enc_algo_server_to_client);
 
-			km = KeyMaterial.create("SHA1", kxs.H, kxs.K, sessionId, enc_cs_key_len, enc_cs_block_len, mac_cs_key_len,
+			km = KeyMaterial.create(kxs.hashAlgo, kxs.H, kxs.K, sessionId, enc_cs_key_len, enc_cs_block_len, mac_cs_key_len,
 					enc_sc_key_len, enc_sc_block_len, mac_sc_key_len);
 		}
 		catch (IllegalArgumentException e)
@@ -319,14 +319,17 @@ public class KexManager implements MessageHandler
 
 	public static final String[] getDefaultKexAlgorithmList()
 	{
-		return new String[] { "diffie-hellman-group-exchange-sha1", "diffie-hellman-group14-sha1",
-				"diffie-hellman-group1-sha1" };
+		return new String[] { "diffie-hellman-group-exchange-sha256", "diffie-hellman-group-exchange-sha1",
+				"diffie-hellman-group14-sha1", "diffie-hellman-group1-sha1" };
 	}
 
 	public static final void checkKexAlgorithmList(String[] algos)
 	{
 		for (int i = 0; i < algos.length; i++)
 		{
+			if ("diffie-hellman-group-exchange-sha256".equals(algos[i]))
+				continue;
+
 			if ("diffie-hellman-group-exchange-sha1".equals(algos[i]))
 				continue;
 
@@ -391,7 +394,7 @@ public class KexManager implements MessageHandler
 				 */
 				kxs = new KexState();
 				kxs.dhgexParameters = nextKEXdhgexParameters;
-				kip = new PacketKexInit(nextKEXcryptoWishList, rnd);
+				kip = new PacketKexInit(nextKEXcryptoWishList);
 				kxs.localKEX = kip;
 				tm.sendKexMessage(kip.getPayload());
 			}
@@ -413,7 +416,8 @@ public class KexManager implements MessageHandler
 				ignore_next_kex_packet = true;
 			}
 
-			if (kxs.np.kex_algo.equals("diffie-hellman-group-exchange-sha1"))
+			if (kxs.np.kex_algo.equals("diffie-hellman-group-exchange-sha1")
+					|| kxs.np.kex_algo.equals("diffie-hellman-group-exchange-sha256"))
 			{
 				if (kxs.dhgexParameters.getMin_group_len() == 0)
 				{
@@ -426,6 +430,11 @@ public class KexManager implements MessageHandler
 					PacketKexDhGexRequest dhgexreq = new PacketKexDhGexRequest(kxs.dhgexParameters);
 					tm.sendKexMessage(dhgexreq.getPayload());
 				}
+				if (kxs.np.kex_algo.endsWith("sha1")) {
+					kxs.hashAlgo = "SHA1";
+				} else {
+					kxs.hashAlgo = "SHA-256";
+				}
 				kxs.state = 1;
 				return;
 			}
@@ -433,12 +442,10 @@ public class KexManager implements MessageHandler
 			if (kxs.np.kex_algo.equals("diffie-hellman-group1-sha1")
 					|| kxs.np.kex_algo.equals("diffie-hellman-group14-sha1"))
 			{
-				kxs.dhx = new DhExchange();
+				kxs.dhx = GenericDhExchange.getInstance(kxs.np.kex_algo);
 
-				if (kxs.np.kex_algo.equals("diffie-hellman-group1-sha1"))
-					kxs.dhx.init(1, rnd);
-				else
-					kxs.dhx.init(14, rnd);
+				kxs.dhx.init(kxs.np.kex_algo);
+				kxs.hashAlgo = kxs.dhx.getHashAlgo();
 
 				PacketKexDHInit kp = new PacketKexDHInit(kxs.dhx.getE());
 				tm.sendKexMessage(kp.getPayload());
@@ -498,7 +505,8 @@ public class KexManager implements MessageHandler
 		if ((kxs == null) || (kxs.state == 0))
 			throw new IOException("Unexpected Kex submessage!");
 
-		if (kxs.np.kex_algo.equals("diffie-hellman-group-exchange-sha1"))
+		if (kxs.np.kex_algo.equals("diffie-hellman-group-exchange-sha1")
+				|| kxs.np.kex_algo.equals("diffie-hellman-group-exchange-sha256"))
 		{
 			if (kxs.state == 1)
 			{
@@ -539,7 +547,8 @@ public class KexManager implements MessageHandler
 
 				try
 				{
-					kxs.H = kxs.dhgx.calculateH(csh.getClientString(), csh.getServerString(),
+					kxs.H = kxs.dhgx.calculateH(kxs.hashAlgo,
+							csh.getClientString(), csh.getServerString(),
 							kxs.localKEX.getPayload(), kxs.remoteKEX.getPayload(), dhgexrpl.getHostKey(),
 							kxs.dhgexParameters);
 				}

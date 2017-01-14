@@ -1,4 +1,3 @@
-
 package com.trilead.ssh2.crypto.dh;
 
 import java.math.BigInteger;
@@ -87,10 +86,10 @@ public class DhGroupExchange
 		this.k = f.modPow(x, p);
 	}
 
-	public byte[] calculateH(byte[] clientversion, byte[] serverversion, byte[] clientKexPayload,
-			byte[] serverKexPayload, byte[] hostKey, DHGexParameters para)
+	public byte[] calculateH(String hashAlgo, byte[] clientversion, byte[] serverversion,
+			byte[] clientKexPayload, byte[] serverKexPayload, byte[] hostKey, DHGexParameters para)
 	{
-		HashForSSH2Types hash = new HashForSSH2Types("SHA1");
+		HashForSSH2Types hash = new HashForSSH2Types(hashAlgo);
 
 		hash.updateByteString(clientversion);
 		hash.updateByteString(serverversion);

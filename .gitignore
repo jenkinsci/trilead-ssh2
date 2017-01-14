@@ -13,3 +13,6 @@ target/
 .project
 .metadata
 .loadpath
+
+.DS_Store
+Thumbs.db

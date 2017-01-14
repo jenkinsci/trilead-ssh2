@@ -20,10 +20,10 @@ public class PacketKexInit
 
 	KexParameters kp = new KexParameters();
 
-	public PacketKexInit(CryptoWishList cwl, SecureRandom rnd)
+	public PacketKexInit(CryptoWishList cwl)
 	{
 		kp.cookie = new byte[16];
-		rnd.nextBytes(kp.cookie);
+		new SecureRandom().nextBytes(kp.cookie);
 
 		kp.kex_algorithms = cwl.kexAlgorithms;
 		kp.server_host_key_algorithms = cwl.serverHostKeyAlgorithms;
