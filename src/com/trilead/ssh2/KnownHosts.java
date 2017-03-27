@@ -13,7 +13,6 @@ import java.io.UnsupportedEncodingException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.security.SecureRandom;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Vector;
 
@@ -66,7 +65,7 @@ public class KnownHosts
 		}
 	}
 
-	private LinkedList publicKeys = new LinkedList();
+	private final LinkedList<KnownHostsEntry> publicKeys = new LinkedList<>();
 
 	public KnownHosts()
 	{
@@ -91,7 +90,7 @@ public class KnownHosts
 	 *        OpenSSH sshd man page for a description of the pattern matching algorithm.
 	 * @param serverHostKeyAlgorithm as passed to the {@link ServerHostKeyVerifier}.
 	 * @param serverHostKey as passed to the {@link ServerHostKeyVerifier}.
-	 * @throws IOException
+	 * @throws IOException on failure trying to convert the host key to a saveable format
 	 */
 	public void addHostkey(String[] hostnames, String serverHostKeyAlgorithm, byte[] serverHostKey) throws IOException {
 		if (hostnames == null) {
@@ -120,8 +119,8 @@ public class KnownHosts
 	/**
 	 * Parses the given known_hosts data and adds entries to the database.
 	 * 
-	 * @param knownHostsData
-	 * @throws IOException
+	 * @param knownHostsData the known hosts data to parse
+	 * @throws IOException on failure reading the parsing the known hosts data
 	 */
 	public void addHostkeys(char[] knownHostsData) throws IOException
 	{
@@ -131,8 +130,8 @@ public class KnownHosts
 	/**
 	 * Parses the given known_hosts file and adds entries to the database.
 	 * 
-	 * @param knownHosts
-	 * @throws IOException
+	 * @param knownHosts the file to read the existing known hosts entries feom, add to add any new entries to
+	 * @throws IOException on failure reading the existing known hosts file
 	 */
 	public void addHostkeys(File knownHosts) throws IOException
 	{
@@ -143,10 +142,10 @@ public class KnownHosts
 	 * Generate the hashed representation of the given hostname. Useful for adding entries
 	 * with hashed hostnames to a known_hosts file. (see -H option of OpenSSH key-gen).
 	 *  
-	 * @param hostname
+	 * @param hostname the hostname to hash
 	 * @return the hashed representation, e.g., "|1|cDhrv7zwEUV3k71CEPHnhHZezhA=|Xo+2y6rUXo2OIWRAYhBOIijbJMA="
 	 */
-	public static final String createHashedHostname(String hostname)
+	public static String createHashedHostname(String hostname)
 	{
 		SHA1 sha1 = new SHA1();
 
@@ -159,10 +158,10 @@ public class KnownHosts
 		String base64_salt = new String(Base64.encode(salt));
 		String base64_hash = new String(Base64.encode(hash));
 
-		return new String("|1|" + base64_salt + "|" + base64_hash);
+		return "|1|" + base64_salt + "|" + base64_hash;
 	}
 
-	private static final byte[] hmacSha1Hash(byte[] salt, String hostname)
+	private static byte[] hmacSha1Hash(byte[] salt, String hostname)
 	{
 		SHA1 sha1 = new SHA1();
 
@@ -188,9 +187,9 @@ public class KnownHosts
 		return dig;
 	}
 
-	private final boolean checkHashed(String entry, String hostname)
+	private boolean checkHashed(String entry, String hostname)
 	{
-		if (entry.startsWith("|1|") == false)
+		if (!entry.startsWith("|1|"))
 			return false;
 
 		int delim_idx = entry.indexOf('|', 3);
@@ -234,18 +233,14 @@ public class KnownHosts
 
 		synchronized (publicKeys)
 		{
-			Iterator i = publicKeys.iterator();
-			
-			while (i.hasNext())
-			{
-				KnownHostsEntry ke = (KnownHostsEntry) i.next();
 
-				if (hostnameMatches(ke.patterns, remoteHostname) == false)
+			for (KnownHostsEntry ke : publicKeys) {
+				if (!hostnameMatches(ke.patterns, remoteHostname))
 					continue;
 
 				boolean res = matchKeys(ke.key, remoteKey);
 
-				if (res == true)
+				if (res)
 					return HOSTKEY_IS_OK;
 
 				result = HOSTKEY_HAS_CHANGED;
@@ -254,22 +249,17 @@ public class KnownHosts
 		return result;
 	}
 
-	private Vector getAllKeys(String hostname)
+	private Vector<Object> getAllKeys(String hostname)
 	{
-		Vector keys = new Vector();
+		Vector<Object> keys = new Vector<>();
 
 		synchronized (publicKeys)
 		{
-			Iterator i = publicKeys.iterator();
 
-			while (i.hasNext())
-			{
-				KnownHostsEntry ke = (KnownHostsEntry) i.next();
-
-				if (hostnameMatches(ke.patterns, hostname) == false)
-					continue;
-
-				keys.addElement(ke.key);
+			for (KnownHostsEntry ke : publicKeys) {
+				if (hostnameMatches(ke.patterns, hostname)) {
+					keys.addElement(ke.key);
+				}
 			}
 		}
 
@@ -283,7 +273,7 @@ public class KnownHosts
 	 * an ordered list of hostkey algorithms is returned which can be passed
 	 * to <code>Connection.setServerHostKeyAlgorithms</code>. 
 	 * 
-	 * @param hostname
+	 * @param hostname the hostname (or hostname pattern) to search for
 	 * @return <code>null</code> if no key for the given hostname is present or
 	 * there are keys of multiple types present for the given hostname. Otherwise,
 	 * an array with hostkey algorithms is returned (i.e., an array of length 2).
@@ -295,20 +285,19 @@ public class KnownHosts
 		if (algos != null)
 			return algos;
 
-		InetAddress[] ipAdresses = null;
+		InetAddress[] ipAddresses;
 
 		try
 		{
-			ipAdresses = InetAddress.getAllByName(hostname);
+			ipAddresses = InetAddress.getAllByName(hostname);
 		}
 		catch (UnknownHostException e)
 		{
 			return null;
 		}
 
-		for (int i = 0; i < ipAdresses.length; i++)
-		{
-			algos = recommendHostkeyAlgorithms(ipAdresses[i].getHostAddress());
+		for (InetAddress ipAddress : ipAddresses) {
+			algos = recommendHostkeyAlgorithms(ipAddress.getHostAddress());
 
 			if (algos != null)
 				return algos;
@@ -317,16 +306,15 @@ public class KnownHosts
 		return null;
 	}
 
-	private final boolean hostnameMatches(String[] hostpatterns, String hostname)
+	private boolean hostnameMatches(String[] hostpatterns, String hostname)
 	{
 		boolean isMatch = false;
 		boolean negate = false;
 
 		hostname = hostname.toLowerCase();
 
-		for (int k = 0; k < hostpatterns.length; k++)
-		{
-			if (hostpatterns[k] == null)
+		for (String hostpattern : hostpatterns) {
+			if (hostpattern == null)
 				continue;
 
 			String pattern = null;
@@ -335,61 +323,46 @@ public class KnownHosts
 			 * entries in lines with multiple entries).
 			 */
 
-			if ((hostpatterns[k].length() > 0) && (hostpatterns[k].charAt(0) == '!'))
-			{
-				pattern = hostpatterns[k].substring(1);
+			if ((hostpattern.length() > 0) && (hostpattern.charAt(0) == '!')) {
+				pattern = hostpattern.substring(1);
 				negate = true;
-			}
-			else
-			{
-				pattern = hostpatterns[k];
+			} else {
+				pattern = hostpattern;
 				negate = false;
 			}
 
 			/* Optimize, no need to check this entry */
 
-			if ((isMatch) && (negate == false))
+			if (isMatch && !negate)
 				continue;
 
 			/* Now compare */
 
-			if (pattern.charAt(0) == '|')
-			{
-				if (checkHashed(pattern, hostname))
-				{
+			if (pattern.charAt(0) == '|') {
+				if (checkHashed(pattern, hostname)) {
 					if (negate)
 						return false;
 					isMatch = true;
 				}
-			}
-			else
-			{
+			} else {
 				pattern = pattern.toLowerCase();
 
-				if ((pattern.indexOf('?') != -1) || (pattern.indexOf('*') != -1))
-				{
-					if (pseudoRegex(pattern.toCharArray(), 0, hostname.toCharArray(), 0))
-					{
+				if ((pattern.indexOf('?') != -1) || (pattern.indexOf('*') != -1)) {
+					if (pseudoRegex(pattern.toCharArray(), 0, hostname.toCharArray(), 0)) {
 						if (negate)
 							return false;
 						isMatch = true;
 					}
-				}
-				else if (pattern.compareTo(hostname) == 0)
-				{
+				} else if (pattern.compareTo(hostname) == 0) {
 					if (negate)
 						return false;
 					isMatch = true;
-				}
-				else
-				{
+				} else {
 					final int indexColon = pattern.indexOf(':');
 					final int indexLastColon = pattern.indexOf(':');
-					if (indexColon > 0 && indexColon < pattern.length() - 2 && indexColon == indexLastColon)
-					{
+					if (indexColon > 0 && indexColon < pattern.length() - 2 && indexColon == indexLastColon) {
 						final String bracketizedHost = '[' + hostname + ']';
-						if (pattern.startsWith(bracketizedHost))
-						{
+						if (pattern.startsWith(bracketizedHost)) {
 							if (negate)
 								return false;
 							isMatch = true;
@@ -437,10 +410,11 @@ public class KnownHosts
 
 		final CharArrayWriter charWriter = new CharArrayWriter();
 
-		knownHosts.createNewFile();
+		if (!knownHosts.createNewFile()) {
+			LOGGER.log(10, "Could not create known hosts file");
+		}
 
-		final Reader reader = new FileReader(knownHosts);
-		try {
+		try (Reader reader = new FileReader(knownHosts)) {
 			while (true) {
 				final int readCharCount = reader.read(buffer);
 				if (readCharCount < 0) {
@@ -450,24 +424,21 @@ public class KnownHosts
 				charWriter.write(buffer, 0, readCharCount);
 			}
 		}
-		finally {
-			reader.close();
-		}
 
 		initialize(charWriter.toCharArray());
 	}
 
-	private final boolean matchKeys(Object key1, Object key2)
+	private boolean matchKeys(Object key1, Object key2)
 	{
 		if ((key1 instanceof RSAPublicKey) && (key2 instanceof RSAPublicKey))
 		{
 			RSAPublicKey savedRSAKey = (RSAPublicKey) key1;
 			RSAPublicKey remoteRSAKey = (RSAPublicKey) key2;
 
-			if (savedRSAKey.getE().equals(remoteRSAKey.getE()) == false)
+			if (!savedRSAKey.getE().equals(remoteRSAKey.getE()))
 				return false;
 
-			if (savedRSAKey.getN().equals(remoteRSAKey.getN()) == false)
+			if (!savedRSAKey.getN().equals(remoteRSAKey.getN()))
 				return false;
 
 			return true;
@@ -478,16 +449,16 @@ public class KnownHosts
 			DSAPublicKey savedDSAKey = (DSAPublicKey) key1;
 			DSAPublicKey remoteDSAKey = (DSAPublicKey) key2;
 
-			if (savedDSAKey.getG().equals(remoteDSAKey.getG()) == false)
+			if (!savedDSAKey.getG().equals(remoteDSAKey.getG()))
 				return false;
 
-			if (savedDSAKey.getP().equals(remoteDSAKey.getP()) == false)
+			if (!savedDSAKey.getP().equals(remoteDSAKey.getP()))
 				return false;
 
-			if (savedDSAKey.getQ().equals(remoteDSAKey.getQ()) == false)
+			if (!savedDSAKey.getQ().equals(remoteDSAKey.getQ()))
 				return false;
 
-			if (savedDSAKey.getY().equals(remoteDSAKey.getY()) == false)
+			if (!savedDSAKey.getY().equals(remoteDSAKey.getY()))
 				return false;
 
 			return true;
@@ -496,7 +467,7 @@ public class KnownHosts
 		return false;
 	}
 
-	private final boolean pseudoRegex(char[] pattern, int i, char[] match, int j)
+	private boolean pseudoRegex(char[] pattern, int i, char[] match, int j)
 	{
 		/* This matching logic is equivalent to the one present in OpenSSH 4.1 */
 
@@ -551,21 +522,19 @@ public class KnownHosts
 	{
 		String preferredAlgo = null;
 
-		Vector keys = getAllKeys(hostname);
+		Vector<Object> keys = getAllKeys(hostname);
 
-		for (int i = 0; i < keys.size(); i++)
-		{
-			String thisAlgo = null;
+		for (Object key : keys) {
+			String thisAlgo;
 
-			if (keys.elementAt(i) instanceof RSAPublicKey)
+			if (key instanceof RSAPublicKey)
 				thisAlgo = "ssh-rsa";
-			else if (keys.elementAt(i) instanceof DSAPublicKey)
+			else if (key instanceof DSAPublicKey)
 				thisAlgo = "ssh-dss";
 			else
 				continue;
 
-			if (preferredAlgo != null)
-			{
+			if (preferredAlgo != null) {
 				/* If we find different key types, then return null */
 
 				if (preferredAlgo.compareTo(thisAlgo) != 0)
@@ -618,7 +587,7 @@ public class KnownHosts
 	 */
 	public int verifyHostkey(String hostname, String serverHostKeyAlgorithm, byte[] serverHostKey) throws IOException
 	{
-		Object remoteKey = null;
+		Object remoteKey;
 
 		if ("ssh-rsa".equals(serverHostKeyAlgorithm))
 		{
@@ -636,7 +605,7 @@ public class KnownHosts
 		if (result == HOSTKEY_IS_OK)
 			return result;
 
-		InetAddress[] ipAdresses = null;
+		InetAddress[] ipAdresses;
 
 		try
 		{
@@ -647,9 +616,8 @@ public class KnownHosts
 			return result;
 		}
 
-		for (int i = 0; i < ipAdresses.length; i++)
-		{
-			int newresult = checkKey(ipAdresses[i].getHostAddress(), remoteKey);
+		for (InetAddress ipAdress : ipAdresses) {
+			int newresult = checkKey(ipAdress.getHostAddress(), remoteKey);
 
 			if (newresult == HOSTKEY_IS_OK)
 				return newresult;
@@ -670,9 +638,9 @@ public class KnownHosts
 	 *        OpenSSH sshd man page for a description of the pattern matching algorithm.
 	 * @param serverHostKeyAlgorithm as passed to the {@link ServerHostKeyVerifier}.
 	 * @param serverHostKey as passed to the {@link ServerHostKeyVerifier}.
-	 * @throws IOException
+	 * @throws IOException on failure parsing the key or writing to file
 	 */
-	public final static void addHostkeyToFile(File knownHosts, String[] hostnames, String serverHostKeyAlgorithm,
+	public static void addHostkeyToFile(File knownHosts, String[] hostnames, String serverHostKeyAlgorithm,
 			byte[] serverHostKey) throws IOException
 	{
 		if ((hostnames == null) || (hostnames.length == 0))
@@ -722,9 +690,9 @@ public class KnownHosts
 	 * @param hostkey the hostkey
 	 * @return the raw fingerprint
 	 */
-	static final private byte[] rawFingerPrint(String type, String keyType, byte[] hostkey)
+	private static byte[] rawFingerPrint(String type, String keyType, byte[] hostkey)
 	{
-		Digest dig = null;
+		Digest dig;
 
 		if ("md5".equals(type))
 		{
@@ -760,11 +728,11 @@ public class KnownHosts
 	 * @param fingerprint raw fingerprint
 	 * @return the hex representation
 	 */
-	static final private String rawToHexFingerprint(byte[] fingerprint)
+	private static String rawToHexFingerprint(byte[] fingerprint)
 	{
 		final char[] alpha = "0123456789abcdef".toCharArray();
 
-		StringBuffer sb = new StringBuffer();
+		StringBuilder sb = new StringBuilder();
 
 		for (int i = 0; i < fingerprint.length; i++)
 		{
@@ -783,12 +751,12 @@ public class KnownHosts
 	 * @param raw raw fingerprint
 	 * @return the bubblebabble representation
 	 */
-	static final private String rawToBubblebabbleFingerprint(byte[] raw)
+	private static String rawToBubblebabbleFingerprint(byte[] raw)
 	{
 		final char[] v = "aeiouy".toCharArray();
 		final char[] c = "bcdfghklmnprstvzx".toCharArray();
 
-		StringBuffer sb = new StringBuffer();
+		StringBuilder sb = new StringBuilder();
 
 		int seed = 1;
 
@@ -836,7 +804,7 @@ public class KnownHosts
 	 * @param publickey key blob
 	 * @return Hex fingerprint
 	 */
-	public final static String createHexFingerprint(String keytype, byte[] publickey)
+	public static String createHexFingerprint(String keytype, byte[] publickey)
 	{
 		byte[] raw = rawFingerPrint("md5", keytype, publickey);
 		return rawToHexFingerprint(raw);
@@ -853,7 +821,7 @@ public class KnownHosts
 	 * @param publickey key data
 	 * @return Bubblebabble fingerprint
 	 */
-	public final static String createBubblebabbleFingerprint(String keytype, byte[] publickey)
+	public static String createBubblebabbleFingerprint(String keytype, byte[] publickey)
 	{
 		byte[] raw = rawFingerPrint("sha1", keytype, publickey);
 		return rawToBubblebabbleFingerprint(raw);
