@@ -508,12 +508,12 @@ public class KnownHosts
 			if (preferredAlgo != null) {
 				/* If we find different key types, then return null */
 
-				if (preferredAlgo.compareTo(thisAlgo) != 0)
+				if (!preferredAlgo.equals(thisAlgo)) {
 					return null;
+				}
 
-				/* OK, we found the same algo again, optimize */
-
-				continue;
+			} else {
+				preferredAlgo = thisAlgo;
 			}
 		}
 
