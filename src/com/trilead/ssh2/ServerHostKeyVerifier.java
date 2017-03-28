@@ -20,7 +20,7 @@ public interface ServerHostKeyVerifier
 	 * 
 	 * @param hostname the hostname used to create the {@link Connection} object
 	 * @param port the remote TCP port
-	 * @param serverHostKeyAlgorithm the public key algorithm (<code>ssh-rsa</code> or <code>ssh-dss</code>)
+	 * @param serverHostKeyAlgorithm the public key algorithm
 	 * @param serverHostKey the server's public key blob
 	 * @return if the client wants to accept the server's host key - if not, the
 	 *         connection will be closed.

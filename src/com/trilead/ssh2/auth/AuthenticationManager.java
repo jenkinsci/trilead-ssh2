@@ -3,8 +3,8 @@ package com.trilead.ssh2.auth;
 import com.trilead.ssh2.InteractiveCallback;
 import com.trilead.ssh2.crypto.PEMDecoder;
 import com.trilead.ssh2.packets.*;
-import com.trilead.ssh2.signature.DSASHA1Verify;
-import com.trilead.ssh2.signature.RSASHA1Verify;
+import com.trilead.ssh2.signature.KeyAlgorithm;
+import com.trilead.ssh2.signature.KeyAlgorithmManager;
 import com.trilead.ssh2.transport.MessageHandler;
 import com.trilead.ssh2.transport.TransportManager;
 
@@ -12,11 +12,8 @@ import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.security.KeyPair;
 import java.security.PrivateKey;
+import java.security.PublicKey;
 import java.security.SecureRandom;
-import java.security.interfaces.DSAPrivateKey;
-import java.security.interfaces.DSAPublicKey;
-import java.security.interfaces.RSAPrivateKey;
-import java.security.interfaces.RSAPublicKey;
 import java.util.Collection;
 import java.util.Vector;
 
@@ -225,47 +222,17 @@ public class AuthenticationManager implements MessageHandler
 			if (!methodPossible("publickey"))
 				throw new IOException("Authentication method publickey not supported by the server at this stage.");
 
-			KeyPair keyPair = PEMDecoder.decodePrivateKey(PEMPrivateKey, password);
+			KeyPair keyPair = PEMDecoder.decodeKeyPair(PEMPrivateKey, password);
 			PrivateKey key = keyPair.getPrivate();
 
+			boolean supportedKey = false;
 
-			if (key instanceof DSAPrivateKey)
-			{
-				DSAPrivateKey pk = (DSAPrivateKey) key;
+			for (KeyAlgorithm<PublicKey, PrivateKey> algorithm : KeyAlgorithmManager.getSupportedAlgorithms()) {
+				if (algorithm.supportsKey(key)) {
 
-				byte[] pk_enc = DSASHA1Verify.encodeSSHPublicKey((DSAPublicKey) keyPair.getPublic());
+					byte[] encodedKey = algorithm.encodePublicKey(keyPair.getPublic());
+					TypesWriter tw = new TypesWriter();
 
-				TypesWriter tw = new TypesWriter();
-
-				byte[] H = tm.getSessionIdentifier();
-
-				tw.writeString(H, 0, H.length);
-				tw.writeByte(Packets.SSH_MSG_USERAUTH_REQUEST);
-				tw.writeString(user);
-				tw.writeString("ssh-connection");
-				tw.writeString("publickey");
-				tw.writeBoolean(true);
-				tw.writeString("ssh-dss");
-				tw.writeString(pk_enc, 0, pk_enc.length);
-
-				byte[] msg = tw.getBytes();
-
-				byte[] ds = DSASHA1Verify.generateSignature(msg, pk, rnd);
-
-				byte[] ds_enc = DSASHA1Verify.encodeSSHSignature(ds);
-
-				PacketUserauthRequestPublicKey ua = new PacketUserauthRequestPublicKey("ssh-connection", user,
-						"ssh-dss", pk_enc, ds_enc);
-				tm.sendMessage(ua.getPayload());
-			}
-			else if (key instanceof RSAPrivateKey)
-			{
-				RSAPrivateKey pk = (RSAPrivateKey) key;
-
-				byte[] pk_enc = RSASHA1Verify.encodeSSHPublicKey((RSAPublicKey) keyPair.getPublic());
-
-				TypesWriter tw = new TypesWriter();
-				{
 					byte[] H = tm.getSessionIdentifier();
 
 					tw.writeString(H, 0, H.length);
@@ -274,22 +241,25 @@ public class AuthenticationManager implements MessageHandler
 					tw.writeString("ssh-connection");
 					tw.writeString("publickey");
 					tw.writeBoolean(true);
-					tw.writeString("ssh-rsa");
-					tw.writeString(pk_enc, 0, pk_enc.length);
+					tw.writeString(algorithm.getKeyFormat());
+					tw.writeString(encodedKey, 0, encodedKey.length);
+
+					byte[] msg = tw.getBytes();
+
+					byte[] ds = algorithm.generateSignature(msg, keyPair.getPrivate(), rnd);
+
+					byte[] ds_enc = algorithm.encodeSignature(ds);
+
+					PacketUserauthRequestPublicKey ua = new PacketUserauthRequestPublicKey("ssh-connection", user,
+							algorithm.getKeyFormat(), encodedKey, ds_enc);
+					tm.sendMessage(ua.getPayload());
+
+					supportedKey = true;
+					break;
 				}
-
-				byte[] msg = tw.getBytes();
-
-				byte[] ds = RSASHA1Verify.generateSignature(msg, pk);
-
-				byte[] rsa_sig_enc = RSASHA1Verify.encodeSSHSignature(ds);
-
-				PacketUserauthRequestPublicKey ua = new PacketUserauthRequestPublicKey("ssh-connection", user,
-						"ssh-rsa", pk_enc, rsa_sig_enc);
-				tm.sendMessage(ua.getPayload());
 			}
-			else
-			{
+
+			if (!supportedKey) {
 				throw new IOException("Unknown private key type returned by the PEM decoder.");
 			}
 
@@ -318,7 +288,7 @@ public class AuthenticationManager implements MessageHandler
 		catch (IOException e)
 		{
 			tm.close(e, false);
-			throw (IOException) new IOException("Publickey authentication failed.", e);
+			throw new IOException("Publickey authentication failed.", e);
 		}
 	}
 
@@ -332,7 +302,7 @@ public class AuthenticationManager implements MessageHandler
 		catch (IOException e)
 		{
 			tm.close(e, false);
-			throw (IOException) new IOException("None authentication failed.", e);
+			throw new IOException("None authentication failed.", e);
 		}
 	}
 
@@ -373,7 +343,7 @@ public class AuthenticationManager implements MessageHandler
 		catch (IOException e)
 		{
 			tm.close(e, false);
-			throw (IOException) new IOException("Password authentication failed.", e);
+			throw new IOException("Password authentication failed.", e);
 		}
 	}
 

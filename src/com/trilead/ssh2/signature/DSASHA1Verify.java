@@ -3,14 +3,7 @@ package com.trilead.ssh2.signature;
 
 import java.io.IOException;
 import java.math.BigInteger;
-import java.security.GeneralSecurityException;
-import java.security.KeyFactory;
 import java.security.SecureRandom;
-import java.security.Signature;
-import java.security.interfaces.DSAParams;
-import java.security.interfaces.DSAPublicKey;
-import java.security.interfaces.DSAPrivateKey;
-import java.security.spec.DSAPublicKeySpec;
 
 import com.trilead.ssh2.IOWarningException;
 import com.trilead.ssh2.crypto.digest.SHA1;
@@ -24,14 +17,16 @@ import com.trilead.ssh2.packets.TypesWriter;
  * 
  * @author Christian Plattner, plattner@trilead.com
  * @version $Id: DSASHA1Verify.java,v 1.2 2008/04/01 12:38:09 cplattne Exp $
+ * @deprecated user {@link DSAKeyAlgorithm}
  */
+@Deprecated
 public class DSASHA1Verify
 {
 	private static final Logger log = Logger.getLogger(DSASHA1Verify.class);
 
 
 	@Deprecated
-	public static com.trilead.ssh2.signature.DSAPublicKey decodeSSHDSAPublicKey(byte[] key) throws IOException {
+	public static DSAPublicKey decodeSSHDSAPublicKey(byte[] key) throws IOException {
 		final TypesReader tr = new TypesReader(key);
 
 		final String key_format = tr.readString();
@@ -48,36 +43,11 @@ public class DSASHA1Verify
 			throw new IOException("Padding in DSA public key!");
 		}
 
-		return new com.trilead.ssh2.signature.DSAPublicKey(p, q, g, y);
-	}
-
-	public static DSAPublicKey decodeSSHPublicKey(byte[] key) throws IOException {
-		final TypesReader tr = new TypesReader(key);
-
-		final String key_format = tr.readString();
-		if (!key_format.equals("ssh-dss")) {
-			throw new IOWarningException("Unsupported key format found '" + key_format + "' while expecting ssh-dss");
-		}
-
-		final BigInteger p = tr.readMPINT();
-		final BigInteger q = tr.readMPINT();
-		final BigInteger g = tr.readMPINT();
-		final BigInteger y = tr.readMPINT();
-
-		if (tr.remain() != 0) {
-			throw new IOException("Padding in DSA public key!");
-		}
-
-		try {
-			KeyFactory generator = KeyFactory.getInstance("DSA");
-			return (DSAPublicKey) generator.generatePublic(new DSAPublicKeySpec(y, p, q, g));
-		} catch (GeneralSecurityException ex) {
-			throw new IOException("Could not generate DSa Key", ex);
-		}
+		return new DSAPublicKey(p, q, g, y);
 	}
 
 	@Deprecated
-	public static byte[] encodeSSHDSAPublicKey(com.trilead.ssh2.signature.DSAPublicKey pk) throws IOException
+	public static byte[] encodeSSHDSAPublicKey(DSAPublicKey pk) throws IOException
 	{
 		TypesWriter tw = new TypesWriter();
 
@@ -85,21 +55,6 @@ public class DSASHA1Verify
 		tw.writeMPInt(pk.getP());
 		tw.writeMPInt(pk.getQ());
 		tw.writeMPInt(pk.getG());
-		tw.writeMPInt(pk.getY());
-
-		return tw.getBytes();
-	}
-
-	public static byte[] encodeSSHPublicKey(DSAPublicKey pk) throws IOException
-	{
-		DSAParams params = pk.getParams();
-
-		TypesWriter tw = new TypesWriter();
-
-		tw.writeString("ssh-dss");
-		tw.writeMPInt(params.getP());
-		tw.writeMPInt(params.getQ());
-		tw.writeMPInt(params.getG());
 		tw.writeMPInt(pk.getY());
 
 		return tw.getBytes();
@@ -129,38 +84,6 @@ public class DSASHA1Verify
 
 		return tw.getBytes();
 	}
-
-	public static byte[] encodeSSHSignature(byte[] ds) {
-		TypesWriter tw = new TypesWriter();
-
-		tw.writeString("ssh-dss");
-
-		int index = 3;
-		int len = ds[index++] & 0xff;
-		byte[] r = new byte[len];
-		System.arraycopy(ds, index, r, 0, r.length);
-
-		index += len + 1;
-		len = ds[index++] & 0xff;
-		byte[] s = new byte[len];
-		System.arraycopy(ds, index, s, 0, s.length);
-
-
-		byte[] a40 = new byte[40];
-
-		/* Patch (unsigned) r and s into the target array. */
-
-		int r_copylen = (r.length < 20) ? r.length : 20;
-		int s_copylen = (s.length < 20) ? s.length : 20;
-
-		System.arraycopy(r, r.length - r_copylen, a40, 20 - r_copylen, r_copylen);
-		System.arraycopy(s, s.length - s_copylen, a40, 40 - s_copylen, s_copylen);
-
-		tw.writeString(a40, 0, 40);
-
-		return tw.getBytes();
-	}
-
 
 	@Deprecated
 	public static DSASignature decodeSSHDSASignature(byte[] sig) throws IOException
@@ -210,83 +133,8 @@ public class DSASHA1Verify
 		return new DSASignature(r, s);
 	}
 
-	public static byte[] decodeSSHSignature(byte[] sig) throws IOException {
-		byte[] rsArray;
-
-		if (sig.length == 40)
-		{
-			/* OK, another broken SSH server. */
-			rsArray = sig;
-		}
-		else
-		{
-			/* Hopefully a server obeying the standard... */
-			TypesReader tr = new TypesReader(sig);
-
-			String sig_format = tr.readString();
-
-			if (!sig_format.equals("ssh-dss"))
-				throw new IOException("Peer sent wrong signature format");
-
-			rsArray = tr.readByteString();
-
-			if (rsArray.length != 40)
-				throw new IOException("Peer sent corrupt signature");
-
-			if (tr.remain() != 0)
-				throw new IOException("Padding in DSA signature!");
-		}
-
-		/* Remember, s and r are unsigned ints. */
-
-		int i = 0;
-		int j = 0;
-
-		if (rsArray[0] == 0 && rsArray[1] == 0 && rsArray[2] == 0) {
-			j = ((rsArray[i++] << 24) & 0xff000000) | ((rsArray[i++] << 16) & 0x00ff0000)
-					| ((rsArray[i++] << 8) & 0x0000ff00) | ((rsArray[i++]) & 0x000000ff);
-			i += j;
-			j = ((rsArray[i++] << 24) & 0xff000000) | ((rsArray[i++] << 16) & 0x00ff0000)
-					| ((rsArray[i++] << 8) & 0x0000ff00) | ((rsArray[i++]) & 0x000000ff);
-			byte[] tmp = new byte[j];
-			System.arraycopy(rsArray, i, tmp, 0, j);
-			rsArray = tmp;
-		}
-
-		int first = ((rsArray[0] & 0x80) != 0 ? 1 : 0);
-		int second = ((rsArray[20] & 0x80) != 0 ? 1 : 0);
-		int length = rsArray.length + 6 + first + second;
-		byte[] tmp = new byte[length];
-
-		tmp[0] = (byte) 0x30;
-
-		if (rsArray.length != 40) {
-			throw new IOException("Peer sent corrupt signature");
-		}
-
-		tmp[1] = (byte) 0x2c;
-		tmp[1] += first;
-		tmp[1] += second;
-
-		tmp[2] = (byte) 0x02;
-		tmp[3] = (byte) 0x14;
-		tmp[3] += first;
-
-		System.arraycopy(rsArray, 0, tmp, 4 + first, 20);
-
-		tmp[4 + tmp[3]] = (byte) 0x02;
-		tmp[5 + tmp[3]] = (byte) 0x14;
-		tmp[5 + tmp[3]] += second;
-
-		System.arraycopy(rsArray, 20, tmp, 6 + tmp[3] + second, 20);
-
-		rsArray = tmp;
-
-		return rsArray;
-	}
-
 	@Deprecated
-	public static boolean verifySignature(byte[] message, DSASignature ds, com.trilead.ssh2.signature.DSAPublicKey dpk) throws IOException
+	public static boolean verifySignature(byte[] message, DSASignature ds, DSAPublicKey dpk) throws IOException
 	{
 		/* Inspired by Bouncycastle's DSASigner class */
 
@@ -343,19 +191,8 @@ public class DSASHA1Verify
 		return v.equals(r);
 	}
 
-	public static boolean verifySignature(byte[] message, byte[] ds, DSAPublicKey dpk) throws IOException {
-		try {
-			Signature signature = Signature.getInstance("SHA1withDSA");
-			signature.initVerify(dpk);
-			signature.update(message);
-			return signature.verify(ds);
-		} catch (GeneralSecurityException ex) {
-			throw new IOException("Could not verify DSA signature", ex);
-		}
-	}
-
 	@Deprecated
-	public static DSASignature generateSignature(byte[] message, com.trilead.ssh2.signature.DSAPrivateKey pk, SecureRandom rnd)
+	public static DSASignature generateSignature(byte[] message, DSAPrivateKey pk, SecureRandom rnd)
 	{
 		SHA1 md = new SHA1();
 		md.update(message);
@@ -379,16 +216,5 @@ public class DSASHA1Verify
 		BigInteger s = k.mod(pk.getQ());
 
 		return new DSASignature(r, s);
-	}
-
-	public static byte[] generateSignature(byte[] message, DSAPrivateKey pk, SecureRandom rnd) throws IOException {
-		try {
-			Signature signature = Signature.getInstance("SHA1WithDSA");
-			signature.initSign(pk, rnd);
-			signature.update(message);
-			return signature.sign();
-		} catch (GeneralSecurityException ex) {
-			throw new IOException("Could not generate DSA Signature");
-		}
 	}
 }

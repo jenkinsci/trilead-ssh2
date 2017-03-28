@@ -37,8 +37,7 @@ public class ConnectionInfo
 	public String serverToClientMACAlgorithm;
 
 	/**
-	 * The type of the server host key (currently either "ssh-dss" or
-	 * "ssh-rsa").
+	 * The type of the server host key
 	 */
 	public String serverHostKeyAlgorithm;
 	/**

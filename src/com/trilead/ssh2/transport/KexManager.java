@@ -3,9 +3,11 @@ package com.trilead.ssh2.transport;
 
 import java.io.IOException;
 import java.io.InterruptedIOException;
+import java.security.PrivateKey;
+import java.security.PublicKey;
 import java.security.SecureRandom;
-import java.security.interfaces.DSAPublicKey;
-import java.security.interfaces.RSAPublicKey;
+import java.util.ArrayList;
+import java.util.List;
 
 import com.trilead.ssh2.ConnectionInfo;
 import com.trilead.ssh2.DHGexParameters;
@@ -28,8 +30,8 @@ import com.trilead.ssh2.packets.PacketKexDhGexRequestOld;
 import com.trilead.ssh2.packets.PacketKexInit;
 import com.trilead.ssh2.packets.PacketNewKeys;
 import com.trilead.ssh2.packets.Packets;
-import com.trilead.ssh2.signature.DSASHA1Verify;
-import com.trilead.ssh2.signature.RSASHA1Verify;
+import com.trilead.ssh2.signature.KeyAlgorithm;
+import com.trilead.ssh2.signature.KeyAlgorithmManager;
 
 
 /**
@@ -41,6 +43,8 @@ import com.trilead.ssh2.signature.RSASHA1Verify;
 public class KexManager implements MessageHandler
 {
 	private static final Logger log = Logger.getLogger(KexManager.class);
+
+	private static final List<String> DEFAULT_KEY_ALGORITHMS = buildDefaultKeyAlgorithms();
 
 	KexState kxs;
 	int kexCount = 0;
@@ -300,14 +304,30 @@ public class KexManager implements MessageHandler
 
 	public static String[] getDefaultServerHostkeyAlgorithmList()
 	{
-		return new String[] { "ssh-rsa", "ssh-dss" };
+		return DEFAULT_KEY_ALGORITHMS.toArray(new String[DEFAULT_KEY_ALGORITHMS.size()]);
+	}
+
+	private static List<String> buildDefaultKeyAlgorithms() {
+		List<String> algorithms = new ArrayList<>();
+		for (KeyAlgorithm<?, ?> algorithm : KeyAlgorithmManager.getSupportedAlgorithms()) {
+			algorithms.add(algorithms.size(), algorithm.getKeyFormat());
+		}
+		return algorithms;
 	}
 
 	public static void checkServerHostkeyAlgorithmsList(String[] algos)
 	{
 		for (String algo : algos) {
-			if ((!"ssh-rsa".equals(algo)) && (!"ssh-dss".equals(algo)))
+			boolean matched = false;
+			for (KeyAlgorithm<?, ?> algorithm : KeyAlgorithmManager.getSupportedAlgorithms()) {
+				if (algorithm.getKeyFormat().equals(algo)) {
+					matched = true;
+					break;
+				}
+			}
+			if (!matched) {
 				throw new IllegalArgumentException("Unknown server host key algorithm '" + algo + "'");
+			}
 		}
 	}
 
@@ -335,26 +355,13 @@ public class KexManager implements MessageHandler
 
 	private boolean verifySignature(byte[] sig, byte[] hostkey) throws IOException
 	{
-		if (kxs.np.server_host_key_algo.equals("ssh-rsa"))
-		{
-			byte[] rs = RSASHA1Verify.decodeSSHSignature(sig);
-			RSAPublicKey rpk = RSASHA1Verify.decodeSSHPublicKey(hostkey);
-
-			log.log(50, "Verifying ssh-rsa signature");
-
-			return RSASHA1Verify.verifySignature(kxs.H, rs, rpk);
+		for (KeyAlgorithm<PublicKey, PrivateKey> algorithm : KeyAlgorithmManager.getSupportedAlgorithms()) {
+			if (algorithm.getKeyFormat().equals(kxs.np.server_host_key_algo)) {
+				PublicKey publicKey = algorithm.decodePublicKey(hostkey);
+				byte[] signature = algorithm.decodeSignature(sig);
+				return algorithm.verifySignature(kxs.H, signature, publicKey);
+			}
 		}
-
-		if (kxs.np.server_host_key_algo.equals("ssh-dss"))
-		{
-			byte[] ds = DSASHA1Verify.decodeSSHSignature(sig);
-			DSAPublicKey dpk = DSASHA1Verify.decodeSSHPublicKey(hostkey);
-
-			log.log(50, "Verifying ssh-dss signature");
-
-			return DSASHA1Verify.verifySignature(kxs.H, ds, dpk);
-		}
-
 		throw new IOException("Unknown server host key algorithm '" + kxs.np.server_host_key_algo + "'");
 	}
 
