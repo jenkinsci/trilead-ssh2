@@ -12,6 +12,7 @@ import java.io.Reader;
 import java.io.UnsupportedEncodingException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.security.PublicKey;
 import java.security.SecureRandom;
 import java.util.LinkedList;
 import java.util.Vector;
@@ -22,9 +23,9 @@ import com.trilead.ssh2.crypto.digest.HMAC;
 import com.trilead.ssh2.crypto.digest.MD5;
 import com.trilead.ssh2.crypto.digest.SHA1;
 import com.trilead.ssh2.log.Logger;
-import com.trilead.ssh2.signature.DSAPublicKey;
+import java.security.interfaces.DSAPublicKey;
 import com.trilead.ssh2.signature.DSASHA1Verify;
-import com.trilead.ssh2.signature.RSAPublicKey;
+import java.security.interfaces.RSAPublicKey;
 import com.trilead.ssh2.signature.RSASHA1Verify;
 
 
@@ -55,10 +56,10 @@ public class KnownHosts
 
 	private class KnownHostsEntry
 	{
-		String[] patterns;
-		Object key;
+		private final String[] patterns;
+		private final PublicKey key;
 
-		KnownHostsEntry(String[] patterns, Object key)
+		private KnownHostsEntry(String[] patterns, PublicKey key)
 		{
 			this.patterns = patterns;
 			this.key = key;
@@ -98,14 +99,14 @@ public class KnownHosts
 		}
 
 		if ("ssh-rsa".equals(serverHostKeyAlgorithm)) {
-			final RSAPublicKey rpk = RSASHA1Verify.decodeSSHRSAPublicKey(serverHostKey);
+			final RSAPublicKey rpk = RSASHA1Verify.decodeSSHPublicKey(serverHostKey);
 
 			synchronized (publicKeys) {
 				publicKeys.add(new KnownHostsEntry(hostnames, rpk));
 			}
 		}
 		else if ("ssh-dss".equals(serverHostKeyAlgorithm)) {
-			final DSAPublicKey dpk = DSASHA1Verify.decodeSSHDSAPublicKey(serverHostKey);
+			final DSAPublicKey dpk = DSASHA1Verify.decodeSSHPublicKey(serverHostKey);
 
 			synchronized (publicKeys) {
 				publicKeys.add(new KnownHostsEntry(hostnames, dpk));
@@ -227,7 +228,7 @@ public class KnownHosts
 		return true;
 	}
 
-	private int checkKey(String remoteHostname, Object remoteKey)
+	private int checkKey(String remoteHostname, PublicKey remoteKey)
 	{
 		int result = HOSTKEY_IS_NEW;
 
@@ -249,9 +250,9 @@ public class KnownHosts
 		return result;
 	}
 
-	private Vector<Object> getAllKeys(String hostname)
+	private Vector<PublicKey> getAllKeys(String hostname)
 	{
-		Vector<Object> keys = new Vector<>();
+		Vector<PublicKey> keys = new Vector<>();
 
 		synchronized (publicKeys)
 		{
@@ -428,43 +429,12 @@ public class KnownHosts
 		initialize(charWriter.toCharArray());
 	}
 
-	private boolean matchKeys(Object key1, Object key2)
+	private boolean matchKeys(PublicKey key1, PublicKey key2)
 	{
-		if ((key1 instanceof RSAPublicKey) && (key2 instanceof RSAPublicKey))
-		{
-			RSAPublicKey savedRSAKey = (RSAPublicKey) key1;
-			RSAPublicKey remoteRSAKey = (RSAPublicKey) key2;
-
-			if (!savedRSAKey.getE().equals(remoteRSAKey.getE()))
-				return false;
-
-			if (!savedRSAKey.getN().equals(remoteRSAKey.getN()))
-				return false;
-
-			return true;
-		}
-
-		if ((key1 instanceof DSAPublicKey) && (key2 instanceof DSAPublicKey))
-		{
-			DSAPublicKey savedDSAKey = (DSAPublicKey) key1;
-			DSAPublicKey remoteDSAKey = (DSAPublicKey) key2;
-
-			if (!savedDSAKey.getG().equals(remoteDSAKey.getG()))
-				return false;
-
-			if (!savedDSAKey.getP().equals(remoteDSAKey.getP()))
-				return false;
-
-			if (!savedDSAKey.getQ().equals(remoteDSAKey.getQ()))
-				return false;
-
-			if (!savedDSAKey.getY().equals(remoteDSAKey.getY()))
-				return false;
-
-			return true;
-		}
-
-		return false;
+		if (null == key1) {
+		    return null == key2;
+        }
+        return key1.equals(key2);
 	}
 
 	private boolean pseudoRegex(char[] pattern, int i, char[] match, int j)
@@ -522,7 +492,7 @@ public class KnownHosts
 	{
 		String preferredAlgo = null;
 
-		Vector<Object> keys = getAllKeys(hostname);
+		Vector<PublicKey> keys = getAllKeys(hostname);
 
 		for (Object key : keys) {
 			String thisAlgo;
@@ -587,15 +557,15 @@ public class KnownHosts
 	 */
 	public int verifyHostkey(String hostname, String serverHostKeyAlgorithm, byte[] serverHostKey) throws IOException
 	{
-		Object remoteKey;
+		PublicKey remoteKey;
 
 		if ("ssh-rsa".equals(serverHostKeyAlgorithm))
 		{
-			remoteKey = RSASHA1Verify.decodeSSHRSAPublicKey(serverHostKey);
+			remoteKey = RSASHA1Verify.decodeSSHPublicKey(serverHostKey);
 		}
 		else if ("ssh-dss".equals(serverHostKeyAlgorithm))
 		{
-			remoteKey = DSASHA1Verify.decodeSSHDSAPublicKey(serverHostKey);
+			remoteKey = DSASHA1Verify.decodeSSHPublicKey(serverHostKey);
 		}
 		else
 			throw new IllegalArgumentException("Unknown hostkey type " + serverHostKeyAlgorithm);

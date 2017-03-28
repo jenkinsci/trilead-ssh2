@@ -7,7 +7,10 @@ import java.math.BigInteger;
  * 
  * @author Christian Plattner, plattner@trilead.com
  * @version $Id: DSAPrivateKey.java,v 1.1 2007/10/15 12:49:57 cplattne Exp $
+ * @deprecated use {@link java.security.interfaces.DSAPrivateKey}
+ * @see java.security.interfaces.DSAPrivateKey
  */
+@Deprecated
 public class DSAPrivateKey
 {
 	private BigInteger p;

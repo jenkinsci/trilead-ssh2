@@ -5,6 +5,15 @@ import java.io.BufferedReader;
 import java.io.CharArrayReader;
 import java.io.IOException;
 import java.math.BigInteger;
+import java.security.GeneralSecurityException;
+import java.security.KeyFactory;
+import java.security.KeyPair;
+import java.security.PrivateKey;
+import java.security.PublicKey;
+import java.security.spec.DSAPrivateKeySpec;
+import java.security.spec.DSAPublicKeySpec;
+import java.security.spec.RSAPrivateKeySpec;
+import java.security.spec.RSAPublicKeySpec;
 
 import com.trilead.ssh2.crypto.cipher.AES;
 import com.trilead.ssh2.crypto.cipher.BlockCipher;
@@ -26,7 +35,7 @@ public class PEMDecoder
 	private static final int PEM_RSA_PRIVATE_KEY = 1;
 	private static final int PEM_DSA_PRIVATE_KEY = 2;
 
-	private static final int hexToInt(char c)
+	private static int hexToInt(char c)
 	{
 		if ((c >= 'a') && (c <= 'f'))
 		{
@@ -120,7 +129,7 @@ public class PEMDecoder
 		return tmp;
 	}
 
-	private static final PEMStructure parsePEM(char[] pem) throws IOException
+	private static PEMStructure parsePEM(char[] pem) throws IOException
 	{
 		PEMStructure ps = new PEMStructure();
 
@@ -193,7 +202,7 @@ public class PEMDecoder
 			/* Ignore line */
 		}
 
-		StringBuffer keyData = new StringBuffer();
+		StringBuilder keyData = new StringBuilder();
 
 		while (true)
 		{
@@ -221,7 +230,7 @@ public class PEMDecoder
 		return ps;
 	}
 
-	private static final void decryptPEM(PEMStructure ps, byte[] pw) throws IOException
+	private static void decryptPEM(PEMStructure ps, byte[] pw) throws IOException
 	{
 		if (ps.dekInfo == null)
 			throw new IOException("Broken PEM, no mode and salt given, but encryption enabled");
@@ -232,7 +241,7 @@ public class PEMDecoder
 		String algo = ps.dekInfo[0];
 		byte[] salt = hexToByteArray(ps.dekInfo[1]);
 
-		BlockCipher bc = null;
+		BlockCipher bc;
 
 		if (algo.equals("DES-EDE3-CBC"))
 		{
@@ -291,7 +300,7 @@ public class PEMDecoder
 		ps.procType = null;
 	}
 
-	public static final boolean isPEMEncrypted(PEMStructure ps) throws IOException
+	public static boolean isPEMEncrypted(PEMStructure ps) throws IOException
 	{
 		if (ps.procType == null)
 			return false;
@@ -299,7 +308,7 @@ public class PEMDecoder
 		if (ps.procType.length != 2)
 			throw new IOException("Unknown Proc-Type field.");
 
-		if ("4".equals(ps.procType[0]) == false)
+		if (!"4".equals(ps.procType[0]))
 			throw new IOException("Unknown Proc-Type field (" + ps.procType[0] + ")");
 
 		if ("ENCRYPTED".equals(ps.procType[1]))
@@ -308,6 +317,7 @@ public class PEMDecoder
 		return false;
 	}
 
+	@Deprecated
 	public static Object decode(char[] pem, String password) throws IOException
 	{
 		PEMStructure ps = parsePEM(pem);
@@ -369,6 +379,92 @@ public class PEMDecoder
 			BigInteger d = dr.readInt();
 
 			return new RSAPrivateKey(d, e, n);
+		}
+
+		throw new IOException("PEM problem: it is of unknown type");
+	}
+
+
+	public static KeyPair decodePrivateKey(char[] pem, String password) throws IOException
+	{
+		PEMStructure ps = parsePEM(pem);
+
+		if (isPEMEncrypted(ps))
+		{
+			if (password == null)
+				throw new IOException("PEM is encrypted, but no password was specified");
+
+			decryptPEM(ps, password.getBytes("ISO-8859-1"));
+		}
+
+		if (ps.pemType == PEM_DSA_PRIVATE_KEY)
+		{
+			SimpleDERReader dr = new SimpleDERReader(ps.data);
+
+			byte[] seq = dr.readSequenceAsByteArray();
+
+			if (dr.available() != 0)
+				throw new IOException("Padding in DSA PRIVATE KEY DER stream.");
+
+			dr.resetInput(seq);
+
+			BigInteger version = dr.readInt();
+
+			if (version.compareTo(BigInteger.ZERO) != 0)
+				throw new IOException("Wrong version (" + version + ") in DSA PRIVATE KEY DER stream.");
+
+			BigInteger p = dr.readInt();
+			BigInteger q = dr.readInt();
+			BigInteger g = dr.readInt();
+			BigInteger y = dr.readInt();
+			BigInteger x = dr.readInt();
+
+			if (dr.available() != 0)
+				throw new IOException("Padding in DSA PRIVATE KEY DER stream.");
+
+			try {
+				DSAPrivateKeySpec privateKeySpec = new DSAPrivateKeySpec(x, p, q, g);
+				DSAPublicKeySpec publicKeySpec = new DSAPublicKeySpec(y, p, q, g);
+				KeyFactory factory = KeyFactory.getInstance("DSA");
+				PrivateKey privateKey = factory.generatePrivate(privateKeySpec);
+				PublicKey publicKey = factory.generatePublic(publicKeySpec);
+				return new KeyPair(publicKey, privateKey);
+			} catch (GeneralSecurityException ex) {
+				throw new IOException("Could not decode DSA key pair");
+			}
+
+		}
+
+		if (ps.pemType == PEM_RSA_PRIVATE_KEY)
+		{
+			SimpleDERReader dr = new SimpleDERReader(ps.data);
+
+			byte[] seq = dr.readSequenceAsByteArray();
+
+			if (dr.available() != 0)
+				throw new IOException("Padding in RSA PRIVATE KEY DER stream.");
+
+			dr.resetInput(seq);
+
+			BigInteger version = dr.readInt();
+
+			if ((version.compareTo(BigInteger.ZERO) != 0) && (version.compareTo(BigInteger.ONE) != 0))
+				throw new IOException("Wrong version (" + version + ") in RSA PRIVATE KEY DER stream.");
+
+			BigInteger n = dr.readInt();
+			BigInteger e = dr.readInt();
+			BigInteger d = dr.readInt();
+
+			try {
+				RSAPrivateKeySpec privateKeySpec = new RSAPrivateKeySpec(n, d);
+				RSAPublicKeySpec publicKeySpec = new RSAPublicKeySpec(n, e);
+				KeyFactory factory = KeyFactory.getInstance("RSA");
+				PrivateKey privateKey = factory.generatePrivate(privateKeySpec);
+				PublicKey publicKey = factory.generatePublic(publicKeySpec);
+				return new KeyPair(publicKey, privateKey);
+			} catch (GeneralSecurityException ex) {
+				throw new IOException("Could not decode RSA Key Pair");
+			}
 		}
 
 		throw new IOException("PEM problem: it is of unknown type");

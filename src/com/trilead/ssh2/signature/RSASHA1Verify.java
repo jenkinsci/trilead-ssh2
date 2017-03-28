@@ -3,6 +3,12 @@ package com.trilead.ssh2.signature;
 
 import java.io.IOException;
 import java.math.BigInteger;
+import java.security.GeneralSecurityException;
+import java.security.KeyFactory;
+import java.security.Signature;
+import java.security.interfaces.RSAPublicKey;
+import java.security.interfaces.RSAPrivateKey;
+import java.security.spec.RSAPublicKeySpec;
 
 import com.trilead.ssh2.IOWarningException;
 import com.trilead.ssh2.crypto.SimpleDERReader;
@@ -22,7 +28,8 @@ public class RSASHA1Verify
 {
 	private static final Logger log = Logger.getLogger(RSASHA1Verify.class);
 
-	public static RSAPublicKey decodeSSHRSAPublicKey(byte[] key) throws IOException {
+	@Deprecated
+	public static com.trilead.ssh2.signature.RSAPublicKey decodeSSHRSAPublicKey(byte[] key) throws IOException {
 		final TypesReader tr = new TypesReader(key);
 
 		final String key_format = tr.readString();
@@ -37,10 +44,34 @@ public class RSASHA1Verify
 			throw new IOException("Padding in RSA public key!");
 		}
 
-		return new RSAPublicKey(e, n);
+		return new com.trilead.ssh2.signature.RSAPublicKey(e, n);
 	}
 
-	public static byte[] encodeSSHRSAPublicKey(RSAPublicKey pk) throws IOException
+	public static RSAPublicKey decodeSSHPublicKey(byte[] key) throws IOException {
+		final TypesReader tr = new TypesReader(key);
+
+		final String key_format = tr.readString();
+		if (!key_format.equals("ssh-rsa")) {
+			throw new IOWarningException("Unsupported key format found '" + key_format + "' while expecting ssh-rsa");
+		}
+
+		final BigInteger e = tr.readMPINT();
+		final BigInteger n = tr.readMPINT();
+
+		if (tr.remain() != 0) {
+			throw new IOException("Padding in RSA public key!");
+		}
+
+		try {
+			KeyFactory generator = KeyFactory.getInstance("RSA");
+			return (RSAPublicKey) generator.generatePublic(new RSAPublicKeySpec(n, e));
+		} catch (GeneralSecurityException ex) {
+			throw new IOException("Could not generate RSA key", ex);
+		}
+	}
+
+	@Deprecated
+	public static byte[] encodeSSHRSAPublicKey(com.trilead.ssh2.signature.RSAPublicKey pk) throws IOException
 	{
 		TypesWriter tw = new TypesWriter();
 
@@ -51,13 +82,25 @@ public class RSASHA1Verify
 		return tw.getBytes();
 	}
 
+	public static byte[] encodeSSHPublicKey(RSAPublicKey pk) throws IOException
+	{
+		TypesWriter tw = new TypesWriter();
+
+		tw.writeString("ssh-rsa");
+		tw.writeMPInt(pk.getPublicExponent());
+		tw.writeMPInt(pk.getModulus());
+
+		return tw.getBytes();
+	}
+
+	@Deprecated
 	public static RSASignature decodeSSHRSASignature(byte[] sig) throws IOException
 	{
 		TypesReader tr = new TypesReader(sig);
 
 		String sig_format = tr.readString();
 
-		if (sig_format.equals("ssh-rsa") == false)
+		if (!sig_format.equals("ssh-rsa"))
 			throw new IOException("Peer sent wrong signature format");
 
 		/* S is NOT an MPINT. "The value for 'rsa_signature_blob' is encoded as a string
@@ -81,6 +124,37 @@ public class RSASHA1Verify
 		return new RSASignature(new BigInteger(1, s));
 	}
 
+	public static byte[] decodeSSHSignature(byte[] sig) throws IOException
+	{
+		TypesReader tr = new TypesReader(sig);
+
+		String sig_format = tr.readString();
+
+		if (!sig_format.equals("ssh-rsa"))
+			throw new IOException("Peer sent wrong signature format");
+
+		/* S is NOT an MPINT. "The value for 'rsa_signature_blob' is encoded as a string
+		 * containing s (which is an integer, without lengths or padding, unsigned and in
+		 * network byte order)." See also below.
+		 */
+
+		byte[] s = tr.readByteString();
+
+		if (s.length == 0)
+			throw new IOException("Error in RSA signature, S is empty.");
+
+		if (log.isEnabled())
+		{
+			log.log(80, "Decoding ssh-rsa signature string (length: " + s.length + ")");
+		}
+
+		if (tr.remain() != 0)
+			throw new IOException("Padding in RSA signature!");
+
+		return s;
+	}
+
+	@Deprecated
 	public static byte[] encodeSSHRSASignature(RSASignature sig) throws IOException
 	{
 		TypesWriter tw = new TypesWriter();
@@ -104,7 +178,30 @@ public class RSASHA1Verify
 		return tw.getBytes();
 	}
 
-	public static RSASignature generateSignature(byte[] message, RSAPrivateKey pk) throws IOException
+	public static byte[] encodeSSHSignature(byte[] sig) throws IOException
+	{
+		TypesWriter tw = new TypesWriter();
+
+		tw.writeString("ssh-rsa");
+
+		/* S is NOT an MPINT. "The value for 'rsa_signature_blob' is encoded as a string
+		 * containing s (which is an integer, without lengths or padding, unsigned and in
+		 * network byte order)."
+		 */
+
+
+		/* Remove first zero sign byte, if present */
+
+		if ((sig.length > 1) && (sig[0] == 0x00))
+			tw.writeString(sig, 1, sig.length - 1);
+		else
+			tw.writeString(sig, 0, sig.length);
+
+		return tw.getBytes();
+	}
+
+	@Deprecated
+	public static RSASignature generateSignature(byte[] message, com.trilead.ssh2.signature.RSAPrivateKey pk) throws IOException
 	{
 		SHA1 md = new SHA1();
 		md.update(message);
@@ -142,7 +239,20 @@ public class RSASHA1Verify
 		return new RSASignature(s);
 	}
 
-	public static boolean verifySignature(byte[] message, RSASignature ds, RSAPublicKey dpk) throws IOException
+	public static byte[] generateSignature(byte[] message, RSAPrivateKey pk) throws IOException {
+		try {
+			Signature signature = Signature.getInstance("SHA1WithRSA");
+			signature.initSign(pk);
+			signature.update(message);
+			return signature.sign();
+		} catch (GeneralSecurityException ex) {
+			throw new IOException("Could not general RSA signature");
+		}
+	}
+
+
+	@Deprecated
+	public static boolean verifySignature(byte[] message, RSASignature ds, com.trilead.ssh2.signature.RSAPublicKey dpk) throws IOException
 	{
 		SHA1 md = new SHA1();
 		md.update(message);
@@ -283,4 +393,16 @@ public class RSASHA1Verify
 
 		return true;
 	}
+
+	public static boolean verifySignature(byte[] message, byte[] ds, RSAPublicKey dpk) throws IOException {
+		try {
+			Signature signature = Signature.getInstance("SHA1WithRSA");
+			signature.initVerify(dpk);
+			signature.update(message);
+			return signature.verify(ds);
+		} catch (GeneralSecurityException ex) {
+			throw new IOException("Could not verify RSA signature");
+		}
+	}
+
 }

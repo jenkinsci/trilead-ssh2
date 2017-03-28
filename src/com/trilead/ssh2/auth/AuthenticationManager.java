@@ -3,14 +3,21 @@ package com.trilead.ssh2.auth;
 import com.trilead.ssh2.InteractiveCallback;
 import com.trilead.ssh2.crypto.PEMDecoder;
 import com.trilead.ssh2.packets.*;
-import com.trilead.ssh2.signature.*;
+import com.trilead.ssh2.signature.DSASHA1Verify;
+import com.trilead.ssh2.signature.RSASHA1Verify;
 import com.trilead.ssh2.transport.MessageHandler;
 import com.trilead.ssh2.transport.TransportManager;
 
 import java.io.IOException;
 import java.io.InterruptedIOException;
+import java.security.KeyPair;
+import java.security.PrivateKey;
 import java.security.SecureRandom;
-import java.util.Iterator;
+import java.security.interfaces.DSAPrivateKey;
+import java.security.interfaces.DSAPublicKey;
+import java.security.interfaces.RSAPrivateKey;
+import java.security.interfaces.RSAPublicKey;
+import java.util.Collection;
 import java.util.Vector;
 
 
@@ -45,9 +52,8 @@ public class AuthenticationManager implements MessageHandler
 		if (remainingMethods == null)
 			return false;
 
-		for (int i = 0; i < remainingMethods.length; i++)
-		{
-			if (remainingMethods[i].compareTo(methName) == 0)
+		for (String remainingMethod : remainingMethods) {
+			if (remainingMethod.compareTo(methName) == 0)
 				return true;
 		}
 		return false;
@@ -60,7 +66,7 @@ public class AuthenticationManager implements MessageHandler
 			while (packets.size() == 0)
 			{
 				if (connectionClosed)
-					throw (IOException) new IOException("The connection is closed.").initCause(tm
+					throw new IOException("The connection is closed.", tm
 							.getReasonClosedCause());
 
 				try
@@ -107,7 +113,7 @@ public class AuthenticationManager implements MessageHandler
 
 	private boolean initialize(String user) throws IOException
 	{
-		if (initDone == false)
+		if (!initDone)
 		{
 			tm.registerMessageHandler(this, 0, 255);
 
@@ -147,12 +153,10 @@ public class AuthenticationManager implements MessageHandler
 	public boolean authenticatePublicKey(String user, AgentProxy proxy) throws IOException {
 		initialize(user);
 
-		boolean success = false;
-		Iterator agentIdentities = proxy.getIdentities().iterator();
-		while(agentIdentities.hasNext()) {
-			AgentIdentity identity = (AgentIdentity)agentIdentities.next();
+		boolean success;
+		for (AgentIdentity identity : (Collection<AgentIdentity>) proxy.getIdentities()) {
 			success = authenticatePublicKey(user, proxy, identity);
-			if(success) {
+			if (success) {
 				return true;
 			}
 		}
@@ -161,7 +165,7 @@ public class AuthenticationManager implements MessageHandler
 
 	boolean authenticatePublicKey(String user, AgentProxy proxy, AgentIdentity identity) throws IOException {
 
-		if (methodPossible("publickey") == false)
+		if (!methodPossible("publickey"))
 			throw new IOException("Authentication method publickey not supported by the server at this stage.");
 
 		byte[] pubKeyBlob = identity.getPublicKeyBlob();
@@ -218,16 +222,18 @@ public class AuthenticationManager implements MessageHandler
 		{
 			initialize(user);
 
-			if (methodPossible("publickey") == false)
+			if (!methodPossible("publickey"))
 				throw new IOException("Authentication method publickey not supported by the server at this stage.");
 
-			Object key = PEMDecoder.decode(PEMPrivateKey, password);
+			KeyPair keyPair = PEMDecoder.decodePrivateKey(PEMPrivateKey, password);
+			PrivateKey key = keyPair.getPrivate();
+
 
 			if (key instanceof DSAPrivateKey)
 			{
 				DSAPrivateKey pk = (DSAPrivateKey) key;
 
-				byte[] pk_enc = DSASHA1Verify.encodeSSHDSAPublicKey(pk.getPublicKey());
+				byte[] pk_enc = DSASHA1Verify.encodeSSHPublicKey((DSAPublicKey) keyPair.getPublic());
 
 				TypesWriter tw = new TypesWriter();
 
@@ -244,9 +250,9 @@ public class AuthenticationManager implements MessageHandler
 
 				byte[] msg = tw.getBytes();
 
-				DSASignature ds = DSASHA1Verify.generateSignature(msg, pk, rnd);
+				byte[] ds = DSASHA1Verify.generateSignature(msg, pk, rnd);
 
-				byte[] ds_enc = DSASHA1Verify.encodeSSHDSASignature(ds);
+				byte[] ds_enc = DSASHA1Verify.encodeSSHSignature(ds);
 
 				PacketUserauthRequestPublicKey ua = new PacketUserauthRequestPublicKey("ssh-connection", user,
 						"ssh-dss", pk_enc, ds_enc);
@@ -256,7 +262,7 @@ public class AuthenticationManager implements MessageHandler
 			{
 				RSAPrivateKey pk = (RSAPrivateKey) key;
 
-				byte[] pk_enc = RSASHA1Verify.encodeSSHRSAPublicKey(pk.getPublicKey());
+				byte[] pk_enc = RSASHA1Verify.encodeSSHPublicKey((RSAPublicKey) keyPair.getPublic());
 
 				TypesWriter tw = new TypesWriter();
 				{
@@ -274,9 +280,9 @@ public class AuthenticationManager implements MessageHandler
 
 				byte[] msg = tw.getBytes();
 
-				RSASignature ds = RSASHA1Verify.generateSignature(msg, pk);
+				byte[] ds = RSASHA1Verify.generateSignature(msg, pk);
 
-				byte[] rsa_sig_enc = RSASHA1Verify.encodeSSHRSASignature(ds);
+				byte[] rsa_sig_enc = RSASHA1Verify.encodeSSHSignature(ds);
 
 				PacketUserauthRequestPublicKey ua = new PacketUserauthRequestPublicKey("ssh-connection", user,
 						"ssh-rsa", pk_enc, rsa_sig_enc);
@@ -312,7 +318,7 @@ public class AuthenticationManager implements MessageHandler
 		catch (IOException e)
 		{
 			tm.close(e, false);
-			throw (IOException) new IOException("Publickey authentication failed.").initCause(e);
+			throw (IOException) new IOException("Publickey authentication failed.", e);
 		}
 	}
 
@@ -326,7 +332,7 @@ public class AuthenticationManager implements MessageHandler
 		catch (IOException e)
 		{
 			tm.close(e, false);
-			throw (IOException) new IOException("None authentication failed.").initCause(e);
+			throw (IOException) new IOException("None authentication failed.", e);
 		}
 	}
 
@@ -336,7 +342,7 @@ public class AuthenticationManager implements MessageHandler
 		{
 			initialize(user);
 
-			if (methodPossible("password") == false)
+			if (!methodPossible("password"))
 				throw new IOException("Authentication method password not supported by the server at this stage.");
 
 			PacketUserauthRequestPassword ua = new PacketUserauthRequestPassword("ssh-connection", user, pass);
@@ -367,7 +373,7 @@ public class AuthenticationManager implements MessageHandler
 		catch (IOException e)
 		{
 			tm.close(e, false);
-			throw (IOException) new IOException("Password authentication failed.").initCause(e);
+			throw (IOException) new IOException("Password authentication failed.", e);
 		}
 	}
 
@@ -377,7 +383,7 @@ public class AuthenticationManager implements MessageHandler
 		{
 			initialize(user);
 
-			if (methodPossible("keyboard-interactive") == false)
+			if (!methodPossible("keyboard-interactive"))
 				throw new IOException(
 						"Authentication method keyboard-interactive not supported by the server at this stage.");
 
@@ -423,7 +429,7 @@ public class AuthenticationManager implements MessageHandler
 					}
 					catch (Exception e)
 					{
-						throw (IOException) new IOException("Exception in callback.").initCause(e);
+						throw new IOException("Exception in callback.", e);
 					}
 
 					if (responses == null)
@@ -441,7 +447,7 @@ public class AuthenticationManager implements MessageHandler
 		catch (IOException e)
 		{
 			tm.close(e, false);
-			throw (IOException) new IOException("Keyboard-interactive authentication failed.").initCause(e);
+			throw new IOException("Keyboard-interactive authentication failed.", e);
 		}
 	}
 

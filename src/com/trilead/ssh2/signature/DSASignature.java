@@ -7,7 +7,9 @@ import java.math.BigInteger;
  * 
  * @author Christian Plattner, plattner@trilead.com
  * @version $Id: DSASignature.java,v 1.1 2007/10/15 12:49:57 cplattne Exp $
+ * @deprecated signatures are now stored in ray byte[] form.
  */
+@Deprecated
 public class DSASignature
 {
 	private BigInteger r;
