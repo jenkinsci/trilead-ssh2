@@ -12,5 +12,9 @@ public abstract class CertificateDecoder {
 
     public abstract String getEndLine();
 
+    public KeyPair createKeyPair(PEMStructure pemStructure, String password) throws IOException {
+        return createKeyPair(pemStructure);
+    }
+    
     protected abstract KeyPair createKeyPair(PEMStructure pemStructure) throws IOException;
 }

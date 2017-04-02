@@ -5,15 +5,9 @@ import java.io.BufferedReader;
 import java.io.CharArrayReader;
 import java.io.IOException;
 import java.math.BigInteger;
-import java.security.GeneralSecurityException;
-import java.security.KeyFactory;
 import java.security.KeyPair;
-import java.security.PrivateKey;
-import java.security.PublicKey;
-import java.security.spec.DSAPrivateKeySpec;
-import java.security.spec.DSAPublicKeySpec;
-import java.security.spec.RSAPrivateKeySpec;
-import java.security.spec.RSAPublicKeySpec;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import com.trilead.ssh2.crypto.cipher.AES;
 import com.trilead.ssh2.crypto.cipher.BlockCipher;
@@ -34,6 +28,7 @@ import com.trilead.ssh2.signature.RSAPrivateKey;
  */
 public class PEMDecoder
 {
+	private static final Logger LOGGER = Logger.getLogger(PEMDecoder.class.getName());
 	private static final int PEM_RSA_PRIVATE_KEY = 1;
 	private static final int PEM_DSA_PRIVATE_KEY = 2;
 
@@ -78,7 +73,7 @@ public class PEMDecoder
 		return decoded;
 	}
 
-	private static byte[] generateKeyFromPasswordSaltWithMD5(byte[] password, byte[] salt, int keyLen)
+	public static byte[] generateKeyFromPasswordSaltWithMD5(byte[] password, byte[] salt, int keyLen)
 			throws IOException
 	{
 		if (salt.length < 8)
@@ -495,8 +490,9 @@ public class PEMDecoder
 			}
 
 			try {
-				return decoder.createKeyPair(ps);
+				return decoder.createKeyPair(ps, password);
 			} catch (IOException ex) {
+				LOGGER.log(Level.WARNING, "Could not decode PEM Key using current decoder", ex);
 				// we couldn't decode the input, try another decoder
 			}
 		}

@@ -25,6 +25,7 @@ public final class KeyAlgorithmManager {
 
     private static Collection<KeyAlgorithm<PublicKey, PrivateKey>> buildSupportAlgorithmsList() {
         List<KeyAlgorithm<?, ?>> algorithms = new ArrayList<>();
+        algorithms.add(new ED25519KeyAlgorithm());
 
         algorithms.add(new RSAKeyAlgorithm());
         algorithms.add(new DSAKeyAlgorithm());
