@@ -1311,7 +1311,7 @@ public class Connection
 			throw new IllegalArgumentException();
 
 		algos = removeDuplicates(algos);
-		KexManager.checkServerHostkeyAlgorithmsList(algos);
+		KexManagerNew.checkServerHostkeyAlgorithmsList(algos);
 		cryptoWishList.serverHostKeyAlgorithms = algos;
 	}
 
