@@ -14,7 +14,7 @@ import com.trilead.ssh2.crypto.cipher.BlockCipher;
 import com.trilead.ssh2.crypto.cipher.BlockCipherFactory;
 import com.trilead.ssh2.crypto.dh.DhGroupExchange;
 import com.trilead.ssh2.crypto.dh.GenericDhExchange;
-import com.trilead.ssh2.crypto.digest.MAC;
+import com.trilead.ssh2.crypto.digest.MACNew;
 import com.trilead.ssh2.log.Logger;
 import com.trilead.ssh2.packets.PacketKexDHInitNew;
 import com.trilead.ssh2.packets.PacketKexDHReply;
@@ -253,11 +253,11 @@ public class KexManager implements MessageHandler
 	{
 		try
 		{
-			int mac_cs_key_len = MAC.getKeyLen(kxs.np.mac_algo_client_to_server);
+			int mac_cs_key_len = MACNew.getKeyLen(kxs.np.mac_algo_client_to_server);
 			int enc_cs_key_len = BlockCipherFactory.getKeySize(kxs.np.enc_algo_client_to_server);
 			int enc_cs_block_len = BlockCipherFactory.getBlockSize(kxs.np.enc_algo_client_to_server);
 
-			int mac_sc_key_len = MAC.getKeyLen(kxs.np.mac_algo_server_to_client);
+			int mac_sc_key_len = MACNew.getKeyLen(kxs.np.mac_algo_server_to_client);
 			int enc_sc_key_len = BlockCipherFactory.getKeySize(kxs.np.enc_algo_server_to_client);
 			int enc_sc_block_len = BlockCipherFactory.getBlockSize(kxs.np.enc_algo_server_to_client);
 
@@ -284,14 +284,14 @@ public class KexManager implements MessageHandler
 		tm.sendKexMessage(ign.getPayload());
 
 		BlockCipher cbc;
-		MAC mac;
+		MACNew mac;
 
 		try
 		{
 			cbc = BlockCipherFactory.createCipher(kxs.np.enc_algo_client_to_server, true, km.enc_key_client_to_server,
 					km.initial_iv_client_to_server);
 
-			mac = new MAC(kxs.np.mac_algo_client_to_server, km.integrity_key_client_to_server);
+			mac = new MACNew(kxs.np.mac_algo_client_to_server, km.integrity_key_client_to_server);
 
 		}
 		catch (IllegalArgumentException e1)
@@ -462,14 +462,14 @@ public class KexManager implements MessageHandler
 				throw new IOException("Peer sent SSH_MSG_NEWKEYS, but I have no key material ready!");
 
 			BlockCipher cbc;
-			MAC mac;
+			MACNew mac;
 
 			try
 			{
 				cbc = BlockCipherFactory.createCipher(kxs.np.enc_algo_server_to_client, false,
 						km.enc_key_server_to_client, km.initial_iv_server_to_client);
 
-				mac = new MAC(kxs.np.mac_algo_server_to_client, km.integrity_key_server_to_client);
+				mac = new MACNew(kxs.np.mac_algo_server_to_client, km.integrity_key_server_to_client);
 
 			}
 			catch (IllegalArgumentException e1)
