@@ -23,7 +23,7 @@ public class PacketKexInit
 	public PacketKexInit(CryptoWishList cwl, SecureRandom rnd)
 	{
 		kp.cookie = new byte[16];
-		new SecureRandom().nextBytes(kp.cookie);
+		rnd.nextBytes(kp.cookie);
 
 		kp.kex_algorithms = cwl.kexAlgorithms;
 		kp.server_host_key_algorithms = cwl.serverHostKeyAlgorithms;
