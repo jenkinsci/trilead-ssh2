@@ -44,7 +44,7 @@ public class KexManager implements MessageHandler
 {
 	private static final Logger log = Logger.getLogger(KexManager.class);
 
-	KexState kxs;
+	KexStateNew kxs;
 	int kexCount = 0;
 	KeyMaterial km;
 	byte[] sessionId;
@@ -240,7 +240,7 @@ public class KexManager implements MessageHandler
 
 		if (kxs == null)
 		{
-			kxs = new KexState();
+			kxs = new KexStateNew();
 
 			kxs.dhgexParameters = nextKEXdhgexParameters;
 			PacketKexInit kp = new PacketKexInit(nextKEXcryptoWishList);
@@ -392,7 +392,7 @@ public class KexManager implements MessageHandler
 				 * Ah, OK, peer wants to do KEX. Let's be nice and play
 				 * together.
 				 */
-				kxs = new KexState();
+				kxs = new KexStateNew();
 				kxs.dhgexParameters = nextKEXdhgexParameters;
 				kip = new PacketKexInit(nextKEXcryptoWishList);
 				kxs.localKEX = kip;
