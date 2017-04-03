@@ -7,13 +7,10 @@ import java.security.NoSuchAlgorithmException;
 
 /**
  * HashForSSH2TypesNew.
- * 
- * @author Christian Plattner, plattner@trilead.com
- * @version $Id: HashForSSH2Types.java,v 1.1 2007/10/15 12:49:57 cplattne Exp $
  */
 public class HashForSSH2TypesNew
 {
-	MessageDigest md;
+	private MessageDigest md;
 
 	public HashForSSH2TypesNew(String type)
 	{
