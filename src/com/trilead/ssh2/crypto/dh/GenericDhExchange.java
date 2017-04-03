@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 
-import com.trilead.ssh2.crypto.digest.HashForSSH2Types;
+import com.trilead.ssh2.crypto.digest.HashForSSH2TypesNew;
 import com.trilead.ssh2.log.Logger;
 
 
@@ -27,7 +27,7 @@ public abstract class GenericDhExchange
 	}
 
 	public static GenericDhExchange getInstance(String algo) {
-		return new DhExchange();
+		return new DhExchangeNew();
 	}
 
 	public abstract void init(String name) throws IOException;
@@ -64,7 +64,7 @@ public abstract class GenericDhExchange
 	public byte[] calculateH(byte[] clientversion, byte[] serverversion, byte[] clientKexPayload,
 			byte[] serverKexPayload, byte[] hostKey) throws UnsupportedEncodingException
 	{
-		HashForSSH2Types hash = new HashForSSH2Types(getHashAlgo());
+		HashForSSH2TypesNew hash = new HashForSSH2TypesNew(getHashAlgo());
 
 		if (log.isEnabled())
 		{
