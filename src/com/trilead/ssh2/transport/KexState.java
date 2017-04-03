@@ -4,8 +4,8 @@ package com.trilead.ssh2.transport;
 import java.math.BigInteger;
 
 import com.trilead.ssh2.DHGexParameters;
+import com.trilead.ssh2.crypto.dh.DhExchange;
 import com.trilead.ssh2.crypto.dh.DhGroupExchange;
-import com.trilead.ssh2.crypto.dh.GenericDhExchange;
 import com.trilead.ssh2.packets.PacketKexInit;
 
 /**
@@ -23,11 +23,10 @@ public class KexState
 
 	public BigInteger K;
 	public byte[] H;
-
+	
 	public byte[] hostkey;
-
-	public String hashAlgo;
-	public GenericDhExchange dhx;
+	
+	public DhExchange dhx;
 	public DhGroupExchange dhgx;
 	public DHGexParameters dhgexParameters;
 }
