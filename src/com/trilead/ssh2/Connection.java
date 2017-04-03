@@ -9,7 +9,7 @@ import com.trilead.ssh2.crypto.digest.MACNew;
 import com.trilead.ssh2.log.Logger;
 import com.trilead.ssh2.packets.PacketIgnore;
 import com.trilead.ssh2.transport.ClientServerHello;
-import com.trilead.ssh2.transport.KexManager;
+import com.trilead.ssh2.transport.KexManagerNew;
 import com.trilead.ssh2.transport.TransportManagerNew;
 import com.trilead.ssh2.util.TimeoutService;
 import com.trilead.ssh2.util.TimeoutService.TimeoutToken;
@@ -86,7 +86,7 @@ public class Connection
 	 */
 	public static synchronized String[] getAvailableServerHostKeyAlgorithms()
 	{
-		return KexManager.getDefaultServerHostkeyAlgorithmList();
+		return KexManagerNew.getDefaultServerHostkeyAlgorithmList();
 	}
 
 	private AuthenticationManager am;
