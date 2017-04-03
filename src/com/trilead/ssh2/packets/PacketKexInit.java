@@ -39,7 +39,7 @@ public class PacketKexInit
 		kp.reserved_field1 = 0;
 	}
 
-	public PacketKeyInit(CryptoWishList cwl) {
+	public PacketKexInit(CryptoWishList cwl) {
 	   this(cwl, new SecureRandom());
 	}
 
