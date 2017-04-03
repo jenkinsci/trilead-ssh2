@@ -57,7 +57,7 @@ public class KexManager implements MessageHandler
 
 	boolean ignore_next_kex_packet = false;
 
-	final TransportManager tm;
+	final TransportManagerNew tm;
 
 	CryptoWishList nextKEXcryptoWishList;
 	DHGexParameters nextKEXdhgexParameters;
@@ -67,7 +67,7 @@ public class KexManager implements MessageHandler
 	final int port;
 	final SecureRandom rnd;
 
-	public KexManager(TransportManager tm, ClientServerHello csh, CryptoWishList initialCwl, String hostname, int port,
+	public KexManager(TransportManagerNew tm, ClientServerHello csh, CryptoWishList initialCwl, String hostname, int port,
 			ServerHostKeyVerifier keyVerifier, SecureRandom rnd)
 	{
 		this.tm = tm;
