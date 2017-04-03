@@ -15,7 +15,7 @@ public class HashForSSH2TypesNew
 {
 	MessageDigest md;
 
-	public HashForSSH2Types(String type)
+	public HashForSSH2TypesNew(String type)
 	{
 		try {
 			md = MessageDigest.getInstance(type);
