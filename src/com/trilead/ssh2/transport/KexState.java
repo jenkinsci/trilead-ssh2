@@ -13,6 +13,8 @@ import com.trilead.ssh2.packets.PacketKexInit;
  * 
  * @author Christian Plattner, plattner@trilead.com
  * @version $Id: KexState.java,v 1.1 2007/10/15 12:49:57 cplattne Exp $
+ *
+ * Deprecated use KexStateNew.
  */
 public class KexState
 {
