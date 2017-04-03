@@ -10,7 +10,7 @@ import com.trilead.ssh2.crypto.cipher.BlockCipher;
 import com.trilead.ssh2.crypto.cipher.CipherInputStream;
 import com.trilead.ssh2.crypto.cipher.CipherOutputStream;
 import com.trilead.ssh2.crypto.cipher.NullCipher;
-import com.trilead.ssh2.crypto.digest.MAC;
+import com.trilead.ssh2.crypto.digest.MACNew;
 import com.trilead.ssh2.log.Logger;
 import com.trilead.ssh2.packets.Packets;
 
@@ -37,13 +37,13 @@ public class TransportConnection
 
 	/* Depends on current MAC and CIPHER */
 
-	MAC send_mac;
+	MACNew send_mac;
 
 	byte[] send_mac_buffer;
 
 	int send_padd_blocksize = 8;
 
-	MAC recv_mac;
+	MACNew recv_mac;
 
 	byte[] recv_mac_buffer;
 
@@ -74,7 +74,7 @@ public class TransportConnection
 		this.rnd = rnd;
 	}
 
-	public void changeRecvCipher(BlockCipher bc, MAC mac)
+	public void changeRecvCipher(BlockCipher bc, MACNew mac)
 	{
 		cis.changeCipher(bc);
 		recv_mac = mac;
@@ -85,7 +85,7 @@ public class TransportConnection
 			recv_padd_blocksize = 8;
 	}
 
-	public void changeSendCipher(BlockCipher bc, MAC mac)
+	public void changeSendCipher(BlockCipher bc, MACNew mac)
 	{
 		if ((bc instanceof NullCipher) == false)
 		{
