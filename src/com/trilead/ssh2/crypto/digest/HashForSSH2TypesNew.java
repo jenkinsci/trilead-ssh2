@@ -80,8 +80,7 @@ public class HashForSSH2TypesNew
 		try {
 			md.digest(out, off, out.length - off);
 		} catch (DigestException e) {
-			// TODO is this right?!
-			throw new RuntimeException("Unable to digest", e);
+			throw new IOExceptions("Unable to digest", e);
 		}
 	}
 }
