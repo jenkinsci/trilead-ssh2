@@ -130,7 +130,7 @@ public class TransportManagerNew
 	Throwable reasonClosedCause = null;
 
 	TransportConnectionNew tc;
-	KexManager km;
+	KexManagerNew km;
 
 	Vector messageHandlers = new Vector();
 
@@ -473,7 +473,7 @@ public class TransportManagerNew
 
 		tc = new TransportConnectionNew(sock.getInputStream(), sock.getOutputStream(), rnd);
 
-		km = new KexManager(this, csh, cwl, hostname, port, verifier, rnd);
+		km = new KexManagerNew(this, csh, cwl, hostname, port, verifier, rnd);
 		km.initiateKEX(cwl, dhgex);
 
 		receiveThread = new Thread(new Runnable()
@@ -798,6 +798,6 @@ public class TransportManagerNew
      * Advertised maximum SSH packet size that the other side can send to us.
      */
     public static final int MAX_PACKET_SIZE = Integer.getInteger(
-    			TransportManager.class.getName()+".maxPacketSize",
+    			TransportManagerNew.class.getName()+".maxPacketSize",
     			64*1024);
 }
