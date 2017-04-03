@@ -1,5 +1,7 @@
 package com.trilead.ssh2.packets;
 
+import java.math.BigInteger;
+
 /**
  * PacketKexDHInit.
  * 
@@ -10,11 +12,11 @@ public class PacketKexDHInit
 {
 	byte[] payload;
 
-	byte[] publicKey;
+	BigInteger e;
 
-	public PacketKexDHInit(byte[] publicKey)
+	public PacketKexDHInit(BigInteger e)
 	{
-		this.publicKey = publicKey;
+		this.e = e;
 	}
 
 	public byte[] getPayload()
@@ -23,7 +25,7 @@ public class PacketKexDHInit
 		{
 			TypesWriter tw = new TypesWriter();
 			tw.writeByte(Packets.SSH_MSG_KEXDH_INIT);
-			tw.writeString(publicKey, 0, publicKey.length);
+			tw.writeMPInt(e);
 			payload = tw.getBytes();
 		}
 		return payload;
