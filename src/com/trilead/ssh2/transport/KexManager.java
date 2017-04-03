@@ -39,6 +39,8 @@ import com.trilead.ssh2.signature.RSASignature;
  * 
  * @author Christian Plattner, plattner@trilead.com
  * @version $Id: KexManager.java,v 1.1 2007/10/15 12:49:56 cplattne Exp $
+ *
+ * Deprecated use KexManagerNew.
  */
 public class KexManager implements MessageHandler
 {
