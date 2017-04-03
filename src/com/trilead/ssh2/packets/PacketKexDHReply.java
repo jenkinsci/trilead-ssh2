@@ -2,18 +2,22 @@ package com.trilead.ssh2.packets;
 
 import java.io.IOException;
 
+import java.math.BigInteger;
+
 /**
  * PacketKexDHReply.
  * 
  * @author Christian Plattner, plattner@trilead.com
  * @version $Id: PacketKexDHReply.java,v 1.1 2007/10/15 12:49:55 cplattne Exp $
+ *
+ * @Deprecated use PacketKexDHReplyNew.
  */
 public class PacketKexDHReply
 {
 	byte[] payload;
 
 	byte[] hostKey;
-	byte[] publicKey;
+	BigInteger f;
 	byte[] signature;
 	
 	public PacketKexDHReply(byte payload[], int off, int len) throws IOException
@@ -30,15 +34,15 @@ public class PacketKexDHReply
 					+ packet_type + ")");
 
 		hostKey = tr.readByteString();
-		publicKey = tr.readByteString();
+		f = tr.readMPINT();
 		signature = tr.readByteString();
 
 		if (tr.remain() != 0) throw new IOException("PADDING IN SSH_MSG_KEXDH_REPLY!");
 	}
 
-	public byte[] getF()
+	public BigInteger getF()
 	{
-		return publicKey;
+		return f;
 	}
 	
 	public byte[] getHostKey()
