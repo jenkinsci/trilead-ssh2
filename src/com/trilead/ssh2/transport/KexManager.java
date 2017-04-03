@@ -17,7 +17,7 @@ import com.trilead.ssh2.crypto.dh.GenericDhExchange;
 import com.trilead.ssh2.crypto.digest.MACNew;
 import com.trilead.ssh2.log.Logger;
 import com.trilead.ssh2.packets.PacketKexDHInitNew;
-import com.trilead.ssh2.packets.PacketKexDHReply;
+import com.trilead.ssh2.packets.PacketKexDHReplyNew;
 import com.trilead.ssh2.packets.PacketKexDhGexGroup;
 import com.trilead.ssh2.packets.PacketKexDhGexInit;
 import com.trilead.ssh2.packets.PacketKexDhGexReply;
@@ -578,7 +578,7 @@ public class KexManager implements MessageHandler
 			if (kxs.state == 1)
 			{
 
-				PacketKexDHReply dhr = new PacketKexDHReply(msg, 0, msglen);
+				PacketKexDHReplyNew dhr = new PacketKexDHReplyNew(msg, 0, msglen);
 
 				kxs.hostkey = dhr.getHostKey();
 
