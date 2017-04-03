@@ -706,7 +706,7 @@ public class Connection
 
 		final TimeoutState state = new TimeoutState();
 
-		tm = new TransportManager(hostname, port);
+		tm = new TransportManagerNew(hostname, port);
 		
 		tm.setConnectionMonitors(connectionMonitors);
 
