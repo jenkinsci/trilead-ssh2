@@ -39,8 +39,8 @@ public class PacketKexInit
 		kp.reserved_field1 = 0;
 	}
 
-	public PacketKeyInit(CryptoWishList cw1) {
-	   this(cw1, new SecureRandom());
+	public PacketKeyInit(CryptoWishList cwl) {
+	   this(cwl, new SecureRandom());
 	}
 
 	public PacketKexInit(byte payload[], int off, int len) throws IOException
