@@ -5,7 +5,7 @@ import com.trilead.ssh2.crypto.PEMDecoder;
 import com.trilead.ssh2.packets.*;
 import com.trilead.ssh2.signature.*;
 import com.trilead.ssh2.transport.MessageHandler;
-import com.trilead.ssh2.transport.TransportManager;
+import com.trilead.ssh2.transport.TransportManagerNew;
 
 import java.io.IOException;
 import java.io.InterruptedIOException;
@@ -22,7 +22,7 @@ import java.util.Vector;
  */
 public class AuthenticationManager implements MessageHandler
 {
-	TransportManager tm;
+	TransportManagerNew tm;
 
 	Vector packets = new Vector();
 	boolean connectionClosed = false;
