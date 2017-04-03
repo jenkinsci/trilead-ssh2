@@ -4,7 +4,7 @@ import java.math.BigInteger;
 import java.security.DigestException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.io.IOExceptions;
+import java.io.IOException;
 
 /**
  * HashForSSH2TypesNew.
@@ -81,7 +81,7 @@ public class HashForSSH2TypesNew
 		try {
 			md.digest(out, off, out.length - off);
 		} catch (DigestException e) {
-			throw new IOExceptions("Unable to digest", e);
+			throw new IOException("Unable to digest", e);
 		}
 	}
 }
