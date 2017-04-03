@@ -21,7 +21,7 @@ import com.trilead.ssh2.ServerHostKeyVerifier;
 import com.trilead.ssh2.crypto.Base64;
 import com.trilead.ssh2.crypto.CryptoWishList;
 import com.trilead.ssh2.crypto.cipher.BlockCipher;
-import com.trilead.ssh2.crypto.digest.MACNew;
+import com.trilead.ssh2.crypto.digest.MAC;
 import com.trilead.ssh2.log.Logger;
 import com.trilead.ssh2.packets.PacketDisconnect;
 import com.trilead.ssh2.packets.Packets;
@@ -50,6 +50,8 @@ import com.trilead.ssh2.util.Tokenizer;
  * 
  * @author Christian Plattner, plattner@trilead.com
  * @version $Id: TransportManager.java,v 1.2 2008/04/01 12:38:09 cplattne Exp $
+ *
+ * Deprecated use TransportManagerNew.
  */
 public class TransportManager
 {
@@ -602,12 +604,12 @@ public class TransportManager
 		km.initiateKEX(cwl, dhgex);
 	}
 
-	public void changeRecvCipher(BlockCipher bc, MACNew mac)
+	public void changeRecvCipher(BlockCipher bc, MAC mac)
 	{
 		tc.changeRecvCipher(bc, mac);
 	}
 
-	public void changeSendCipher(BlockCipher bc, MACNew mac)
+	public void changeSendCipher(BlockCipher bc, MAC mac)
 	{
 		tc.changeSendCipher(bc, mac);
 	}
