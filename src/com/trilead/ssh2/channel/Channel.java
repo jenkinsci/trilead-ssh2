@@ -5,7 +5,7 @@ import com.trilead.ssh2.log.Logger;
 import com.trilead.ssh2.packets.PacketSignal;
 import com.trilead.ssh2.packets.PacketWindowChange;
 import com.trilead.ssh2.packets.Packets;
-import com.trilead.ssh2.transport.TransportManager;
+import com.trilead.ssh2.transport.TransportManagerNew;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -252,7 +252,7 @@ public class Channel
 		this.cm = cm;
 
 		this.localWindow = channelBufferSize;
-		this.localMaxPacketSize = TransportManager.MAX_PACKET_SIZE - 1024; // leave enough slack
+		this.localMaxPacketSize = TransportManagerNew.MAX_PACKET_SIZE - 1024; // leave enough slack
 
 		this.stdinStream = new ChannelOutputStream(this);
 		this.stdout.stream = new ChannelInputStream(this, false);
