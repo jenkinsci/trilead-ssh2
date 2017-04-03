@@ -20,7 +20,7 @@ public class PacketKexInit
 
 	KexParameters kp = new KexParameters();
 
-	public PacketKexInit(CryptoWishList cwl)
+	public PacketKexInit(CryptoWishList cwl, SecureRandom rnd)
 	{
 		kp.cookie = new byte[16];
 		new SecureRandom().nextBytes(kp.cookie);
@@ -37,6 +37,10 @@ public class PacketKexInit
 		kp.languages_server_to_client = new String[] {};
 		kp.first_kex_packet_follows = false;
 		kp.reserved_field1 = 0;
+	}
+
+	public PacketKeyInit(CryptoWishList cw1) {
+	   this(cw1, new SecureRandom());
 	}
 
 	public PacketKexInit(byte payload[], int off, int len) throws IOException
