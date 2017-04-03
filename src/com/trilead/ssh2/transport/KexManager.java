@@ -16,7 +16,7 @@ import com.trilead.ssh2.crypto.dh.DhGroupExchange;
 import com.trilead.ssh2.crypto.dh.GenericDhExchange;
 import com.trilead.ssh2.crypto.digest.MAC;
 import com.trilead.ssh2.log.Logger;
-import com.trilead.ssh2.packets.PacketKexDHInit;
+import com.trilead.ssh2.packets.PacketKexDHInitNew;
 import com.trilead.ssh2.packets.PacketKexDHReply;
 import com.trilead.ssh2.packets.PacketKexDhGexGroup;
 import com.trilead.ssh2.packets.PacketKexDhGexInit;
@@ -447,7 +447,7 @@ public class KexManager implements MessageHandler
 				kxs.dhx.init(kxs.np.kex_algo);
 				kxs.hashAlgo = kxs.dhx.getHashAlgo();
 
-				PacketKexDHInit kp = new PacketKexDHInit(kxs.dhx.getE());
+				PacketKexDHInitNew kp = new PacketKexDHInitNew(kxs.dhx.getE());
 				tm.sendKexMessage(kp.getPayload());
 				kxs.state = 1;
 				return;
