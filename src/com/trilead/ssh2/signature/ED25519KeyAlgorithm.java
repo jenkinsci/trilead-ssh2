@@ -26,19 +26,20 @@ import java.util.Arrays;
  */
 public class ED25519KeyAlgorithm extends KeyAlgorithm<EdDSAPublicKey, EdDSAPrivateKey> {
     
-    private static final String ED25519 = "ssh-ed25519";
+    private static final String ED25519_KEY_NAME = "ssh-ed25519";
+    private static final String ED25519_CURVE_NAME = "Ed25519";
     
     protected ED25519KeyAlgorithm() {
         /*Whilst the signature is 'NoneWith', it actually uses a digest from the key's parameter specification
          * so is really SHA512WithEdDSA, but has to be looked up using what's in the Provider implementation.
          */
-        super("NoneWithEdDSA", ED25519, EdDSAPrivateKey.class, new EdDSASecurityProvider());
+        super("NoneWithEdDSA", ED25519_KEY_NAME, EdDSAPrivateKey.class, new EdDSASecurityProvider());
     }
     
     @Override
     public byte[] encodeSignature(byte[] signature) throws IOException {
         TypesWriter signatureWriter = new TypesWriter();
-        signatureWriter.writeString(ED25519);
+        signatureWriter.writeString(ED25519_KEY_NAME);
         signatureWriter.writeString(signature, 0, signature.length);
         return signatureWriter.getBytes();
     }
@@ -48,7 +49,7 @@ public class ED25519KeyAlgorithm extends KeyAlgorithm<EdDSAPublicKey, EdDSAPriva
         TypesReader typesReader = new TypesReader(encodedSignature);
     
         String signatureFormat = typesReader.readString();
-        if (!signatureFormat.equals(ED25519)) {
+        if (!signatureFormat.equals(ED25519_KEY_NAME)) {
             throw new IOException("Invalid signature format");
         }
     
@@ -65,7 +66,7 @@ public class ED25519KeyAlgorithm extends KeyAlgorithm<EdDSAPublicKey, EdDSAPriva
         byte[] encoded = publicKey.getAbyte();
 
         TypesWriter typesWriter = new TypesWriter();
-        typesWriter.writeString(ED25519);
+        typesWriter.writeString(ED25519_KEY_NAME);
         typesWriter.writeString(encoded, 0, encoded.length);
         return typesWriter.getBytes();
     }
@@ -75,7 +76,7 @@ public class ED25519KeyAlgorithm extends KeyAlgorithm<EdDSAPublicKey, EdDSAPriva
         TypesReader typesReader = new TypesReader(encodedPublicKey);
     
         String keyFormat = typesReader.readString();
-        if (!keyFormat.equals(ED25519)) {
+        if (!keyFormat.equals(ED25519_KEY_NAME)) {
             throw new IOException("Invalid key type");
         }
     
@@ -84,8 +85,7 @@ public class ED25519KeyAlgorithm extends KeyAlgorithm<EdDSAPublicKey, EdDSAPriva
             throw new IOException("Unexpected padding in public key");
         }
     
-        return new EdDSAPublicKey(new EdDSAPublicKeySpec(
-                keyBytes, EdDSANamedCurveTable.getByName(EdDSANamedCurveTable.CURVE_ED25519_SHA512)));
+        return new EdDSAPublicKey(new EdDSAPublicKeySpec(keyBytes, EdDSANamedCurveTable.getByName(ED25519_CURVE_NAME)));
     }
     
     @Override
@@ -158,13 +158,13 @@ public class ED25519KeyAlgorithm extends KeyAlgorithm<EdDSAPublicKey, EdDSAPriva
             }
     
             String keyType = privateKeyTypeReader.readString();
-            if (!keyType.equals(ED25519)) {
+            if (!keyType.equals(ED25519_KEY_NAME)) {
                 throw new IOException("Invalid key type");
             }
     
             byte[] publicBytes = privateKeyTypeReader.readByteString();
             byte[] privateBytes = privateKeyTypeReader.readByteString();
-            EdDSAParameterSpec spec = EdDSANamedCurveTable.getByName(EdDSANamedCurveTable.CURVE_ED25519_SHA512);
+            EdDSAParameterSpec spec = EdDSANamedCurveTable.getByName(ED25519_CURVE_NAME);
             
             EdDSAPublicKeySpec publicKeySpec = new EdDSAPublicKeySpec(publicBytes, spec);
             EdDSAPrivateKeySpec privateKeySpec = new EdDSAPrivateKeySpec(Arrays.copyOfRange(privateBytes, 0, 32), spec);
