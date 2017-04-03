@@ -4,7 +4,7 @@ import java.math.BigInteger;
 import java.security.DigestException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.io.IOException;
+import java.io.IOExceptions;
 
 /**
  * HashForSSH2TypesNew.
