@@ -24,7 +24,7 @@ import com.trilead.ssh2.packets.PacketWindowChange;
 import com.trilead.ssh2.packets.Packets;
 import com.trilead.ssh2.packets.TypesReader;
 import com.trilead.ssh2.transport.MessageHandler;
-import com.trilead.ssh2.transport.TransportManager;
+import com.trilead.ssh2.transport.TransportManagerNew;
 
 /**
  * ChannelManager. Please read the comments in Channel.java.
@@ -40,7 +40,7 @@ public class ChannelManager implements MessageHandler
 
 	private HashMap x11_magic_cookies = new HashMap();
 
-	/*package*/ TransportManager tm;
+	/*package*/ TransportManagerNew tm;
 
 	private Vector channels = new Vector();
 	private int nextLocalChannel = 100;
@@ -54,7 +54,7 @@ public class ChannelManager implements MessageHandler
 
 	private boolean listenerThreadsAllowed = true;
 
-	public ChannelManager(TransportManager tm)
+	public ChannelManager(TransportManagerNew tm)
 	{
 		this.tm = tm;
 		tm.registerMessageHandler(this, 80, 100);
