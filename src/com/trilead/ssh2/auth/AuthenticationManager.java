@@ -35,7 +35,7 @@ public class AuthenticationManager implements MessageHandler
 	boolean authenticated = false;
 	boolean initDone = false;
 
-	public AuthenticationManager(TransportManager tm)
+	public AuthenticationManager(TransportManagerNew tm)
 	{
 		this.tm = tm;
 	}
