@@ -71,7 +71,7 @@ public class HashForSSH2TypesNew
 		return tmp;
 	}
 
-	public void getDigest(byte[] out)
+	public void getDigest(byte[] out) throws IOException
 	{
 		getDigest(out, 0);
 	}
