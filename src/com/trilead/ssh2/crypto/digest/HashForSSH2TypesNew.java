@@ -64,7 +64,7 @@ public class HashForSSH2TypesNew
 		return md.getDigestLength();
 	}
 
-	public byte[] getDigest()
+	public byte[] getDigest() throws IOException
 	{
 		byte[] tmp = new byte[md.getDigestLength()];
 		getDigest(tmp);
