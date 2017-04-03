@@ -10,7 +10,7 @@ import com.trilead.ssh2.log.Logger;
 import com.trilead.ssh2.packets.PacketIgnore;
 import com.trilead.ssh2.transport.ClientServerHello;
 import com.trilead.ssh2.transport.KexManager;
-import com.trilead.ssh2.transport.TransportManager;
+import com.trilead.ssh2.transport.TransportManagerNew;
 import com.trilead.ssh2.util.TimeoutService;
 import com.trilead.ssh2.util.TimeoutService.TimeoutToken;
 
@@ -102,7 +102,7 @@ public class Connection
 
 	private final int port;
 
-	private TransportManager tm;
+	private TransportManagerNew tm;
 
 	private boolean tcpNoDelay = false;
 
