@@ -86,6 +86,30 @@ public class DhGroupExchange
 		this.k = f.modPow(x, p);
 	}
 
+	public byte[] calculateH(byte[] clientversion, byte[] serverversion, byte[] clientKexPayload,
+ 			byte[] serverKexPayload, byte[] hostKey, DHGexParameters para)
+	{
+		HashForSSH2Types hash = new HashForSSH2Types("SHA1");
+
+		hash.updateByteString(clientversion);
+		hash.updateByteString(serverversion);
+		hash.updateByteString(clientKexPayload);
+		hash.updateByteString(serverKexPayload);
+		hash.updateByteString(hostKey);
+		if (para.getMin_group_len() > 0)
+			hash.updateUINT32(para.getMin_group_len());
+		hash.updateUINT32(para.getPref_group_len());
+		if (para.getMax_group_len() > 0)
+			hash.updateUINT32(para.getMax_group_len());
+		hash.updateBigInt(p);
+		hash.updateBigInt(g);
+		hash.updateBigInt(e);
+		hash.updateBigInt(f);
+		hash.updateBigInt(k);
+
+		return hash.getDigest();
+	}
+
 	public byte[] calculateH(String hashAlgo, byte[] clientversion, byte[] serverversion,
 			byte[] clientKexPayload, byte[] serverKexPayload, byte[] hostKey, DHGexParameters para)
 	{
