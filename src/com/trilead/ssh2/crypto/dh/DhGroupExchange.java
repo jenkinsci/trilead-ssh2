@@ -89,25 +89,7 @@ public class DhGroupExchange
 	public byte[] calculateH(byte[] clientversion, byte[] serverversion, byte[] clientKexPayload,
  			byte[] serverKexPayload, byte[] hostKey, DHGexParameters para)
 	{
-		HashForSSH2TypesNew hash = new HashForSSH2TypesNew("SHA1");
-
-		hash.updateByteString(clientversion);
-		hash.updateByteString(serverversion);
-		hash.updateByteString(clientKexPayload);
-		hash.updateByteString(serverKexPayload);
-		hash.updateByteString(hostKey);
-		if (para.getMin_group_len() > 0)
-			hash.updateUINT32(para.getMin_group_len());
-		hash.updateUINT32(para.getPref_group_len());
-		if (para.getMax_group_len() > 0)
-			hash.updateUINT32(para.getMax_group_len());
-		hash.updateBigInt(p);
-		hash.updateBigInt(g);
-		hash.updateBigInt(e);
-		hash.updateBigInt(f);
-		hash.updateBigInt(k);
-
-		return hash.getDigest();
+		return calculateH("SHA1", clientversion, serverversion, clientKexPayload, serverKexPayload, hostKey, para);
 	}
 
 	public byte[] calculateH(String hashAlgo, byte[] clientversion, byte[] serverversion,
