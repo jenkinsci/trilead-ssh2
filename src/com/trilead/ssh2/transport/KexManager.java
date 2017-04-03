@@ -12,12 +12,12 @@ import com.trilead.ssh2.crypto.CryptoWishList;
 import com.trilead.ssh2.crypto.KeyMaterial;
 import com.trilead.ssh2.crypto.cipher.BlockCipher;
 import com.trilead.ssh2.crypto.cipher.BlockCipherFactory;
+import com.trilead.ssh2.crypto.dh.DhExchange;
 import com.trilead.ssh2.crypto.dh.DhGroupExchange;
-import com.trilead.ssh2.crypto.dh.GenericDhExchange;
-import com.trilead.ssh2.crypto.digest.MACNew;
+import com.trilead.ssh2.crypto.digest.MAC;
 import com.trilead.ssh2.log.Logger;
-import com.trilead.ssh2.packets.PacketKexDHInitNew;
-import com.trilead.ssh2.packets.PacketKexDHReplyNew;
+import com.trilead.ssh2.packets.PacketKexDHInit;
+import com.trilead.ssh2.packets.PacketKexDHReply;
 import com.trilead.ssh2.packets.PacketKexDhGexGroup;
 import com.trilead.ssh2.packets.PacketKexDhGexInit;
 import com.trilead.ssh2.packets.PacketKexDhGexReply;
@@ -44,7 +44,7 @@ public class KexManager implements MessageHandler
 {
 	private static final Logger log = Logger.getLogger(KexManager.class);
 
-	KexStateNew kxs;
+	KexState kxs;
 	int kexCount = 0;
 	KeyMaterial km;
 	byte[] sessionId;
@@ -57,7 +57,7 @@ public class KexManager implements MessageHandler
 
 	boolean ignore_next_kex_packet = false;
 
-	final TransportManagerNew tm;
+	final TransportManager tm;
 
 	CryptoWishList nextKEXcryptoWishList;
 	DHGexParameters nextKEXdhgexParameters;
@@ -67,7 +67,7 @@ public class KexManager implements MessageHandler
 	final int port;
 	final SecureRandom rnd;
 
-	public KexManager(TransportManagerNew tm, ClientServerHello csh, CryptoWishList initialCwl, String hostname, int port,
+	public KexManager(TransportManager tm, ClientServerHello csh, CryptoWishList initialCwl, String hostname, int port,
 			ServerHostKeyVerifier keyVerifier, SecureRandom rnd)
 	{
 		this.tm = tm;
@@ -240,10 +240,10 @@ public class KexManager implements MessageHandler
 
 		if (kxs == null)
 		{
-			kxs = new KexStateNew();
+			kxs = new KexState();
 
 			kxs.dhgexParameters = nextKEXdhgexParameters;
-			PacketKexInit kp = new PacketKexInit(nextKEXcryptoWishList);
+			PacketKexInit kp = new PacketKexInit(nextKEXcryptoWishList, rnd);
 			kxs.localKEX = kp;
 			tm.sendKexMessage(kp.getPayload());
 		}
@@ -253,15 +253,15 @@ public class KexManager implements MessageHandler
 	{
 		try
 		{
-			int mac_cs_key_len = MACNew.getKeyLen(kxs.np.mac_algo_client_to_server);
+			int mac_cs_key_len = MAC.getKeyLen(kxs.np.mac_algo_client_to_server);
 			int enc_cs_key_len = BlockCipherFactory.getKeySize(kxs.np.enc_algo_client_to_server);
 			int enc_cs_block_len = BlockCipherFactory.getBlockSize(kxs.np.enc_algo_client_to_server);
 
-			int mac_sc_key_len = MACNew.getKeyLen(kxs.np.mac_algo_server_to_client);
+			int mac_sc_key_len = MAC.getKeyLen(kxs.np.mac_algo_server_to_client);
 			int enc_sc_key_len = BlockCipherFactory.getKeySize(kxs.np.enc_algo_server_to_client);
 			int enc_sc_block_len = BlockCipherFactory.getBlockSize(kxs.np.enc_algo_server_to_client);
 
-			km = KeyMaterial.create(kxs.hashAlgo, kxs.H, kxs.K, sessionId, enc_cs_key_len, enc_cs_block_len, mac_cs_key_len,
+			km = KeyMaterial.create("SHA1", kxs.H, kxs.K, sessionId, enc_cs_key_len, enc_cs_block_len, mac_cs_key_len,
 					enc_sc_key_len, enc_sc_block_len, mac_sc_key_len);
 		}
 		catch (IllegalArgumentException e)
@@ -284,14 +284,14 @@ public class KexManager implements MessageHandler
 		tm.sendKexMessage(ign.getPayload());
 
 		BlockCipher cbc;
-		MACNew mac;
+		MAC mac;
 
 		try
 		{
 			cbc = BlockCipherFactory.createCipher(kxs.np.enc_algo_client_to_server, true, km.enc_key_client_to_server,
 					km.initial_iv_client_to_server);
 
-			mac = new MACNew(kxs.np.mac_algo_client_to_server, km.integrity_key_client_to_server);
+			mac = new MAC(kxs.np.mac_algo_client_to_server, km.integrity_key_client_to_server);
 
 		}
 		catch (IllegalArgumentException e1)
@@ -319,17 +319,14 @@ public class KexManager implements MessageHandler
 
 	public static final String[] getDefaultKexAlgorithmList()
 	{
-		return new String[] { "diffie-hellman-group-exchange-sha256", "diffie-hellman-group-exchange-sha1",
-				"diffie-hellman-group14-sha1", "diffie-hellman-group1-sha1" };
+		return new String[] { "diffie-hellman-group-exchange-sha1", "diffie-hellman-group14-sha1",
+				"diffie-hellman-group1-sha1" };
 	}
 
 	public static final void checkKexAlgorithmList(String[] algos)
 	{
 		for (int i = 0; i < algos.length; i++)
 		{
-			if ("diffie-hellman-group-exchange-sha256".equals(algos[i]))
-				continue;
-
 			if ("diffie-hellman-group-exchange-sha1".equals(algos[i]))
 				continue;
 
@@ -392,9 +389,9 @@ public class KexManager implements MessageHandler
 				 * Ah, OK, peer wants to do KEX. Let's be nice and play
 				 * together.
 				 */
-				kxs = new KexStateNew();
+				kxs = new KexState();
 				kxs.dhgexParameters = nextKEXdhgexParameters;
-				kip = new PacketKexInit(nextKEXcryptoWishList);
+				kip = new PacketKexInit(nextKEXcryptoWishList, rnd);
 				kxs.localKEX = kip;
 				tm.sendKexMessage(kip.getPayload());
 			}
@@ -416,8 +413,7 @@ public class KexManager implements MessageHandler
 				ignore_next_kex_packet = true;
 			}
 
-			if (kxs.np.kex_algo.equals("diffie-hellman-group-exchange-sha1")
-					|| kxs.np.kex_algo.equals("diffie-hellman-group-exchange-sha256"))
+			if (kxs.np.kex_algo.equals("diffie-hellman-group-exchange-sha1"))
 			{
 				if (kxs.dhgexParameters.getMin_group_len() == 0)
 				{
@@ -430,11 +426,6 @@ public class KexManager implements MessageHandler
 					PacketKexDhGexRequest dhgexreq = new PacketKexDhGexRequest(kxs.dhgexParameters);
 					tm.sendKexMessage(dhgexreq.getPayload());
 				}
-				if (kxs.np.kex_algo.endsWith("sha1")) {
-					kxs.hashAlgo = "SHA1";
-				} else {
-					kxs.hashAlgo = "SHA-256";
-				}
 				kxs.state = 1;
 				return;
 			}
@@ -442,12 +433,14 @@ public class KexManager implements MessageHandler
 			if (kxs.np.kex_algo.equals("diffie-hellman-group1-sha1")
 					|| kxs.np.kex_algo.equals("diffie-hellman-group14-sha1"))
 			{
-				kxs.dhx = GenericDhExchange.getInstance(kxs.np.kex_algo);
+				kxs.dhx = new DhExchange();
 
-				kxs.dhx.init(kxs.np.kex_algo);
-				kxs.hashAlgo = kxs.dhx.getHashAlgo();
+				if (kxs.np.kex_algo.equals("diffie-hellman-group1-sha1"))
+					kxs.dhx.init(1, rnd);
+				else
+					kxs.dhx.init(14, rnd);
 
-				PacketKexDHInitNew kp = new PacketKexDHInitNew(kxs.dhx.getE());
+				PacketKexDHInit kp = new PacketKexDHInit(kxs.dhx.getE());
 				tm.sendKexMessage(kp.getPayload());
 				kxs.state = 1;
 				return;
@@ -462,14 +455,14 @@ public class KexManager implements MessageHandler
 				throw new IOException("Peer sent SSH_MSG_NEWKEYS, but I have no key material ready!");
 
 			BlockCipher cbc;
-			MACNew mac;
+			MAC mac;
 
 			try
 			{
 				cbc = BlockCipherFactory.createCipher(kxs.np.enc_algo_server_to_client, false,
 						km.enc_key_server_to_client, km.initial_iv_server_to_client);
 
-				mac = new MACNew(kxs.np.mac_algo_server_to_client, km.integrity_key_server_to_client);
+				mac = new MAC(kxs.np.mac_algo_server_to_client, km.integrity_key_server_to_client);
 
 			}
 			catch (IllegalArgumentException e1)
@@ -505,8 +498,7 @@ public class KexManager implements MessageHandler
 		if ((kxs == null) || (kxs.state == 0))
 			throw new IOException("Unexpected Kex submessage!");
 
-		if (kxs.np.kex_algo.equals("diffie-hellman-group-exchange-sha1")
-				|| kxs.np.kex_algo.equals("diffie-hellman-group-exchange-sha256"))
+		if (kxs.np.kex_algo.equals("diffie-hellman-group-exchange-sha1"))
 		{
 			if (kxs.state == 1)
 			{
@@ -547,8 +539,7 @@ public class KexManager implements MessageHandler
 
 				try
 				{
-					kxs.H = kxs.dhgx.calculateH(kxs.hashAlgo,
-							csh.getClientString(), csh.getServerString(),
+					kxs.H = kxs.dhgx.calculateH(csh.getClientString(), csh.getServerString(),
 							kxs.localKEX.getPayload(), kxs.remoteKEX.getPayload(), dhgexrpl.getHostKey(),
 							kxs.dhgexParameters);
 				}
@@ -578,7 +569,7 @@ public class KexManager implements MessageHandler
 			if (kxs.state == 1)
 			{
 
-				PacketKexDHReplyNew dhr = new PacketKexDHReplyNew(msg, 0, msglen);
+				PacketKexDHReply dhr = new PacketKexDHReply(msg, 0, msglen);
 
 				kxs.hostkey = dhr.getHostKey();
 
