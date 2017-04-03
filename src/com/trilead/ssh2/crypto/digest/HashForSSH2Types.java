@@ -8,8 +8,9 @@ import java.math.BigInteger;
  * 
  * @author Christian Plattner, plattner@trilead.com
  * @version $Id: HashForSSH2Types.java,v 1.1 2007/10/15 12:49:57 cplattne Exp $
+ *
+ * @deprecated use HashForSSH2TypesNew instead
  */
-// @deprecated use HashForSSH2TypesNew instead
 public class HashForSSH2Types
 {
 	Digest md;
