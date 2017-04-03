@@ -76,7 +76,7 @@ public class HashForSSH2TypesNew
 		getDigest(out, 0);
 	}
 
-	public void getDigest(byte[] out, int off)
+	public void getDigest(byte[] out, int off) throws IOException
 	{
 		try {
 			md.digest(out, off, out.length - off);
