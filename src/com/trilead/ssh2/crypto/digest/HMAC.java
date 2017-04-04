@@ -7,6 +7,7 @@ package com.trilead.ssh2.crypto.digest;
  * @author Christian Plattner, plattner@trilead.com
  * @version $Id: HMAC.java,v 1.1 2007/10/15 12:49:57 cplattne Exp $
  */
+@Deprecated
 public final class HMAC implements Digest
 {
 	Digest md;

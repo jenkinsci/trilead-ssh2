@@ -2,6 +2,8 @@
 package com.trilead.ssh2.crypto.digest;
 
 import java.math.BigInteger;
+import java.security.GeneralSecurityException;
+import java.security.MessageDigest;
 
 /**
  * HashForSSH2Types.
@@ -11,25 +13,37 @@ import java.math.BigInteger;
  */
 public class HashForSSH2Types
 {
+
+	/**
+	 * Overwriting this value will not cause the result of the
+	 * digest to change
+	 * @deprecated the actual message digest is held in a private field
+	 */
+	@Deprecated
 	Digest md;
+	
+	private final Digest messageDigest;
+	
+	
 
 	public HashForSSH2Types(Digest md)
 	{
+		super();
 		this.md = md;
+		this.messageDigest = md;
 	}
 
 	public HashForSSH2Types(String type)
 	{
-		if (type.equals("SHA1"))
-		{
-			md = new SHA1();
+		this(new JreMessageDigestWrapper(createMessageDigest(type)));
+	}
+
+	private static MessageDigest createMessageDigest(String algorithm) {
+		try {
+			return MessageDigest.getInstance(algorithm);
+		} catch (GeneralSecurityException ex) {
+			throw new IllegalArgumentException("Could not get Message digest instance", ex);
 		}
-		else if (type.equals("MD5"))
-		{
-			md = new MD5();
-		}
-		else
-			throw new IllegalArgumentException("Unknown algorithm " + type);
 	}
 
 	public void updateByte(byte b)
@@ -37,20 +51,20 @@ public class HashForSSH2Types
 		/* HACK - to test it with J2ME */
 		byte[] tmp = new byte[1];
 		tmp[0] = b;
-		md.update(tmp);
+		messageDigest.update(tmp);
 	}
 
 	public void updateBytes(byte[] b)
 	{
-		md.update(b);
+		messageDigest.update(b);
 	}
 
 	public void updateUINT32(int v)
 	{
-		md.update((byte) (v >> 24));
-		md.update((byte) (v >> 16));
-		md.update((byte) (v >> 8));
-		md.update((byte) (v));
+		messageDigest.update((byte) (v >> 24));
+		messageDigest.update((byte) (v >> 16));
+		messageDigest.update((byte) (v >> 8));
+		messageDigest.update((byte) (v));
 	}
 
 	public void updateByteString(byte[] b)
@@ -66,17 +80,17 @@ public class HashForSSH2Types
 
 	public void reset()
 	{
-		md.reset();
+		messageDigest.reset();
 	}
 
 	public int getDigestLength()
 	{
-		return md.getDigestLength();
+		return messageDigest.getDigestLength();
 	}
 
 	public byte[] getDigest()
 	{
-		byte[] tmp = new byte[md.getDigestLength()];
+		byte[] tmp = new byte[messageDigest.getDigestLength()];
 		getDigest(tmp);
 		return tmp;
 	}
@@ -88,6 +102,6 @@ public class HashForSSH2Types
 
 	public void getDigest(byte[] out, int off)
 	{
-		md.digest(out, off);
+		messageDigest.digest(out, off);
 	}
 }

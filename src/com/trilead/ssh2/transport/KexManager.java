@@ -18,7 +18,7 @@ import com.trilead.ssh2.crypto.cipher.BlockCipher;
 import com.trilead.ssh2.crypto.cipher.BlockCipherFactory;
 import com.trilead.ssh2.crypto.dh.DhExchange;
 import com.trilead.ssh2.crypto.dh.DhGroupExchange;
-import com.trilead.ssh2.crypto.digest.MAC;
+import com.trilead.ssh2.crypto.digest.MessageMac;
 import com.trilead.ssh2.log.Logger;
 import com.trilead.ssh2.packets.PacketKexDHInit;
 import com.trilead.ssh2.packets.PacketKexDHReply;
@@ -252,15 +252,15 @@ public class KexManager implements MessageHandler
 	{
 		try
 		{
-			int mac_cs_key_len = MAC.getKeyLen(kxs.np.mac_algo_client_to_server);
+			int mac_cs_key_len = MessageMac.getKeyLength(kxs.np.mac_algo_client_to_server);
 			int enc_cs_key_len = BlockCipherFactory.getKeySize(kxs.np.enc_algo_client_to_server);
 			int enc_cs_block_len = BlockCipherFactory.getBlockSize(kxs.np.enc_algo_client_to_server);
 
-			int mac_sc_key_len = MAC.getKeyLen(kxs.np.mac_algo_server_to_client);
+			int mac_sc_key_len = MessageMac.getKeyLength(kxs.np.mac_algo_server_to_client);
 			int enc_sc_key_len = BlockCipherFactory.getKeySize(kxs.np.enc_algo_server_to_client);
 			int enc_sc_block_len = BlockCipherFactory.getBlockSize(kxs.np.enc_algo_server_to_client);
 
-			km = KeyMaterial.create("SHA1", kxs.H, kxs.K, sessionId, enc_cs_key_len, enc_cs_block_len, mac_cs_key_len,
+			km = KeyMaterial.create(kxs.getHashAlgorithm(), kxs.H, kxs.K, sessionId, enc_cs_key_len, enc_cs_block_len, mac_cs_key_len,
 					enc_sc_key_len, enc_sc_block_len, mac_sc_key_len);
 		}
 		catch (IllegalArgumentException e)
@@ -283,14 +283,14 @@ public class KexManager implements MessageHandler
 		tm.sendKexMessage(ign.getPayload());
 
 		BlockCipher cbc;
-		MAC mac;
+		MessageMac mac;
 
 		try
 		{
 			cbc = BlockCipherFactory.createCipher(kxs.np.enc_algo_client_to_server, true, km.enc_key_client_to_server,
 					km.initial_iv_client_to_server);
 
-			mac = new MAC(kxs.np.mac_algo_client_to_server, km.integrity_key_client_to_server);
+			mac = new MessageMac(kxs.np.mac_algo_client_to_server, km.integrity_key_client_to_server);
 
 		}
 		catch (IllegalArgumentException e1)
@@ -333,8 +333,8 @@ public class KexManager implements MessageHandler
 
 	public static String[] getDefaultKexAlgorithmList()
 	{
-		return new String[] { "diffie-hellman-group-exchange-sha1", "diffie-hellman-group14-sha1",
-				"diffie-hellman-group1-sha1" };
+		return new String[] { "diffie-hellman-group-exchange-sha256", "diffie-hellman-group-exchange-sha1",
+				"diffie-hellman-group14-sha1", "diffie-hellman-group1-sha1" };
 	}
 
 	public static void checkKexAlgorithmList(String[] algos)
@@ -347,6 +347,9 @@ public class KexManager implements MessageHandler
 				continue;
 
 			if ("diffie-hellman-group1-sha1".equals(algo))
+				continue;
+
+			if ("diffie-hellman-group-exchange-sha256".equals(algo))
 				continue;
 
 			throw new IllegalArgumentException("Unknown kex algorithm '" + algo + "'");
@@ -413,7 +416,8 @@ public class KexManager implements MessageHandler
 				ignore_next_kex_packet = true;
 			}
 
-			if (kxs.np.kex_algo.equals("diffie-hellman-group-exchange-sha1"))
+			if (kxs.np.kex_algo.equals("diffie-hellman-group-exchange-sha1")
+					|| kxs.np.kex_algo.equals("diffie-hellman-group-exchange-sha256"))
 			{
 				if (kxs.dhgexParameters.getMin_group_len() == 0)
 				{
@@ -427,13 +431,20 @@ public class KexManager implements MessageHandler
 					tm.sendKexMessage(dhgexreq.getPayload());
 				}
 				kxs.state = 1;
+
+				if (kxs.np.kex_algo.endsWith("sha1")) {
+					kxs.setHashAlgorithm("SHA1");
+				} else {
+					kxs.setHashAlgorithm("SHA-256");
+				}
+
 				return;
 			}
 
 			if (kxs.np.kex_algo.equals("diffie-hellman-group1-sha1")
 					|| kxs.np.kex_algo.equals("diffie-hellman-group14-sha1"))
 			{
-				kxs.dhx = new DhExchange();
+				kxs.dhx = new DhExchange(kxs.dhx.getHashAlgorithm());
 
 				if (kxs.np.kex_algo.equals("diffie-hellman-group1-sha1"))
 					kxs.dhx.init(1, rnd);
@@ -443,6 +454,7 @@ public class KexManager implements MessageHandler
 				PacketKexDHInit kp = new PacketKexDHInit(kxs.dhx.getE());
 				tm.sendKexMessage(kp.getPayload());
 				kxs.state = 1;
+				kxs.setHashAlgorithm(kxs.dhx.getHashAlgorithm());
 				return;
 			}
 
@@ -455,14 +467,14 @@ public class KexManager implements MessageHandler
 				throw new IOException("Peer sent SSH_MSG_NEWKEYS, but I have no key material ready!");
 
 			BlockCipher cbc;
-			MAC mac;
+			MessageMac mac;
 
 			try
 			{
 				cbc = BlockCipherFactory.createCipher(kxs.np.enc_algo_server_to_client, false,
 						km.enc_key_server_to_client, km.initial_iv_server_to_client);
 
-				mac = new MAC(kxs.np.mac_algo_server_to_client, km.integrity_key_server_to_client);
+				mac = new MessageMac(kxs.np.mac_algo_server_to_client, km.integrity_key_server_to_client);
 
 			}
 			catch (IllegalArgumentException e1)
@@ -498,12 +510,13 @@ public class KexManager implements MessageHandler
 		if ((kxs == null) || (kxs.state == 0))
 			throw new IOException("Unexpected Kex submessage!");
 
-		if (kxs.np.kex_algo.equals("diffie-hellman-group-exchange-sha1"))
+		if (kxs.np.kex_algo.equals("diffie-hellman-group-exchange-sha1")
+				|| kxs.np.kex_algo.equals("diffie-hellman-group-exchange-sha256"))
 		{
 			if (kxs.state == 1)
 			{
 				PacketKexDhGexGroup dhgexgrp = new PacketKexDhGexGroup(msg, 0, msglen);
-				kxs.dhgx = new DhGroupExchange(dhgexgrp.getP(), dhgexgrp.getG());
+				kxs.dhgx = new DhGroupExchange(kxs.getHashAlgorithm(), dhgexgrp.getP(), dhgexgrp.getG());
 				kxs.dhgx.init(rnd);
 				PacketKexDhGexInit dhgexinit = new PacketKexDhGexInit(kxs.dhgx.getE());
 				tm.sendKexMessage(dhgexinit.getPayload());
