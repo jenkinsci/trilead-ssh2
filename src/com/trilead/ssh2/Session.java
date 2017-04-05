@@ -10,6 +10,7 @@ import java.security.SecureRandom;
 import com.trilead.ssh2.channel.Channel;
 import com.trilead.ssh2.channel.ChannelManager;
 import com.trilead.ssh2.channel.X11ServerData;
+import com.trilead.ssh2.packets.PacketSignal;
 
 
 /**
@@ -131,7 +132,62 @@ public class Session
 				terminal_modes);
 	}
 
-	/**
+    /**
+     * Tells the server that the size of the terminal has changed.
+     *
+     * See {@link #requestPTY(String, int, int, int, int, byte[])} for more details about how parameters are interpreted.
+   	 *
+   	 * @param term_width_characters
+   	 *            terminal width, characters (e.g., 80)
+   	 * @param term_height_characters
+   	 *            terminal height, rows (e.g., 24)
+   	 * @param term_width_pixels
+   	 *            terminal width, pixels (e.g., 640)
+   	 * @param term_height_pixels
+   	 *            terminal height, pixels (e.g., 480)
+   	 * @throws IOException
+   	 */
+   	public void requestWindowChange(int term_width_characters, int term_height_characters, int term_width_pixels,
+   			int term_height_pixels) throws IOException
+   	{
+   		synchronized (this)
+   		{
+   			/* The following is just a nicer error, we would catch it anyway later in the channel code */
+   			if (flag_closed)
+   				throw new IOException("This session is closed.");
+
+   			if (!flag_pty_requested)
+   				throw new IOException("A PTY was not requested.");
+   		}
+
+   		cn.requestWindowChange(term_width_characters, term_height_characters, term_width_pixels, term_height_pixels);
+   	}
+
+    /**
+     * Sends a signal to the remote process.
+     */
+    public void signal(String name) throws IOException {
+        synchronized (this) {
+            /* The following is just a nicer error, we would catch it anyway later in the channel code */
+            if (flag_closed)
+                throw new IOException("This session is closed.");
+        }
+
+        cn.signal(name);
+    }
+
+    /**
+     * Sends a signal to the remote process.
+     *
+     * For better portability, specify signal by name, not by its number.
+     */
+    public void signal(int code) throws IOException {
+        String sig = PacketSignal.strsignal(code);
+        if (sig==null)  throw new IllegalArgumentException("Unrecognized signal code: "+code);
+        signal(sig);
+    }
+
+    /**
 	 * Request X11 forwarding for the current session.
 	 * <p>
 	 * You have to supply the name and port of your X-server.

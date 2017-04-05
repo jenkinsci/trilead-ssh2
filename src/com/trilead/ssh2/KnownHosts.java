@@ -52,6 +52,7 @@ public class KnownHosts
 	public static final int HOSTKEY_IS_OK = 0;
 	public static final int HOSTKEY_IS_NEW = 1;
 	public static final int HOSTKEY_HAS_CHANGED = 2;
+    private static final SecureRandom SECURE_RANDOM = RandomFactory.create();
 
 	private class KnownHostsEntry
 	{
@@ -151,7 +152,7 @@ public class KnownHosts
 
 		byte[] salt = new byte[sha1.getDigestLength()];
 
-		new SecureRandom().nextBytes(salt);
+		SECURE_RANDOM.nextBytes(salt);
 
 		byte[] hash = hmacSha1Hash(salt, hostname);
 
@@ -426,7 +427,7 @@ public class KnownHosts
 				addHostkey(hostnames, serverHostKeyAlgorithm, msg);
 			}
 			catch (IOWarningException ex) {
-				LOGGER.log(20, "Ignored invalid line '" + line + "'");
+				LOGGER.log(30, "Ignored invalid line '" + line + "'",ex);
 			}
 		}
 	}

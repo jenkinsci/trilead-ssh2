@@ -219,7 +219,7 @@ public class RemoteX11AcceptThread extends Thread
 		}
 		catch (IOException e)
 		{
-			log.log(50, "IOException in X11 proxy code: " + e.getMessage());
+			log.log(50, "IOException in X11 proxy code",e);
 
 			try
 			{

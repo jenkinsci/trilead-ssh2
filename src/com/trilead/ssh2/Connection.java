@@ -817,7 +817,7 @@ public class Connection
 		catch (IOException e1)
 		{
 			/* This will also invoke any registered connection monitors */
-			close(new Throwable("There was a problem during connect."), false);
+			close(new Throwable("There was a problem during connect.").initCause(e1), false);
 
 			synchronized (state)
 			{
@@ -1123,7 +1123,7 @@ public class Connection
 	private final SecureRandom getOrCreateSecureRND()
 	{
 		if (generator == null)
-			generator = new SecureRandom();
+            generator = RandomFactory.create();
 
 		return generator;
 	}
@@ -1494,6 +1494,8 @@ public class Connection
 	 *            a {@link DebugLogger DebugLogger} instance, <code>null</code>
 	 *            means logging using the simple logger which logs all messages
 	 *            to to stderr. Ignored if enabled is <code>false</code>
+     * @deprecated
+     *      Logging is now sent automatically to java.util.logging, and never to the {@link DebugLogger}.
 	 */
 	public synchronized void enableDebugging(boolean enable, DebugLogger logger)
 	{
@@ -1548,6 +1550,14 @@ public class Connection
 
 		cm.requestGlobalTrileadPing();
 	}
+
+    /**
+     * If the socket connection is lost (either by this side closing down or the other side closing down),
+     * return a non-null object indicating the cause of the connection loss.
+     */
+    public Throwable getReasonClosedCause() {
+        return tm.getReasonClosedCause();
+    }
 
     /**
      * Executes a process remotely and blocks until its completion.

@@ -2,6 +2,8 @@
 package com.trilead.ssh2.channel;
 
 import com.trilead.ssh2.log.Logger;
+import com.trilead.ssh2.packets.PacketSignal;
+import com.trilead.ssh2.packets.PacketWindowChange;
 import com.trilead.ssh2.packets.Packets;
 import com.trilead.ssh2.transport.TransportManager;
 
@@ -94,6 +96,7 @@ public class Channel
                 }
             } else {
                 sink.write(buf,start,len);
+                freeupWindow(len, true);
             }
         }
 
@@ -242,7 +245,7 @@ public class Channel
 	// We protect it with a private short term lock.
 
 	private final Object reasonClosedLock = new Object();
-	private String reasonClosed = null;
+	private Throwable reasonClosed = null;
 
 	public Channel(ChannelManager cm)
 	{
@@ -303,28 +306,52 @@ public class Channel
 		}
 	}
 
+    /**
+     * @deprecated
+     *      Use {@link #getReasonClosedCause()}
+     */
 	public String getReasonClosed()
 	{
 		synchronized (reasonClosedLock)
 		{
-			return reasonClosed;
+			return reasonClosed!=null ? reasonClosed.getMessage() : null;
 		}
 	}
 
+    public Throwable getReasonClosedCause()
+   	{
+   		synchronized (reasonClosedLock)
+   		{
+   			return reasonClosed;
+   		}
+   	}
+
 	public void setReasonClosed(String reasonClosed)
 	{
-		synchronized (reasonClosedLock)
-		{
-			if (this.reasonClosed == null)
-				this.reasonClosed = reasonClosed;
-		}
+        setReasonClosed(new IOException(reasonClosed));
 	}
+
+    public void setReasonClosed(Throwable reasonClosed) {
+        synchronized (reasonClosedLock)
+      		{
+      			if (this.reasonClosed == null)
+      				this.reasonClosed = reasonClosed;
+      		}
+    }
 
     /**
      * Update the flow control couner and if necessary, sends ACK to the other end to
      * let it send more data.
      */
     void freeupWindow(int copylen) throws IOException {
+        freeupWindow(copylen, false);
+	}
+
+    /**
+     * Update the flow control couner and if necessary, sends ACK to the other end to
+     * let it send more data.
+     */
+    void freeupWindow(int copylen, boolean sendAsync) throws IOException {
         if (copylen <= 0) return;
 
         int increment = 0;
@@ -373,9 +400,50 @@ public class Channel
                 msg[7] = (byte) (increment >> 8);
                 msg[8] = (byte) (increment);
 
-                if (closeMessageSent == false)
-                    cm.tm.sendMessage(msg);
+                if (closeMessageSent == false) {
+                    if (sendAsync) {
+                        cm.tm.sendAsynchronousMessage(msg);
+                    } else {
+                        cm.tm.sendMessage(msg);
+                    }
+                }
             }
+        }
+    }
+
+    public void requestWindowChange(int term_width_characters, int term_height_characters,
+                                    int term_width_pixels, int term_height_pixels) throws IOException {
+        PacketWindowChange pwc;
+
+        synchronized (this) {
+            if (state != Channel.STATE_OPEN)
+                throw (IOException)new IOException("Cannot request window-change on this channel").initCause(getReasonClosedCause());
+
+            pwc = new PacketWindowChange(remoteID, term_width_characters, term_height_characters,
+                    term_width_pixels, term_height_pixels);
+        }
+
+        synchronized (channelSendLock) {
+            if (closeMessageSent)
+                throw (IOException)new IOException("Cannot request window-change on this channel").initCause(getReasonClosedCause());
+            cm.tm.sendMessage(pwc.getPayload());
+        }
+    }
+
+    public void signal(String name) throws IOException {
+        PacketSignal p;
+
+        synchronized (this) {
+            if (state != Channel.STATE_OPEN)
+                throw (IOException)new IOException("Cannot send signal on this channel").initCause(getReasonClosedCause());
+
+            p = new PacketSignal(remoteID, name);
+        }
+
+        synchronized (channelSendLock) {
+            if (closeMessageSent)
+                throw (IOException)new IOException("Cannot request window-change on this channel").initCause(getReasonClosedCause());
+            cm.tm.sendMessage(p.getPayload());
         }
     }
 

@@ -40,7 +40,7 @@ import com.trilead.ssh2.signature.RSASignature;
  * @author Christian Plattner, plattner@trilead.com
  * @version $Id: KexManager.java,v 1.1 2007/10/15 12:49:56 cplattne Exp $
  */
-public class KexManager
+public class KexManager implements MessageHandler
 {
 	private static final Logger log = Logger.getLogger(KexManager.class);
 
@@ -170,36 +170,36 @@ public class KexManager
 		{
 			np.kex_algo = getFirstMatch(client.kex_algorithms, server.kex_algorithms);
 
-			log.log(20, "kex_algo=" + np.kex_algo);
+			log.log(30, "kex_algo=" + np.kex_algo);
 
 			np.server_host_key_algo = getFirstMatch(client.server_host_key_algorithms,
 					server.server_host_key_algorithms);
 
-			log.log(20, "server_host_key_algo=" + np.server_host_key_algo);
+			log.log(30, "server_host_key_algo=" + np.server_host_key_algo);
 
 			np.enc_algo_client_to_server = getFirstMatch(client.encryption_algorithms_client_to_server,
 					server.encryption_algorithms_client_to_server);
 			np.enc_algo_server_to_client = getFirstMatch(client.encryption_algorithms_server_to_client,
 					server.encryption_algorithms_server_to_client);
 
-			log.log(20, "enc_algo_client_to_server=" + np.enc_algo_client_to_server);
-			log.log(20, "enc_algo_server_to_client=" + np.enc_algo_server_to_client);
+			log.log(30, "enc_algo_client_to_server=" + np.enc_algo_client_to_server);
+			log.log(30, "enc_algo_server_to_client=" + np.enc_algo_server_to_client);
 
 			np.mac_algo_client_to_server = getFirstMatch(client.mac_algorithms_client_to_server,
 					server.mac_algorithms_client_to_server);
 			np.mac_algo_server_to_client = getFirstMatch(client.mac_algorithms_server_to_client,
 					server.mac_algorithms_server_to_client);
 
-			log.log(20, "mac_algo_client_to_server=" + np.mac_algo_client_to_server);
-			log.log(20, "mac_algo_server_to_client=" + np.mac_algo_server_to_client);
+			log.log(30, "mac_algo_client_to_server=" + np.mac_algo_client_to_server);
+			log.log(30, "mac_algo_server_to_client=" + np.mac_algo_server_to_client);
 
 			np.comp_algo_client_to_server = getFirstMatch(client.compression_algorithms_client_to_server,
 					server.compression_algorithms_client_to_server);
 			np.comp_algo_server_to_client = getFirstMatch(client.compression_algorithms_server_to_client,
 					server.compression_algorithms_server_to_client);
 
-			log.log(20, "comp_algo_client_to_server=" + np.comp_algo_client_to_server);
-			log.log(20, "comp_algo_server_to_client=" + np.comp_algo_server_to_client);
+			log.log(30, "comp_algo_client_to_server=" + np.comp_algo_client_to_server);
+			log.log(30, "comp_algo_server_to_client=" + np.comp_algo_server_to_client);
 
 		}
 		catch (NegotiateException e)
@@ -368,16 +368,6 @@ public class KexManager
 	public synchronized void handleMessage(byte[] msg, int msglen) throws IOException
 	{
 		PacketKexInit kip;
-
-		if (msg == null)
-		{
-			synchronized (accessLock)
-			{
-				connectionClosed = true;
-				accessLock.notifyAll();
-				return;
-			}
-		}
 
 		if ((kxs == null) && (msg[0] != Packets.SSH_MSG_KEXINIT))
 			throw new IOException("Unexpected KEX message (type " + msg[0] + ")");
@@ -628,4 +618,11 @@ public class KexManager
 
 		throw new IllegalStateException("Unkown KEX method! (" + kxs.np.kex_algo + ")");
 	}
+
+    public void handleEndMessage(Throwable cause) throws IOException {
+        synchronized (accessLock) {
+            connectionClosed = true;
+            accessLock.notifyAll();
+        }
+    }
 }

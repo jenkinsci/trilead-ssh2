@@ -127,10 +127,9 @@ public class TransportManager
 	int port;
 	final Socket sock = new Socket();
 
-	Object connectionSemaphore = new Object();
+	final Object connectionSemaphore = new Object();
 
 	boolean flagKexOngoing = false;
-	boolean connectionClosed = false;
 
 	Throwable reasonClosedCause = null;
 
@@ -237,6 +236,10 @@ public class TransportManager
 		return versions;
 	}
 
+    /**
+     * If the socket connection is lost (either by this side closing down or the other side closing down),
+     * return a non-null object indicating the cause of the connection loss.
+     */
 	public Throwable getReasonClosedCause()
 	{
 		synchronized (connectionSemaphore)
@@ -244,6 +247,10 @@ public class TransportManager
 			return reasonClosedCause;
 		}
 	}
+
+    public boolean isConnectionClosed() {
+        return getReasonClosedCause()!=null;
+    }
 
 	public byte[] getSessionIdentifier()
 	{
@@ -274,7 +281,7 @@ public class TransportManager
 
 		synchronized (connectionSemaphore)
 		{
-			if (connectionClosed == false)
+			if (reasonClosedCause==null)
 			{
 				if (useDisconnectPacket == true)
 				{
@@ -298,8 +305,9 @@ public class TransportManager
 					}
 				}
 
-				connectionClosed = true;
-				reasonClosedCause = cause; /* may be null */
+                if (cause==null)
+                    cause = new Exception("Unknown cause");
+				reasonClosedCause = cause;
 			}
 			connectionSemaphore.notifyAll();
 		}
@@ -482,16 +490,19 @@ public class TransportManager
 		{
 			public void run()
 			{
+                Throwable cause;
 				try
 				{
 					receiveLoop();
+                    cause = new AssertionError();   // receiveLoop never returns normally
 				}
 				catch (IOException e)
 				{
-					close(e, false);
+                    if (log.isEnabled() && !isConnectionClosed())
+                        log.log(10, "Receive thread: error in receiveLoop",e);
 
-					if (log.isEnabled())
-						log.log(10, "Receive thread: error in receiveLoop: " + e.getMessage());
+                    cause = e;
+					close(e, false);
 				}
 
 				if (log.isEnabled())
@@ -503,7 +514,7 @@ public class TransportManager
 				{
 					try
 					{
-						km.handleMessage(null, 0);
+						km.handleEndMessage(cause);
 					}
 					catch (IOException e)
 					{
@@ -515,7 +526,7 @@ public class TransportManager
 					HandlerEntry he = (HandlerEntry) messageHandlers.elementAt(i);
 					try
 					{
-						he.mh.handleMessage(null, 0);
+						he.mh.handleEndMessage(cause);
 					}
 					catch (Exception ignore)
 					{
@@ -561,12 +572,9 @@ public class TransportManager
 	{
 		synchronized (connectionSemaphore)
 		{
-			if (connectionClosed)
-			{
-				throw (IOException) new IOException("Sorry, this connection is closed.").initCause(reasonClosedCause);
-			}
+            ensureConnected();
 
-			flagKexOngoing = true;
+            flagKexOngoing = true;
 
 			try
 			{
@@ -580,7 +588,14 @@ public class TransportManager
 		}
 	}
 
-	public void kexFinished() throws IOException
+    private void ensureConnected() throws IOException {
+        if (reasonClosedCause!=null)
+        {
+            throw (IOException) new IOException("Sorry, this connection is closed.").initCause(reasonClosedCause);
+        }
+    }
+
+    public void kexFinished() throws IOException
 	{
 		synchronized (connectionSemaphore)
 		{
@@ -649,13 +664,9 @@ public class TransportManager
 		{
 			while (true)
 			{
-				if (connectionClosed)
-				{
-					throw (IOException) new IOException("Sorry, this connection is closed.")
-							.initCause(reasonClosedCause);
-				}
+                ensureConnected();
 
-				if (flagKexOngoing == false)
+                if (flagKexOngoing == false)
 					break;
 
 				try
