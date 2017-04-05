@@ -352,7 +352,8 @@ public class TransportManager
 
 		if (proxyData == null)
 		{
-			if (sourceAddress != null && sourceAddress.length() > 0)
+
+			if (sourceAddress != null)
 			{
 				InetAddress sourceaddr = createInetAddress(this.sourceAddress);
 				sock.bind(new InetSocketAddress(sourceaddr,0));
