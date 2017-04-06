@@ -136,9 +136,7 @@ public class Connection
 	 */
 	public Connection(String hostname, int port)
 	{
-		this.hostname = hostname;
-		this.port = port;
-		this.sourceAddress = null;
+		this(hostname, port, null);
 	}
 	
 	/**

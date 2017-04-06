@@ -122,7 +122,7 @@ public class TransportManager
 		}
 	}
 
-	String sourceAddress;
+	final private String sourceAddress;
 	String hostname;
 	int port;
 	final Socket sock = new Socket();
@@ -203,6 +203,11 @@ public class TransportManager
 		}
 
 		return InetAddress.getByAddress(host, addr);
+	}
+	
+	public TransportManager(String host, int port) throws IOException
+	{
+		this(host, port, null);
 	}
 
 	public TransportManager(String host, int port, String sourceAddress) throws IOException
