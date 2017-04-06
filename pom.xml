@@ -23,10 +23,15 @@
     <tag>HEAD</tag>
   </scm>
   <distributionManagement>
-    <repository>
-      <id>maven.jenkins-ci.org</id>
-      <url>https://repo.jenkins-ci.org/releases</url>
-    </repository>
+      <repository>
+          <uniqueVersion>false</uniqueVersion>
+          <id>maven.jenkins-ci.org</id>
+          <url>https://repo.jenkins-ci.org/releases/</url>
+      </repository>
+      <snapshotRepository>
+          <id>maven.jenkins-ci.org</id>
+          <url>https://repo.jenkins-ci.org/snapshots/</url>
+      </snapshotRepository>
   </distributionManagement>
 
   <repositories>
