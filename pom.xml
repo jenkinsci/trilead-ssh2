@@ -17,8 +17,9 @@
   </licenses>
 
   <scm>
+    <connection>scm:git:git://github.com/jenkinsci/trilead-ssh2.git</connection>
     <developerConnection>scm:git:ssh://git@github.com/jenkinsci/trilead-ssh2.git</developerConnection>
-    <connection>scm:git:https://kohsuke@github.com/jenkinsci/trilead-ssh2.git</connection>
+    <url>https://github.com/jenkinsci/trilead-ssh2</url>
     <tag>HEAD</tag>
   </scm>
   <distributionManagement>
