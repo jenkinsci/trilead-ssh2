@@ -1,19 +1,6 @@
 
 package com.trilead.ssh2.channel;
 
-import com.trilead.ssh2.log.Logger;
-import com.trilead.ssh2.packets.PacketSignal;
-import com.trilead.ssh2.packets.PacketWindowChange;
-import com.trilead.ssh2.packets.Packets;
-import com.trilead.ssh2.transport.TransportManager;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InterruptedIOException;
-import java.io.OutputStream;
-
-import static com.trilead.ssh2.util.IOUtils.closeQuietly;
-
 /**
  * Channel.
  * 
@@ -53,15 +40,7 @@ public class Channel
 	static final int STATE_OPEN = 2;
 	static final int STATE_CLOSED = 4;
 
-	private static final int CHANNEL_BUFFER_SIZE = Integer.getInteger(
-			Channel.class.getName()+".bufferSize",
-			1024*1024 + 16*1024).intValue();
-
-    /**
-     * This channel's session size.
-     */
-    // @GuarydedBy("this")
-    int channelBufferSize = CHANNEL_BUFFER_SIZE;
+	static final int CHANNEL_BUFFER_SIZE = 30000;
 
 	/*
 	 * To achieve correctness, the following rules have to be respected when
@@ -71,91 +50,10 @@ public class Channel
 	// These fields can always be read
 	final ChannelManager cm;
 	final ChannelOutputStream stdinStream;
+	final ChannelInputStream stdoutStream;
+	final ChannelInputStream stderrStream;
 
-    /**
-     * One stream.
-     *
-     * Either {@link #stream} and {@link #buffer} is set, or the {@link #sink} is set, but those
-     * are mutually exclusive. The former is used when we are buffering data and let the application
-     * read it via {@link InputStream}, and the latter is used when we are passing through the data
-     * to another {@link OutputStream}.
-     *
-     * The synchronization is done by {@link Channel}
-     */
-    class Output {
-        ChannelInputStream stream;
-        FifoBuffer buffer = new FifoBuffer(Channel.this, 2048, channelBufferSize);
-        OutputStream sink;
-
-        public void write(byte[] buf, int start, int len) throws IOException {
-            if (buffer!=null) {
-                try {
-                    buffer.write(buf,start,len);
-                } catch (InterruptedException e) {
-                    throw new InterruptedIOException();
-                }
-            } else {
-                sink.write(buf,start,len);
-                freeupWindow(len, true);
-            }
-        }
-
-        /**
-         * How many bytes can be read from the buffer?
-         */
-        public int readable() {
-            if (buffer!=null)   return buffer.readable();
-            else                return 0;
-        }
-
-        /**
-         * See {@link InputStream#available()}
-         */
-        public int available() {
-            if (buffer==null)
-                throw new IllegalStateException("Output is being piped to "+sink);
-
-            int sz = buffer.readable();
-            if (sz>0)    return sz;
-            return isEOF() ? -1 : 0;
-        }
-
-        /**
-         * Read from the buffer.
-         */
-        public int read(byte[] buf, int start, int len) throws InterruptedException {
-            return buffer.read(buf,start,len);
-        }
-
-        /**
-         * Called when there will be no more data arriving to this output any more.
-         * Not that buffer might still have some more data that needs to be drained.
-         */
-        public void eof() {
-            if (buffer!=null)
-                buffer.close();
-            else
-                closeQuietly(sink);
-        }
-
-        /**
-         * Instead of spooling data, let our I/O thread write to the given {@link OutputStream}.
-         */
-        public void pipeTo(OutputStream os) throws IOException {
-            sink = os;
-            if (buffer.readable()!=0) {
-                freeupWindow(buffer.writeTo(os));
-            }
-
-            buffer = null;
-            stream = null;
-        }
-    }
-
-    final Output stdout = new Output();
-    final Output stderr = new Output();
-
-    // These two fields will only be written while the Channel is in state
+	// These two fields will only be written while the Channel is in state
 	// STATE_OPENING.
 	// The code makes sure that the two fields are written out when the state is
 	// changing to STATE_OPEN.
@@ -219,17 +117,15 @@ public class Channel
 	int localMaxPacketSize = -1;
 	int remoteMaxPacketSize = -1;
 
+	final byte[] stdoutBuffer = new byte[CHANNEL_BUFFER_SIZE];
+	final byte[] stderrBuffer = new byte[CHANNEL_BUFFER_SIZE];
 
-    private boolean eof = false;
+	int stdoutReadpos = 0;
+	int stdoutWritepos = 0;
+	int stderrReadpos = 0;
+	int stderrWritepos = 0;
 
-    synchronized void eof() {
-        stdout.eof();
-        stderr.eof();
-        eof = true;
-    }
-    boolean isEOF() {
-        return eof;
-    }
+	boolean EOF = false;
 
 	Integer exit_status;
 
@@ -245,31 +141,25 @@ public class Channel
 	// We protect it with a private short term lock.
 
 	private final Object reasonClosedLock = new Object();
-	private Throwable reasonClosed = null;
+	private String reasonClosed = null;
 
 	public Channel(ChannelManager cm)
 	{
 		this.cm = cm;
 
-		this.localWindow = channelBufferSize;
-		this.localMaxPacketSize = TransportManager.MAX_PACKET_SIZE - 1024; // leave enough slack
+		this.localWindow = CHANNEL_BUFFER_SIZE;
+		this.localMaxPacketSize = 35000 - 1024; // leave enough slack
 
 		this.stdinStream = new ChannelOutputStream(this);
-		this.stdout.stream = new ChannelInputStream(this, false);
-		this.stderr.stream = new ChannelInputStream(this, true);
+		this.stdoutStream = new ChannelInputStream(this, false);
+		this.stderrStream = new ChannelInputStream(this, true);
 	}
 
 	/* Methods to allow access from classes outside of this package */
 
-    public synchronized void setWindowSize(int newSize) {
-        if (newSize<=0)  throw new IllegalArgumentException("Invalid value: "+newSize);
-        this.channelBufferSize = newSize;
-        // next time when the other side sends us something, we'll issue SSH_MSG_CHANNEL_WINDOW_ADJUST
-    }
-
 	public ChannelInputStream getStderrStream()
 	{
-		return stderr.stream;
+		return stderrStream;
 	}
 
 	public ChannelOutputStream getStdinStream()
@@ -279,16 +169,8 @@ public class Channel
 
 	public ChannelInputStream getStdoutStream()
 	{
-		return stdout.stream;
+		return stdoutStream;
 	}
-
-    public synchronized void pipeStdoutStream(OutputStream os) throws IOException {
-        stdout.pipeTo(os);
-    }
-
-    public synchronized void pipeStderrStream(OutputStream os) throws IOException {
-        stderr.pipeTo(os);
-    }
 
 	public String getExitSignal()
 	{
@@ -306,146 +188,20 @@ public class Channel
 		}
 	}
 
-    /**
-     * @deprecated
-     *      Use {@link #getReasonClosedCause()}
-     */
 	public String getReasonClosed()
 	{
 		synchronized (reasonClosedLock)
 		{
-			return reasonClosed!=null ? reasonClosed.getMessage() : null;
+			return reasonClosed;
 		}
 	}
 
-    public Throwable getReasonClosedCause()
-   	{
-   		synchronized (reasonClosedLock)
-   		{
-   			return reasonClosed;
-   		}
-   	}
-
 	public void setReasonClosed(String reasonClosed)
 	{
-        setReasonClosed(new IOException(reasonClosed));
+		synchronized (reasonClosedLock)
+		{
+			if (this.reasonClosed == null)
+				this.reasonClosed = reasonClosed;
+		}
 	}
-
-    public void setReasonClosed(Throwable reasonClosed) {
-        synchronized (reasonClosedLock)
-      		{
-      			if (this.reasonClosed == null)
-      				this.reasonClosed = reasonClosed;
-      		}
-    }
-
-    /**
-     * Update the flow control couner and if necessary, sends ACK to the other end to
-     * let it send more data.
-     */
-    void freeupWindow(int copylen) throws IOException {
-        freeupWindow(copylen, false);
-	}
-
-    /**
-     * Update the flow control couner and if necessary, sends ACK to the other end to
-     * let it send more data.
-     */
-    void freeupWindow(int copylen, boolean sendAsync) throws IOException {
-        if (copylen <= 0) return;
-
-        int increment = 0;
-        int remoteID;
-        int localID;
-
-        synchronized (this) {
-            if (localWindow <= ((channelBufferSize * 3) / 4)) {
-                // have enough local window been consumed? if so, we'll send Ack
-
-                // the window control is on the combined bytes of stdout & stderr
-                int space = channelBufferSize - stdout.readable() - stderr.readable();
-
-                increment = space - localWindow;
-                if (increment > 0)    // increment<0 can't happen, but be defensive
-                    localWindow += increment;
-            }
-
-            remoteID = this.remoteID; /* read while holding the lock */
-            localID = this.localID; /* read while holding the lock */
-
-        }
-
-        /*
-         * If a consumer reads stdout and stdin in parallel, we may end up with
-         * sending two msgWindowAdjust messages. Luckily, it
-         * does not matter in which order they arrive at the server.
-         */
-
-        if (increment > 0)
-        {
-            if (log.isEnabled())
-                log.log(80, "Sending SSH_MSG_CHANNEL_WINDOW_ADJUST (channel " + localID + ", " + increment + ")");
-
-            synchronized (channelSendLock)
-            {
-                byte[] msg = msgWindowAdjust;
-
-                msg[0] = Packets.SSH_MSG_CHANNEL_WINDOW_ADJUST;
-                msg[1] = (byte) (remoteID >> 24);
-                msg[2] = (byte) (remoteID >> 16);
-                msg[3] = (byte) (remoteID >> 8);
-                msg[4] = (byte) (remoteID);
-                msg[5] = (byte) (increment >> 24);
-                msg[6] = (byte) (increment >> 16);
-                msg[7] = (byte) (increment >> 8);
-                msg[8] = (byte) (increment);
-
-                if (closeMessageSent == false) {
-                    if (sendAsync) {
-                        cm.tm.sendAsynchronousMessage(msg);
-                    } else {
-                        cm.tm.sendMessage(msg);
-                    }
-                }
-            }
-        }
-    }
-
-    public void requestWindowChange(int term_width_characters, int term_height_characters,
-                                    int term_width_pixels, int term_height_pixels) throws IOException {
-        PacketWindowChange pwc;
-
-        synchronized (this) {
-            if (state != Channel.STATE_OPEN)
-                throw (IOException)new IOException("Cannot request window-change on this channel").initCause(getReasonClosedCause());
-
-            pwc = new PacketWindowChange(remoteID, term_width_characters, term_height_characters,
-                    term_width_pixels, term_height_pixels);
-        }
-
-        synchronized (channelSendLock) {
-            if (closeMessageSent)
-                throw (IOException)new IOException("Cannot request window-change on this channel").initCause(getReasonClosedCause());
-            cm.tm.sendMessage(pwc.getPayload());
-        }
-    }
-
-    public void signal(String name) throws IOException {
-        PacketSignal p;
-
-        synchronized (this) {
-            if (state != Channel.STATE_OPEN)
-                throw (IOException)new IOException("Cannot send signal on this channel").initCause(getReasonClosedCause());
-
-            p = new PacketSignal(remoteID, name);
-        }
-
-        synchronized (channelSendLock) {
-            if (closeMessageSent)
-                throw (IOException)new IOException("Cannot request window-change on this channel").initCause(getReasonClosedCause());
-            cm.tm.sendMessage(p.getPayload());
-        }
-    }
-
-    private static final Logger log = Logger.getLogger(Channel.class);
 }

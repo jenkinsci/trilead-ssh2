@@ -1,17 +1,37 @@
+
 package com.trilead.ssh2.auth;
+
+import java.io.IOException;
+import java.security.KeyPair;
+import java.security.PrivateKey;
+import java.security.SecureRandom;
+import java.security.interfaces.DSAPrivateKey;
+import java.security.interfaces.DSAPublicKey;
+import java.security.interfaces.ECPrivateKey;
+import java.security.interfaces.ECPublicKey;
+import java.security.interfaces.RSAPrivateKey;
+import java.security.interfaces.RSAPublicKey;
+import java.util.Vector;
 
 import com.trilead.ssh2.InteractiveCallback;
 import com.trilead.ssh2.crypto.PEMDecoder;
-import com.trilead.ssh2.packets.*;
-import com.trilead.ssh2.signature.*;
+import com.trilead.ssh2.packets.PacketServiceAccept;
+import com.trilead.ssh2.packets.PacketServiceRequest;
+import com.trilead.ssh2.packets.PacketUserauthBanner;
+import com.trilead.ssh2.packets.PacketUserauthFailure;
+import com.trilead.ssh2.packets.PacketUserauthInfoRequest;
+import com.trilead.ssh2.packets.PacketUserauthInfoResponse;
+import com.trilead.ssh2.packets.PacketUserauthRequestInteractive;
+import com.trilead.ssh2.packets.PacketUserauthRequestNone;
+import com.trilead.ssh2.packets.PacketUserauthRequestPassword;
+import com.trilead.ssh2.packets.PacketUserauthRequestPublicKey;
+import com.trilead.ssh2.packets.Packets;
+import com.trilead.ssh2.packets.TypesWriter;
+import com.trilead.ssh2.signature.DSASHA1Verify;
+import com.trilead.ssh2.signature.ECDSASHA2Verify;
+import com.trilead.ssh2.signature.RSASHA1Verify;
 import com.trilead.ssh2.transport.MessageHandler;
 import com.trilead.ssh2.transport.TransportManager;
-
-import java.io.IOException;
-import java.io.InterruptedIOException;
-import java.security.SecureRandom;
-import java.util.Iterator;
-import java.util.Vector;
 
 
 /**
@@ -69,7 +89,6 @@ public class AuthenticationManager implements MessageHandler
 				}
 				catch (InterruptedException ign)
 				{
-                    throw new InterruptedIOException();
 				}
 			}
 			/* This sequence works with J2ME */
@@ -144,76 +163,19 @@ public class AuthenticationManager implements MessageHandler
 		return authenticated;
 	}
 
-	public boolean authenticatePublicKey(String user, AgentProxy proxy) throws IOException {
-		initialize(user);
-
-		boolean success = false;
-		Iterator agentIdentities = proxy.getIdentities().iterator();
-		while(agentIdentities.hasNext()) {
-			AgentIdentity identity = (AgentIdentity)agentIdentities.next();
-			success = authenticatePublicKey(user, proxy, identity);
-			if(success) {
-				return true;
-			}
-		}
-		return false;
-	}
-
-	boolean authenticatePublicKey(String user, AgentProxy proxy, AgentIdentity identity) throws IOException {
-
-		if (methodPossible("publickey") == false)
-			throw new IOException("Authentication method publickey not supported by the server at this stage.");
-
-		byte[] pubKeyBlob = identity.getPublicKeyBlob();
-		if(pubKeyBlob == null) {
-			return false;
-		}
-
-		TypesWriter tw = new TypesWriter();
-		byte[] H = tm.getSessionIdentifier();
-
-		tw.writeString(H, 0, H.length);
-		tw.writeByte(Packets.SSH_MSG_USERAUTH_REQUEST);
-		tw.writeString(user);
-		tw.writeString("ssh-connection");
-		tw.writeString("publickey");
-		tw.writeBoolean(true);
-		tw.writeString(identity.getAlgName());
-		tw.writeString(pubKeyBlob, 0, pubKeyBlob.length);
-
-		byte[] msg = tw.getBytes();
-		byte[] response = identity.sign(msg);
-
-		PacketUserauthRequestPublicKey ua = new PacketUserauthRequestPublicKey(
-				"ssh-connection", user, identity.getAlgName(), pubKeyBlob, response);
-		tm.sendMessage(ua.getPayload());
-
-		byte[] ar = getNextMessage();
-
-		if (ar[0] == Packets.SSH_MSG_USERAUTH_SUCCESS)
-		{
-			authenticated = true;
-			tm.removeMessageHandler(this, 0, 255);
-			return true;
-		}
-
-		if (ar[0] == Packets.SSH_MSG_USERAUTH_FAILURE)
-		{
-			PacketUserauthFailure puf = new PacketUserauthFailure(ar, 0, ar.length);
-
-			remainingMethods = puf.getAuthThatCanContinue();
-			isPartialSuccess = puf.isPartialSuccess();
-
-			return false;
-		}
-
-		throw new IOException("Unexpected SSH message (type " + ar[0] + ")");
-	}
-
-
 	public boolean authenticatePublicKey(String user, char[] PEMPrivateKey, String password, SecureRandom rnd)
 			throws IOException
 	{
+		KeyPair pair = PEMDecoder.decode(PEMPrivateKey, password);
+
+		return authenticatePublicKey(user, pair, rnd);
+	}
+
+	public boolean authenticatePublicKey(String user, KeyPair pair, SecureRandom rnd)
+			throws IOException
+	{
+		PrivateKey key = pair.getPrivate();
+
 		try
 		{
 			initialize(user);
@@ -221,13 +183,11 @@ public class AuthenticationManager implements MessageHandler
 			if (methodPossible("publickey") == false)
 				throw new IOException("Authentication method publickey not supported by the server at this stage.");
 
-			Object key = PEMDecoder.decode(PEMPrivateKey, password);
-
 			if (key instanceof DSAPrivateKey)
 			{
 				DSAPrivateKey pk = (DSAPrivateKey) key;
 
-				byte[] pk_enc = DSASHA1Verify.encodeSSHDSAPublicKey(pk.getPublicKey());
+				byte[] pk_enc = DSASHA1Verify.encodeSSHDSAPublicKey((DSAPublicKey) pair.getPublic());
 
 				TypesWriter tw = new TypesWriter();
 
@@ -244,7 +204,7 @@ public class AuthenticationManager implements MessageHandler
 
 				byte[] msg = tw.getBytes();
 
-				DSASignature ds = DSASHA1Verify.generateSignature(msg, pk, rnd);
+				byte[] ds = DSASHA1Verify.generateSignature(msg, pk, rnd);
 
 				byte[] ds_enc = DSASHA1Verify.encodeSSHDSASignature(ds);
 
@@ -256,7 +216,7 @@ public class AuthenticationManager implements MessageHandler
 			{
 				RSAPrivateKey pk = (RSAPrivateKey) key;
 
-				byte[] pk_enc = RSASHA1Verify.encodeSSHRSAPublicKey(pk.getPublicKey());
+				byte[] pk_enc = RSASHA1Verify.encodeSSHRSAPublicKey((RSAPublicKey) pair.getPublic());
 
 				TypesWriter tw = new TypesWriter();
 				{
@@ -274,12 +234,46 @@ public class AuthenticationManager implements MessageHandler
 
 				byte[] msg = tw.getBytes();
 
-				RSASignature ds = RSASHA1Verify.generateSignature(msg, pk);
+				byte[] ds = RSASHA1Verify.generateSignature(msg, pk);
 
 				byte[] rsa_sig_enc = RSASHA1Verify.encodeSSHRSASignature(ds);
 
 				PacketUserauthRequestPublicKey ua = new PacketUserauthRequestPublicKey("ssh-connection", user,
 						"ssh-rsa", pk_enc, rsa_sig_enc);
+
+				tm.sendMessage(ua.getPayload());
+			}
+			else if (key instanceof ECPrivateKey)
+			{
+				ECPrivateKey pk = (ECPrivateKey) key;
+				final String algo = ECDSASHA2Verify.ECDSA_SHA2_PREFIX
+						+ ECDSASHA2Verify.getCurveName(pk.getParams());
+
+				byte[] pk_enc = ECDSASHA2Verify.encodeSSHECDSAPublicKey((ECPublicKey) pair.getPublic());
+
+				TypesWriter tw = new TypesWriter();
+				{
+					byte[] H = tm.getSessionIdentifier();
+
+					tw.writeString(H, 0, H.length);
+					tw.writeByte(Packets.SSH_MSG_USERAUTH_REQUEST);
+					tw.writeString(user);
+					tw.writeString("ssh-connection");
+					tw.writeString("publickey");
+					tw.writeBoolean(true);
+					tw.writeString(algo);
+					tw.writeString(pk_enc, 0, pk_enc.length);
+				}
+
+				byte[] msg = tw.getBytes();
+
+				byte[] ds = ECDSASHA2Verify.generateSignature(msg, pk);
+
+				byte[] ec_sig_enc = ECDSASHA2Verify.encodeSSHECDSASignature(ds, pk.getParams());
+
+				PacketUserauthRequestPublicKey ua = new PacketUserauthRequestPublicKey("ssh-connection", user,
+						algo, pk_enc, ec_sig_enc);
+
 				tm.sendMessage(ua.getPayload());
 			}
 			else
@@ -288,7 +282,6 @@ public class AuthenticationManager implements MessageHandler
 			}
 
 			byte[] ar = getNextMessage();
-
 			if (ar[0] == Packets.SSH_MSG_USERAUTH_SUCCESS)
 			{
 				authenticated = true;
@@ -311,6 +304,7 @@ public class AuthenticationManager implements MessageHandler
 		}
 		catch (IOException e)
 		{
+e.printStackTrace();
 			tm.close(e, false);
 			throw (IOException) new IOException("Publickey authentication failed.").initCause(e);
 		}
@@ -449,9 +443,16 @@ public class AuthenticationManager implements MessageHandler
 	{
 		synchronized (packets)
 		{
-            byte[] tmp = new byte[msglen];
-            System.arraycopy(msg, 0, tmp, 0, msglen);
-            packets.addElement(tmp);
+			if (msg == null)
+			{
+				connectionClosed = true;
+			}
+			else
+			{
+				byte[] tmp = new byte[msglen];
+				System.arraycopy(msg, 0, tmp, 0, msglen);
+				packets.addElement(tmp);
+			}
 
 			packets.notifyAll();
 
@@ -462,11 +463,4 @@ public class AuthenticationManager implements MessageHandler
 			}
 		}
 	}
-
-    public void handleEndMessage(Throwable cause) throws IOException {
-        synchronized (packets) {
-            connectionClosed = true;
-            packets.notifyAll();
-        }
-    }
 }

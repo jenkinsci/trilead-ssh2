@@ -1,9 +1,9 @@
+
 package com.trilead.ssh2.channel;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.InterruptedIOException;
 import java.net.Socket;
 
 import com.trilead.ssh2.log.Logger;
@@ -191,7 +191,7 @@ public class RemoteX11AcceptThread extends Thread
 
 			/* Start forwarding traffic */
 
-			StreamForwarder r2l = new StreamForwarder(c, null, null, remote_is, x11_os, "RemoteToX11");
+			StreamForwarder r2l = new StreamForwarder(c, null, s, remote_is, x11_os, "RemoteToX11");
 			StreamForwarder l2r = new StreamForwarder(c, null, null, x11_is, remote_os, "X11ToRemote");
 
 			/* No need to start two threads, one can be executed in the current thread */
@@ -208,7 +208,6 @@ public class RemoteX11AcceptThread extends Thread
 				}
 				catch (InterruptedException e)
 				{
-					throw new InterruptedIOException();
 				}
 			}
 
@@ -219,7 +218,7 @@ public class RemoteX11AcceptThread extends Thread
 		}
 		catch (IOException e)
 		{
-			log.log(50, "IOException in X11 proxy code",e);
+			log.log(50, "IOException in X11 proxy code: " + e.getMessage());
 
 			try
 			{

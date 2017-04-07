@@ -17,7 +17,7 @@ public abstract interface ChannelCondition
 	 * A timeout has occurred, none of your requested conditions is fulfilled.
 	 * However, other conditions may be true - therefore, NEVER use the "=="
 	 * operator to test for this (or any other) condition. Always use
-	 * something like <code>((cond & ChannelCondition.CLOSED) != 0)</code>.
+	 * something like <code>((cond &amp; ChannelCondition.CLOSED) != 0)</code>.
 	 */
 	public static final int TIMEOUT = 1;
 

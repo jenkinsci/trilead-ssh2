@@ -92,7 +92,9 @@ public class TimeoutService
 					}
 					catch (Exception e)
 					{
-						log.log(20, "Exception in Timeout handler",e);
+						StringWriter sw = new StringWriter();
+						e.printStackTrace(new PrintWriter(sw));
+						log.log(20, "Exeception in Timeout handler:" + e.getMessage() + "(" + sw.toString() + ")");
 					}
 				}
 			}

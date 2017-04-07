@@ -3,8 +3,6 @@ package com.trilead.ssh2.log;
 
 import com.trilead.ssh2.DebugLogger;
 
-import java.util.logging.Level;
-
 /**
  * Logger - a very simple logger, mainly used during development.
  * Is not based on log4j (to reduce external dependencies).
@@ -24,7 +22,7 @@ public class Logger
 	public static boolean enabled = false;
 	public static DebugLogger logger = null;
 	
-	private java.util.logging.Logger log;
+	private String className;
 
 	public final static Logger getLogger(Class x)
 	{
@@ -33,27 +31,24 @@ public class Logger
 
 	public Logger(Class x)
 	{
-		this.log = java.util.logging.Logger.getLogger(x.getName());
+		this.className = x.getName();
 	}
 
 	public final boolean isEnabled()
 	{
-		return true;
+		return enabled;
 	}
 
-	public final void log(int lv, String message)
+	public final void log(int level, String message)
 	{
-        log.log(level(lv),message);
+		if (!enabled)
+			return;
+		
+		DebugLogger target = logger;
+		
+		if (target == null)
+			return;
+		
+		target.log(level, className, message);
 	}
-
-    public final void log(int lv, String message, Throwable cause)
-   	{
-       log.log(level(lv),message,cause);
-   	}
-
-    private Level level(int lv) {
-        if (lv<=20)     return Level.FINE;
-        if (lv<=50)     return Level.FINER;
-        return Level.FINEST;
-    }
 }
