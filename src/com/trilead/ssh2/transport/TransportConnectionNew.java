@@ -10,20 +10,15 @@ import com.trilead.ssh2.crypto.cipher.BlockCipher;
 import com.trilead.ssh2.crypto.cipher.CipherInputStream;
 import com.trilead.ssh2.crypto.cipher.CipherOutputStream;
 import com.trilead.ssh2.crypto.cipher.NullCipher;
-import com.trilead.ssh2.crypto.digest.MAC;
+import com.trilead.ssh2.crypto.digest.MACNew;
 import com.trilead.ssh2.log.Logger;
 import com.trilead.ssh2.packets.Packets;
 
 
 /**
- * TransportConnection.
- * 
- * @author Christian Plattner, plattner@trilead.com
- * @version $Id: TransportConnection.java,v 1.1 2007/10/15 12:49:56 cplattne Exp $
- *
- * Deprecated use TransportConnectionNew.
+ * TransportConnectionNew.
  */
-public class TransportConnection
+public class TransportConnectionNew
 {
 	private static final Logger log = Logger.getLogger(TransportConnection.class);
 
@@ -39,13 +34,13 @@ public class TransportConnection
 
 	/* Depends on current MAC and CIPHER */
 
-	MAC send_mac;
+	MACNew send_mac;
 
 	byte[] send_mac_buffer;
 
 	int send_padd_blocksize = 8;
 
-	MAC recv_mac;
+	MACNew recv_mac;
 
 	byte[] recv_mac_buffer;
 
@@ -69,14 +64,14 @@ public class TransportConnection
 
 	final SecureRandom rnd;
 
-	public TransportConnection(InputStream is, OutputStream os, SecureRandom rnd)
+	public TransportConnectionNew(InputStream is, OutputStream os, SecureRandom rnd)
 	{
 		this.cis = new CipherInputStream(new NullCipher(), is);
 		this.cos = new CipherOutputStream(new NullCipher(), os);
 		this.rnd = rnd;
 	}
 
-	public void changeRecvCipher(BlockCipher bc, MAC mac)
+	public void changeRecvCipher(BlockCipher bc, MACNew mac)
 	{
 		cis.changeCipher(bc);
 		recv_mac = mac;
@@ -87,7 +82,7 @@ public class TransportConnection
 			recv_padd_blocksize = 8;
 	}
 
-	public void changeSendCipher(BlockCipher bc, MAC mac)
+	public void changeSendCipher(BlockCipher bc, MACNew mac)
 	{
 		if ((bc instanceof NullCipher) == false)
 		{
@@ -216,7 +211,7 @@ public class TransportConnection
 
 		int padding_length = recv_packet_header_buffer[4] & 0xff;
 
-		if (packet_length > TransportManager.MAX_PACKET_SIZE || packet_length < 12)
+		if (packet_length > TransportManagerNew.MAX_PACKET_SIZE || packet_length < 12)
 			throw new IOException("Illegal packet size! (" + packet_length + ")");
 
 		int payload_length = packet_length - padding_length - 1;
@@ -242,7 +237,7 @@ public class TransportConnection
 
 		int padding_length = recv_packet_header_buffer[4] & 0xff;
 
-		if (packet_length > TransportManager.MAX_PACKET_SIZE || packet_length < 12)
+		if (packet_length > TransportManagerNew.MAX_PACKET_SIZE || packet_length < 12)
 			throw new IOException("Illegal packet size! (" + packet_length + ")");
 
 		int payload_length = packet_length - padding_length - 1;

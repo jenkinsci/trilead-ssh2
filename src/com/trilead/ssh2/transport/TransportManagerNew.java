@@ -21,7 +21,7 @@ import com.trilead.ssh2.ServerHostKeyVerifier;
 import com.trilead.ssh2.crypto.Base64;
 import com.trilead.ssh2.crypto.CryptoWishList;
 import com.trilead.ssh2.crypto.cipher.BlockCipher;
-import com.trilead.ssh2.crypto.digest.MAC;
+import com.trilead.ssh2.crypto.digest.MACNew;
 import com.trilead.ssh2.log.Logger;
 import com.trilead.ssh2.packets.PacketDisconnect;
 import com.trilead.ssh2.packets.Packets;
@@ -46,14 +46,9 @@ import com.trilead.ssh2.util.Tokenizer;
  */
 
 /**
- * TransportManager.
- * 
- * @author Christian Plattner, plattner@trilead.com
- * @version $Id: TransportManager.java,v 1.2 2008/04/01 12:38:09 cplattne Exp $
- *
- * Deprecated use TransportManagerNew.
+ * TransportManagerNew.
  */
-public class TransportManager
+public class TransportManagerNew
 {
     private static final Logger log = Logger.getLogger(TransportManager.class);
 
@@ -134,8 +129,8 @@ public class TransportManager
 
 	Throwable reasonClosedCause = null;
 
-	TransportConnection tc;
-	KexManager km;
+	TransportConnectionNew tc;
+	KexManagerNew km;
 
 	Vector messageHandlers = new Vector();
 
@@ -206,7 +201,7 @@ public class TransportManager
 		return InetAddress.getByAddress(host, addr);
 	}
 
-	public TransportManager(String host, int port) throws IOException
+	public TransportManagerNew(String host, int port) throws IOException
 	{
 		this.hostname = host;
 		this.port = port;
@@ -476,9 +471,9 @@ public class TransportManager
 		ClientServerHello csh = new ClientServerHello(sock.getInputStream(), sock.getOutputStream());
 		versions = csh;
 
-		tc = new TransportConnection(sock.getInputStream(), sock.getOutputStream(), rnd);
+		tc = new TransportConnectionNew(sock.getInputStream(), sock.getOutputStream(), rnd);
 
-		km = new KexManager(this, csh, cwl, hostname, port, verifier, rnd);
+		km = new KexManagerNew(this, csh, cwl, hostname, port, verifier, rnd);
 		km.initiateKEX(cwl, dhgex);
 
 		receiveThread = new Thread(new Runnable()
@@ -604,12 +599,12 @@ public class TransportManager
 		km.initiateKEX(cwl, dhgex);
 	}
 
-	public void changeRecvCipher(BlockCipher bc, MAC mac)
+	public void changeRecvCipher(BlockCipher bc, MACNew mac)
 	{
 		tc.changeRecvCipher(bc, mac);
 	}
 
-	public void changeSendCipher(BlockCipher bc, MAC mac)
+	public void changeSendCipher(BlockCipher bc, MACNew mac)
 	{
 		tc.changeSendCipher(bc, mac);
 	}
@@ -803,6 +798,6 @@ public class TransportManager
      * Advertised maximum SSH packet size that the other side can send to us.
      */
     public static final int MAX_PACKET_SIZE = Integer.getInteger(
-    			TransportManager.class.getName()+".maxPacketSize",
+    			TransportManagerNew.class.getName()+".maxPacketSize",
     			64*1024);
 }

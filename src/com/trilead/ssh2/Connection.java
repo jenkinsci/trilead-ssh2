@@ -5,12 +5,12 @@ import com.trilead.ssh2.auth.AuthenticationManager;
 import com.trilead.ssh2.channel.ChannelManager;
 import com.trilead.ssh2.crypto.CryptoWishList;
 import com.trilead.ssh2.crypto.cipher.BlockCipherFactory;
-import com.trilead.ssh2.crypto.digest.MAC;
+import com.trilead.ssh2.crypto.digest.MACNew;
 import com.trilead.ssh2.log.Logger;
 import com.trilead.ssh2.packets.PacketIgnore;
 import com.trilead.ssh2.transport.ClientServerHello;
-import com.trilead.ssh2.transport.KexManager;
-import com.trilead.ssh2.transport.TransportManager;
+import com.trilead.ssh2.transport.KexManagerNew;
+import com.trilead.ssh2.transport.TransportManagerNew;
 import com.trilead.ssh2.util.TimeoutService;
 import com.trilead.ssh2.util.TimeoutService.TimeoutToken;
 
@@ -75,7 +75,7 @@ public class Connection
 	 */
 	public static synchronized String[] getAvailableMACs()
 	{
-		return MAC.getMacList();
+		return MACNew.getMacList();
 	}
 
 	/**
@@ -86,7 +86,7 @@ public class Connection
 	 */
 	public static synchronized String[] getAvailableServerHostKeyAlgorithms()
 	{
-		return KexManager.getDefaultServerHostkeyAlgorithmList();
+		return KexManagerNew.getDefaultServerHostkeyAlgorithmList();
 	}
 
 	private AuthenticationManager am;
@@ -102,7 +102,7 @@ public class Connection
 
 	private final int port;
 
-	private TransportManager tm;
+	private TransportManagerNew tm;
 
 	private boolean tcpNoDelay = false;
 
@@ -706,7 +706,7 @@ public class Connection
 
 		final TimeoutState state = new TimeoutState();
 
-		tm = new TransportManager(hostname, port);
+		tm = new TransportManagerNew(hostname, port);
 		
 		tm.setConnectionMonitors(connectionMonitors);
 
@@ -1242,7 +1242,7 @@ public class Connection
 		if ((macs == null) || (macs.length == 0))
 			throw new IllegalArgumentException();
 		macs = removeDuplicates(macs);
-		MAC.checkMacList(macs);
+		MACNew.checkMacList(macs);
 		cryptoWishList.c2s_mac_algos = macs;
 	}
 
@@ -1288,7 +1288,7 @@ public class Connection
 			throw new IllegalArgumentException();
 
 		macs = removeDuplicates(macs);
-		MAC.checkMacList(macs);
+		MACNew.checkMacList(macs);
 		cryptoWishList.s2c_mac_algos = macs;
 	}
 
@@ -1311,7 +1311,7 @@ public class Connection
 			throw new IllegalArgumentException();
 
 		algos = removeDuplicates(algos);
-		KexManager.checkServerHostkeyAlgorithmsList(algos);
+		KexManagerNew.checkServerHostkeyAlgorithmsList(algos);
 		cryptoWishList.serverHostKeyAlgorithms = algos;
 	}
 

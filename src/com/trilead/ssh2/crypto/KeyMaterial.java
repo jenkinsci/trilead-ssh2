@@ -4,7 +4,7 @@ package com.trilead.ssh2.crypto;
 
 import java.math.BigInteger;
 
-import com.trilead.ssh2.crypto.digest.HashForSSH2Types;
+import com.trilead.ssh2.crypto.digest.HashForSSH2TypesNew;
 
 /**
  * Establishes key material for iv/key/mac (both directions).
@@ -21,7 +21,7 @@ public class KeyMaterial
 	public byte[] integrity_key_client_to_server;
 	public byte[] integrity_key_server_to_client;
 
-	private static byte[] calculateKey(HashForSSH2Types sh, BigInteger K, byte[] H, byte type, byte[] SessionID,
+	private static byte[] calculateKey(HashForSSH2TypesNew sh, BigInteger K, byte[] H, byte type, byte[] SessionID,
 			int keyLength)
 	{
 		byte[] res = new byte[keyLength];
@@ -66,13 +66,13 @@ public class KeyMaterial
 		return res;
 	}
 
-	public static KeyMaterial create(String hashType, byte[] H, BigInteger K, byte[] SessionID, int keyLengthCS,
+	public static KeyMaterial create(String hashAlgo, byte[] H, BigInteger K, byte[] SessionID, int keyLengthCS,
 			int blockSizeCS, int macLengthCS, int keyLengthSC, int blockSizeSC, int macLengthSC)
 			throws IllegalArgumentException
 	{
 		KeyMaterial km = new KeyMaterial();
 
-		HashForSSH2Types sh = new HashForSSH2Types(hashType);
+		HashForSSH2TypesNew sh = new HashForSSH2TypesNew(hashAlgo);
 
 		km.initial_iv_client_to_server = calculateKey(sh, K, H, (byte) 'A', SessionID, blockSizeCS);
 

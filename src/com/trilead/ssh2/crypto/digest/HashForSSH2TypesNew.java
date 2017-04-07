@@ -1,37 +1,24 @@
-
 package com.trilead.ssh2.crypto.digest;
 
 import java.math.BigInteger;
+import java.security.DigestException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 
 /**
- * HashForSSH2Types.
- * 
- * @author Christian Plattner, plattner@trilead.com
- * @version $Id: HashForSSH2Types.java,v 1.1 2007/10/15 12:49:57 cplattne Exp $
- *
- * @deprecated use HashForSSH2TypesNew instead
+ * HashForSSH2TypesNew.
  */
-public class HashForSSH2Types
+public class HashForSSH2TypesNew
 {
-	Digest md;
+	private MessageDigest md;
 
-	public HashForSSH2Types(Digest md)
+	public HashForSSH2TypesNew(String type)
 	{
-		this.md = md;
-	}
-
-	public HashForSSH2Types(String type)
-	{
-		if (type.equals("SHA1"))
-		{
-			md = new SHA1();
+		try {
+			md = MessageDigest.getInstance(type);
+		} catch (NoSuchAlgorithmException e) {
+			throw new RuntimeException("Unsupported algorithm " + type);
 		}
-		else if (type.equals("MD5"))
-		{
-			md = new MD5();
-		}
-		else
-			throw new IllegalArgumentException("Unknown algorithm " + type);
 	}
 
 	public void updateByte(byte b)
@@ -90,6 +77,10 @@ public class HashForSSH2Types
 
 	public void getDigest(byte[] out, int off)
 	{
-		md.digest(out, off);
+		try {
+			md.digest(out, off, out.length - off);
+		} catch (DigestException e) {
+			throw new RuntimeException("Unable to digest", e);
+		}
 	}
 }
