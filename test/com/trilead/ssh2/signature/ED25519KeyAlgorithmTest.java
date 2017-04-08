@@ -73,7 +73,10 @@ public class ED25519KeyAlgorithmTest {
     
     @Test
     public void testParsePrivateKey() throws IOException {
-        PEMDecoder.decodeKeyPair(IOUtils.toCharArray(getClass().getResourceAsStream("ed25519-testkey-unprotected.txt")), null);
-        //Once we get decryption working: PEMDecoder.decodeKeyPair(IOUtils.toCharArray(getClass().getResourceAsStream("ed25519-testkey-protected.txt")), "password");
+        KeyPair expected = PEMDecoder.decodeKeyPair(IOUtils.toCharArray(getClass().getResourceAsStream("ed25519-testkey-unprotected.txt")), null);
+        KeyPair actual = PEMDecoder.decodeKeyPair(IOUtils.toCharArray(getClass().getResourceAsStream("ed25519-testkey-protected.txt")), "password");
+
+        assertEquals(expected.getPrivate(), actual.getPrivate());
+        assertEquals(expected.getPublic(), actual.getPublic());
     }
 }
