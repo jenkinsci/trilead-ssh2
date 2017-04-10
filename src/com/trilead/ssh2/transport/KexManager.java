@@ -3,7 +3,11 @@ package com.trilead.ssh2.transport;
 
 import java.io.IOException;
 import java.io.InterruptedIOException;
+import java.security.PrivateKey;
+import java.security.PublicKey;
 import java.security.SecureRandom;
+import java.util.ArrayList;
+import java.util.List;
 
 import com.trilead.ssh2.ConnectionInfo;
 import com.trilead.ssh2.DHGexParameters;
@@ -26,12 +30,8 @@ import com.trilead.ssh2.packets.PacketKexDhGexRequestOld;
 import com.trilead.ssh2.packets.PacketKexInit;
 import com.trilead.ssh2.packets.PacketNewKeys;
 import com.trilead.ssh2.packets.Packets;
-import com.trilead.ssh2.signature.DSAPublicKey;
-import com.trilead.ssh2.signature.DSASHA1Verify;
-import com.trilead.ssh2.signature.DSASignature;
-import com.trilead.ssh2.signature.RSAPublicKey;
-import com.trilead.ssh2.signature.RSASHA1Verify;
-import com.trilead.ssh2.signature.RSASignature;
+import com.trilead.ssh2.signature.KeyAlgorithm;
+import com.trilead.ssh2.signature.KeyAlgorithmManager;
 
 
 /**
@@ -43,6 +43,8 @@ import com.trilead.ssh2.signature.RSASignature;
 public class KexManager implements MessageHandler
 {
 	private static final Logger log = Logger.getLogger(KexManager.class);
+
+	private static final List<String> DEFAULT_KEY_ALGORITHMS = buildDefaultKeyAlgorithms();
 
 	KexState kxs;
 	int kexCount = 0;
@@ -90,8 +92,7 @@ public class KexManager implements MessageHandler
 					return lastConnInfo;
 
 				if (connectionClosed)
-					throw (IOException) new IOException("Key exchange was not finished, connection is closed.")
-							.initCause(tm.getReasonClosedCause());
+					throw new IOException("Key exchange was not finished, connection is closed.", tm.getReasonClosedCause());
 
 				try
 				{
@@ -113,12 +114,10 @@ public class KexManager implements MessageHandler
 		if (client.length == 0)
 			return null;
 
-		for (int i = 0; i < client.length; i++)
-		{
-			for (int j = 0; j < server.length; j++)
-			{
-				if (client[i].equals(server[j]))
-					return client[i];
+		for (String aClient : client) {
+			for (String aServer : server) {
+				if (aClient.equals(aServer))
+					return aClient;
 			}
 		}
 		throw new NegotiateException();
@@ -143,12 +142,12 @@ public class KexManager implements MessageHandler
 		if (cpar == null || spar == null)
 			throw new IllegalArgumentException();
 
-		if (compareFirstOfNameList(cpar.kex_algorithms, spar.kex_algorithms) == false)
+		if (!compareFirstOfNameList(cpar.kex_algorithms, spar.kex_algorithms))
 		{
 			return false;
 		}
 
-		if (compareFirstOfNameList(cpar.server_host_key_algorithms, spar.server_host_key_algorithms) == false)
+		if (!compareFirstOfNameList(cpar.server_host_key_algorithms, spar.server_host_key_algorithms))
 		{
 			return false;
 		}
@@ -303,65 +302,66 @@ public class KexManager implements MessageHandler
 		tm.kexFinished();
 	}
 
-	public static final String[] getDefaultServerHostkeyAlgorithmList()
+	public static String[] getDefaultServerHostkeyAlgorithmList()
 	{
-		return new String[] { "ssh-rsa", "ssh-dss" };
+		return DEFAULT_KEY_ALGORITHMS.toArray(new String[DEFAULT_KEY_ALGORITHMS.size()]);
 	}
 
-	public static final void checkServerHostkeyAlgorithmsList(String[] algos)
+	private static List<String> buildDefaultKeyAlgorithms() {
+		List<String> algorithms = new ArrayList<>();
+		for (KeyAlgorithm<?, ?> algorithm : KeyAlgorithmManager.getSupportedAlgorithms()) {
+			algorithms.add(algorithms.size(), algorithm.getKeyFormat());
+		}
+		return algorithms;
+	}
+
+	public static void checkServerHostkeyAlgorithmsList(String[] algos)
 	{
-		for (int i = 0; i < algos.length; i++)
-		{
-			if (("ssh-rsa".equals(algos[i]) == false) && ("ssh-dss".equals(algos[i]) == false))
-				throw new IllegalArgumentException("Unknown server host key algorithm '" + algos[i] + "'");
+		for (String algo : algos) {
+			boolean matched = false;
+			for (KeyAlgorithm<?, ?> algorithm : KeyAlgorithmManager.getSupportedAlgorithms()) {
+				if (algorithm.getKeyFormat().equals(algo)) {
+					matched = true;
+					break;
+				}
+			}
+			if (!matched) {
+				throw new IllegalArgumentException("Unknown server host key algorithm '" + algo + "'");
+			}
 		}
 	}
 
-	public static final String[] getDefaultKexAlgorithmList()
+	public static String[] getDefaultKexAlgorithmList()
 	{
 		return new String[] { "diffie-hellman-group-exchange-sha1", "diffie-hellman-group14-sha1",
 				"diffie-hellman-group1-sha1" };
 	}
 
-	public static final void checkKexAlgorithmList(String[] algos)
+	public static void checkKexAlgorithmList(String[] algos)
 	{
-		for (int i = 0; i < algos.length; i++)
-		{
-			if ("diffie-hellman-group-exchange-sha1".equals(algos[i]))
+		for (String algo : algos) {
+			if ("diffie-hellman-group-exchange-sha1".equals(algo))
 				continue;
 
-			if ("diffie-hellman-group14-sha1".equals(algos[i]))
+			if ("diffie-hellman-group14-sha1".equals(algo))
 				continue;
 
-			if ("diffie-hellman-group1-sha1".equals(algos[i]))
+			if ("diffie-hellman-group1-sha1".equals(algo))
 				continue;
 
-			throw new IllegalArgumentException("Unknown kex algorithm '" + algos[i] + "'");
+			throw new IllegalArgumentException("Unknown kex algorithm '" + algo + "'");
 		}
 	}
 
 	private boolean verifySignature(byte[] sig, byte[] hostkey) throws IOException
 	{
-		if (kxs.np.server_host_key_algo.equals("ssh-rsa"))
-		{
-			RSASignature rs = RSASHA1Verify.decodeSSHRSASignature(sig);
-			RSAPublicKey rpk = RSASHA1Verify.decodeSSHRSAPublicKey(hostkey);
-
-			log.log(50, "Verifying ssh-rsa signature");
-
-			return RSASHA1Verify.verifySignature(kxs.H, rs, rpk);
+		for (KeyAlgorithm<PublicKey, PrivateKey> algorithm : KeyAlgorithmManager.getSupportedAlgorithms()) {
+			if (algorithm.getKeyFormat().equals(kxs.np.server_host_key_algo)) {
+				PublicKey publicKey = algorithm.decodePublicKey(hostkey);
+				byte[] signature = algorithm.decodeSignature(sig);
+				return algorithm.verifySignature(kxs.H, signature, publicKey);
+			}
 		}
-
-		if (kxs.np.server_host_key_algo.equals("ssh-dss"))
-		{
-			DSASignature ds = DSASHA1Verify.decodeSSHDSASignature(sig);
-			DSAPublicKey dpk = DSASHA1Verify.decodeSSHDSAPublicKey(hostkey);
-
-			log.log(50, "Verifying ssh-dss signature");
-
-			return DSASHA1Verify.verifySignature(kxs.H, ds, dpk);
-		}
-
 		throw new IOException("Unknown server host key algorithm '" + kxs.np.server_host_key_algo + "'");
 	}
 
@@ -404,7 +404,7 @@ public class KexManager implements MessageHandler
 			if (kxs.np == null)
 				throw new IOException("Cannot negotiate, proposals do not match.");
 
-			if (kxs.remoteKEX.isFirst_kex_packet_follows() && (kxs.np.guessOK == false))
+			if (kxs.remoteKEX.isFirst_kex_packet_follows() && !kxs.np.guessOK)
 			{
 				/*
 				 * Guess was wrong, we need to ignore the next kex packet.
@@ -527,11 +527,11 @@ public class KexManager implements MessageHandler
 					}
 					catch (Exception e)
 					{
-						throw (IOException) new IOException(
-								"The server hostkey was not accepted by the verifier callback.").initCause(e);
+						throw new IOException(
+								"The server hostkey was not accepted by the verifier callback.", e);
 					}
 
-					if (vres == false)
+					if (!vres)
 						throw new IOException("The server hostkey was not accepted by the verifier callback");
 				}
 
@@ -545,12 +545,12 @@ public class KexManager implements MessageHandler
 				}
 				catch (IllegalArgumentException e)
 				{
-					throw (IOException) new IOException("KEX error.").initCause(e);
+					throw new IOException("KEX error.", e);
 				}
 
 				boolean res = verifySignature(dhgexrpl.getSignature(), kxs.hostkey);
 
-				if (res == false)
+				if (!res)
 					throw new IOException("Hostkey signature sent by remote is wrong!");
 
 				kxs.K = kxs.dhgx.getK();
@@ -583,11 +583,11 @@ public class KexManager implements MessageHandler
 					}
 					catch (Exception e)
 					{
-						throw (IOException) new IOException(
-								"The server hostkey was not accepted by the verifier callback.").initCause(e);
+						throw new IOException(
+								"The server hostkey was not accepted by the verifier callback.", e);
 					}
 
-					if (vres == false)
+					if (!vres)
 						throw new IOException("The server hostkey was not accepted by the verifier callback");
 				}
 
@@ -600,12 +600,12 @@ public class KexManager implements MessageHandler
 				}
 				catch (IllegalArgumentException e)
 				{
-					throw (IOException) new IOException("KEX error.").initCause(e);
+					throw new IOException("KEX error.", e);
 				}
 
 				boolean res = verifySignature(dhr.getSignature(), kxs.hostkey);
 
-				if (res == false)
+				if (!res)
 					throw new IOException("Hostkey signature sent by remote is wrong!");
 
 				kxs.K = kxs.dhx.getK();

@@ -7,6 +7,8 @@ import java.math.BigInteger;
  * 
  * @author Christian Plattner, plattner@trilead.com
  * @version $Id: DSAPublicKey.java,v 1.1 2007/10/15 12:49:57 cplattne Exp $
+ * @deprecated use {@link java.security.interfaces.DSAPublicKey}
+ * @see java.security.interfaces.DSAPublicKey
  */
 public class DSAPublicKey
 {

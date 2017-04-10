@@ -14,4 +14,8 @@ public class PEMStructure
 	String dekInfo[];
 	String procType[];
 	byte[] data;
+
+	public byte[] getData() {
+		return data;
+	}
 }

@@ -1299,8 +1299,7 @@ public class Connection
 	 * Unless you know what you are doing, you will never need this.
 	 * 
 	 * @param algos
-	 *            An array of allowed server host key algorithms. SSH-2 defines
-	 *            <code>ssh-dss</code> and <code>ssh-rsa</code>. The
+	 *            An array of allowed server host key algorithms. The
 	 *            entries of the array must be ordered after preference, i.e.,
 	 *            the entry at index 0 is the most preferred one. You must
 	 *            specify at least one entry.
