@@ -1,13 +1,17 @@
 package com.trilead.ssh2;
 
-import com.trilead.ssh2.signature.DSAPublicKey;
-import com.trilead.ssh2.signature.DSASHA1Verify;
-import com.trilead.ssh2.signature.RSAPublicKey;
-import com.trilead.ssh2.signature.RSASHA1Verify;
+import com.trilead.ssh2.signature.DSAKeyAlgorithm;
+import com.trilead.ssh2.signature.ECDSAKeyAlgorithm;
+import com.trilead.ssh2.signature.RSAKeyAlgorithm;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.math.BigInteger;
+import java.security.GeneralSecurityException;
+import java.security.KeyPairGenerator;
+import java.security.NoSuchAlgorithmException;
+import java.security.interfaces.DSAPublicKey;
+import java.security.interfaces.ECPublicKey;
+import java.security.interfaces.RSAPublicKey;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertNull;
@@ -18,17 +22,28 @@ import static org.junit.Assert.assertNull;
 public class KnownHostsTest {
 
     @Test
-    public void testKnownHostsPreferredAlgorithmsSshDssOnly() throws IOException {
+    public void testKnownHostsPreferredAlgorithmsSshDssOnly() throws IOException, NoSuchAlgorithmException {
         KnownHosts testCase = new KnownHosts();
-        testCase.addHostkey(new String[]{"localhost"}, "ssh-dss", DSASHA1Verify.encodeSSHDSAPublicKey(new DSAPublicKey(BigInteger.ONE, BigInteger.ONE, BigInteger.ONE, BigInteger.ONE)));
-        assertArrayEquals(new String[]{"ssh-dss", "ssh-rsa"}, testCase.getPreferredServerHostkeyAlgorithmOrder("localhost"));
+        KeyPairGenerator dsaGenerator = KeyPairGenerator.getInstance("DSA");
+        testCase.addHostkey(new String[]{"localhost"}, "ssh-dss", new DSAKeyAlgorithm().encodePublicKey((DSAPublicKey) dsaGenerator.generateKeyPair().getPublic()));
+        assertArrayEquals(new String[]{"ssh-dss", "ssh-ed25519", "ecdsa-sha2-nistp521", "ecdsa-sha2-nistp384", "ecdsa-sha2-nistp256", "ssh-rsa"}, testCase.getPreferredServerHostkeyAlgorithmOrder("localhost"));
     }
 
     @Test
-    public void testKnownHostsPreferredAlgorithmsSshRsaOnly() throws IOException {
+    public void testKnownHostsPreferredAlgorithmsSshRsaOnly() throws IOException, NoSuchAlgorithmException {
         KnownHosts testCase = new KnownHosts();
-        testCase.addHostkey(new String[]{"localhost"}, "ssh-rsa", RSASHA1Verify.encodeSSHRSAPublicKey(new RSAPublicKey(BigInteger.ONE, BigInteger.ONE)));
-        assertArrayEquals(new String[]{"ssh-rsa", "ssh-dss"}, testCase.getPreferredServerHostkeyAlgorithmOrder("localhost"));
+        KeyPairGenerator rsaGenerator = KeyPairGenerator.getInstance("RSA");
+        testCase.addHostkey(new String[]{"localhost"}, "ssh-rsa", new RSAKeyAlgorithm().encodePublicKey((RSAPublicKey) rsaGenerator.generateKeyPair().getPublic()));
+        assertArrayEquals(new String[]{"ssh-rsa", "ssh-ed25519", "ecdsa-sha2-nistp521", "ecdsa-sha2-nistp384", "ecdsa-sha2-nistp256", "ssh-dss"}, testCase.getPreferredServerHostkeyAlgorithmOrder("localhost"));
+    }
+
+
+    @Test
+    public void testKnownHostsPreferredAlgorithmsEcdsaOnly() throws IOException, NoSuchAlgorithmException {
+        KnownHosts testCase = new KnownHosts();
+        KeyPairGenerator ecGenerator = KeyPairGenerator.getInstance("EC");
+        testCase.addHostkey(new String[]{"localhost"}, "ecdsa-sha2-nistp256", new ECDSAKeyAlgorithm.ECDSASha2Nistp256().encodePublicKey((ECPublicKey) ecGenerator.generateKeyPair().getPublic()));
+        assertArrayEquals(new String[]{"ecdsa-sha2-nistp256", "ssh-ed25519", "ecdsa-sha2-nistp521", "ecdsa-sha2-nistp384", "ssh-rsa", "ssh-dss"}, testCase.getPreferredServerHostkeyAlgorithmOrder("localhost"));
     }
 
     @Test
@@ -45,10 +60,12 @@ public class KnownHostsTest {
      * @throws IOException if failing to add the test keys
      */
     @Test
-    public void testKnownHostsPreferredAlgorithmsRsaAndDssHosts() throws IOException {
+    public void testKnownHostsPreferredAlgorithmsRsaAndDssHosts() throws IOException, GeneralSecurityException {
         KnownHosts testCase = new KnownHosts();
-        testCase.addHostkey(new String[]{"localhost"}, "ssh-dss", DSASHA1Verify.encodeSSHDSAPublicKey(new DSAPublicKey(BigInteger.ONE, BigInteger.ONE, BigInteger.ONE, BigInteger.ONE)));
-        testCase.addHostkey(new String[]{"localhost"}, "ssh-rsa", RSASHA1Verify.encodeSSHRSAPublicKey(new RSAPublicKey(BigInteger.ONE, BigInteger.ONE)));
+        KeyPairGenerator dsaGenerator = KeyPairGenerator.getInstance("DSA");
+        testCase.addHostkey(new String[]{"localhost"}, "ssh-dss", new DSAKeyAlgorithm().encodePublicKey((DSAPublicKey) dsaGenerator.generateKeyPair().getPublic()));
+        KeyPairGenerator rsaGenerator = KeyPairGenerator.getInstance("RSA");
+        testCase.addHostkey(new String[]{"localhost"}, "ssh-rsa", new RSAKeyAlgorithm().encodePublicKey((RSAPublicKey) rsaGenerator.generateKeyPair().getPublic()));
         assertNull(testCase.getPreferredServerHostkeyAlgorithmOrder("localhost"));
     }
 
