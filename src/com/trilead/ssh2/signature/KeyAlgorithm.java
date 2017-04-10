@@ -9,6 +9,7 @@ import java.security.Provider;
 import java.security.PublicKey;
 import java.security.SecureRandom;
 import java.security.Signature;
+import java.util.List;
 
 /**
  * @author Michael Clarke
@@ -66,7 +67,7 @@ public abstract class KeyAlgorithm<U extends PublicKey, R extends PrivateKey> {
 
     public abstract U decodePublicKey(byte[] encodedPublicKey) throws IOException;
 
-    public abstract CertificateDecoder getCertificateDecoder();
+    public abstract List<CertificateDecoder> getCertificateDecoders();
 
     public boolean supportsKey(R key) {
         return keyType.isAssignableFrom(key.getClass());

@@ -24,6 +24,8 @@ import java.security.spec.ECPrivateKeySpec;
 import java.security.spec.ECPublicKeySpec;
 import java.security.spec.EllipticCurve;
 import java.security.spec.KeySpec;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author Michael Clarke
@@ -44,7 +46,7 @@ public abstract class ECDSAKeyAlgorithm extends KeyAlgorithm<ECPublicKey, ECPriv
         this.ecParameterSpec = ecParameterSpec;
     }
 
-    private String getCurveName() {
+    /*package*/ String getCurveName() {
         return curveName;
     }
 
@@ -265,8 +267,9 @@ public abstract class ECDSAKeyAlgorithm extends KeyAlgorithm<ECPublicKey, ECPriv
         }
 
         @Override
-        public CertificateDecoder getCertificateDecoder() {
-            return new EcdsaCertificateDecoder("1.2.840.10045.3.1.7", getEcParameterSpec());
+        public List<CertificateDecoder> getCertificateDecoders() {
+            return Arrays.asList(new EcdsaCertificateDecoder("1.2.840.10045.3.1.7", getEcParameterSpec()),
+                    new OpenSshEcdsaCertificateDecoder(getKeyFormat(), getCurveName(), getEcParameterSpec()));
         }
     }
 
@@ -290,8 +293,9 @@ public abstract class ECDSAKeyAlgorithm extends KeyAlgorithm<ECPublicKey, ECPriv
         }
 
         @Override
-        public CertificateDecoder getCertificateDecoder() {
-            return new EcdsaCertificateDecoder("1.3.132.0.34", getEcParameterSpec());
+        public List<CertificateDecoder> getCertificateDecoders() {
+            return Arrays.asList(new EcdsaCertificateDecoder("1.3.132.0.34", getEcParameterSpec()),
+                    new OpenSshEcdsaCertificateDecoder(getKeyFormat(), getCurveName(), getEcParameterSpec()));
         }
     }
 
@@ -315,8 +319,9 @@ public abstract class ECDSAKeyAlgorithm extends KeyAlgorithm<ECPublicKey, ECPriv
         }
 
         @Override
-        public CertificateDecoder getCertificateDecoder() {
-            return new EcdsaCertificateDecoder("1.3.132.0.35", getEcParameterSpec());
+        public List<CertificateDecoder> getCertificateDecoders() {
+            return Arrays.asList(new EcdsaCertificateDecoder("1.3.132.0.35", getEcParameterSpec()),
+                    new OpenSshEcdsaCertificateDecoder(getKeyFormat(), getCurveName(), getEcParameterSpec()));
         }
 
     }
@@ -397,6 +402,41 @@ public abstract class ECDSAKeyAlgorithm extends KeyAlgorithm<ECPublicKey, ECPriv
             } catch (GeneralSecurityException ex) {
                 throw new IOException("Could not generate EC key pair");
             }
+        }
+    }
+
+
+    private static class OpenSshEcdsaCertificateDecoder extends OpenSshCertificateDecoder {
+
+        private final String curveName;
+        private final ECParameterSpec ecParameterSpec;
+
+        OpenSshEcdsaCertificateDecoder(String keyAlgorithm, String curveName, ECParameterSpec ecParameterSpec) {
+            super(keyAlgorithm);
+            this.curveName = curveName;
+            this.ecParameterSpec = ecParameterSpec;
+        }
+
+        @Override
+        KeyPair generateKeyPair(TypesReader tr) throws GeneralSecurityException, IOException {
+            String curveName = tr.readString();
+            if (!curveName.equals(this.curveName)) {
+                throw new IOException("Incorrect curve name: " + curveName);
+            }
+            byte[] groupBytes = tr.readByteString();
+            BigInteger privateKey = tr.readMPINT();
+
+            ECPoint group = decodePoint(groupBytes, ecParameterSpec.getCurve());
+            if (null == group) {
+                throw new IOException("Invalid ECDSA group");
+            }
+
+
+            KeySpec keySpec = new ECPublicKeySpec(group, ecParameterSpec);
+            ECPrivateKeySpec privateKeySpec = new ECPrivateKeySpec(privateKey, ecParameterSpec);
+            KeyFactory kf = KeyFactory.getInstance("EC");
+            return new KeyPair(kf.generatePublic(keySpec), kf.generatePrivate(privateKeySpec));
+
         }
     }
 

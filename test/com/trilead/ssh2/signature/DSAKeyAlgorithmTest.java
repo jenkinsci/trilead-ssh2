@@ -1,5 +1,7 @@
 package com.trilead.ssh2.signature;
 
+import com.trilead.ssh2.crypto.PEMDecoder;
+import org.apache.commons.io.IOUtils;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -65,5 +67,14 @@ public class DSAKeyAlgorithmTest {
         DSAPublicKey publicKey = (DSAPublicKey) keyPair.getPublic();
         byte[] signature = testCase.generateSignature("Other Message".getBytes(StandardCharsets.UTF_8), privateKey, new SecureRandom());
         assertFalse(testCase.verifySignature(message, signature, publicKey));
+    }
+
+
+    @Test
+    public void testParsePrivateKey() throws IOException {
+        KeyPair oldFormat = PEMDecoder.decodeKeyPair(IOUtils.toCharArray(getClass().getResourceAsStream("dsa-testkey-unprotected.txt")), null);
+        KeyPair newFormat = PEMDecoder.decodeKeyPair(IOUtils.toCharArray(getClass().getResourceAsStream("dsa-testkey-unprotected-newformat.txt")), null);
+        assertEquals(oldFormat.getPublic(), newFormat.getPublic());
+        assertEquals(oldFormat.getPrivate(), newFormat.getPrivate());
     }
 }

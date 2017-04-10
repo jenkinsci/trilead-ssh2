@@ -1,5 +1,7 @@
 package com.trilead.ssh2.signature;
 
+import com.trilead.ssh2.crypto.PEMDecoder;
+import org.apache.commons.io.IOUtils;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -65,5 +67,14 @@ public class RSAKeyAlgorithmTest {
         RSAPublicKey publicKey = (RSAPublicKey) keyPair.getPublic();
         byte[] signature = testCase.generateSignature("Other Message".getBytes(StandardCharsets.UTF_8), privateKey, new SecureRandom());
         assertFalse(testCase.verifySignature(message, signature, publicKey));
+    }
+
+    @Test
+    public void testParsePrivateKey() throws IOException {
+        KeyPair expected = PEMDecoder.decodeKeyPair(IOUtils.toCharArray(getClass().getResourceAsStream("rsa-testkey-unprotected.txt")), null);
+        KeyPair actual = PEMDecoder.decodeKeyPair(IOUtils.toCharArray(getClass().getResourceAsStream("rsa-testkey-unprotected-newformat.txt")), "password");
+
+        assertEquals(expected.getPrivate(), actual.getPrivate());
+        assertEquals(expected.getPublic(), actual.getPublic());
     }
 }

@@ -19,6 +19,8 @@ import java.security.interfaces.DSAPrivateKey;
 import java.security.interfaces.DSAPublicKey;
 import java.security.spec.DSAPrivateKeySpec;
 import java.security.spec.DSAPublicKeySpec;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author Michael Clarke
@@ -176,8 +178,26 @@ public class DSAKeyAlgorithm extends KeyAlgorithm<DSAPublicKey, DSAPrivateKey> {
     }
 
     @Override
-    public DsaCertificateDecoder getCertificateDecoder() {
-        return new DsaCertificateDecoder();
+    public List<CertificateDecoder> getCertificateDecoders() {
+        return Arrays.asList(new DsaCertificateDecoder(), new OpenSshCertificateDecoder(getKeyFormat()) {
+            @Override
+            KeyPair generateKeyPair(TypesReader typesReader) throws GeneralSecurityException, IOException {
+                BigInteger p = typesReader.readMPINT();
+                BigInteger q = typesReader.readMPINT();
+                BigInteger g = typesReader.readMPINT();
+                BigInteger y = typesReader.readMPINT();
+                BigInteger x = typesReader.readMPINT();
+
+                DSAPrivateKeySpec privateKeySpec = new DSAPrivateKeySpec(x, p, q, g);
+                DSAPublicKeySpec publicKeySpec = new DSAPublicKeySpec(y, p, q, g);
+
+
+                KeyFactory factory = KeyFactory.getInstance("DSA");
+                PrivateKey privateKey = factory.generatePrivate(privateKeySpec);
+                PublicKey publicKey = factory.generatePublic(publicKeySpec);
+                return new KeyPair(publicKey, privateKey);
+            }
+        });
     }
 
     private static class DsaCertificateDecoder extends CertificateDecoder {

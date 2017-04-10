@@ -18,6 +18,8 @@ import java.security.interfaces.RSAPublicKey;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.spec.RSAPrivateKeySpec;
 import java.security.spec.RSAPublicKeySpec;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author Michael Clarke
@@ -115,8 +117,25 @@ public class RSAKeyAlgorithm extends KeyAlgorithm<RSAPublicKey, RSAPrivateKey> {
     }
 
     @Override
-    public RSACertificateDecoder getCertificateDecoder() {
-        return new RSACertificateDecoder();
+    public List<CertificateDecoder> getCertificateDecoders() {
+        return Arrays.asList(new RSACertificateDecoder(), new OpenSshCertificateDecoder("ssh-rsa") {
+            @Override
+            KeyPair generateKeyPair(TypesReader typesReader) throws GeneralSecurityException, IOException {
+                BigInteger n = typesReader.readMPINT();
+                BigInteger e = typesReader.readMPINT();
+                BigInteger d = typesReader.readMPINT();
+
+                //P and Q may be null and we don't actually use them, so parse the value but don't use it
+                /*BigInteger p = */typesReader.readMPINT();
+                /*BigInteger q = */typesReader.readMPINT();
+
+                RSAPublicKeySpec publicKeySpec = new RSAPublicKeySpec(n, e);
+                RSAPrivateKeySpec privateKeySpec = new RSAPrivateKeySpec(n, d);
+
+                KeyFactory factory = KeyFactory.getInstance("RSA");
+                return new KeyPair(factory.generatePublic(publicKeySpec), factory.generatePrivate(privateKeySpec));
+            }
+        });
     }
 
 

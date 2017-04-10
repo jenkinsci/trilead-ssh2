@@ -479,21 +479,22 @@ public class PEMDecoder
 	{
 
 		for (KeyAlgorithm<?, ?> algorithm : KeyAlgorithmManager.getSupportedAlgorithms()) {
-			CertificateDecoder decoder = algorithm.getCertificateDecoder();
-			PEMStructure ps = parsePEM(pem, decoder);
+			for (CertificateDecoder decoder : algorithm.getCertificateDecoders()) {
+				try {
+					PEMStructure ps = parsePEM(pem, decoder);
 
-			if (isPEMEncrypted(ps)) {
-				if (password == null)
-					throw new IOException("PEM is encrypted, but no password was specified");
+					if (isPEMEncrypted(ps)) {
+						if (password == null)
+							throw new IOException("PEM is encrypted, but no password was specified");
 
-				decryptPEM(ps, password.getBytes("ISO-8859-1"));
-			}
+						decryptPEM(ps, password.getBytes("ISO-8859-1"));
+					}
 
-			try {
-				return decoder.createKeyPair(ps, password);
-			} catch (IOException ex) {
-				LOGGER.log(Level.WARNING, "Could not decode PEM Key using current decoder", ex);
-				// we couldn't decode the input, try another decoder
+					return decoder.createKeyPair(ps, password);
+				} catch (IOException ex) {
+					LOGGER.log(Level.FINE, "Could not decode PEM Key using current decoder: " + decoder.getClass().getName(), ex);
+					// we couldn't decode the input, try another decoder
+				}
 			}
 		}
 		throw new IOException("PEM problem: it is of unknown type");
