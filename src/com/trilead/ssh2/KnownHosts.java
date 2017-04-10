@@ -22,8 +22,8 @@ import java.util.Vector;
 
 import com.trilead.ssh2.crypto.Base64;
 import com.trilead.ssh2.crypto.digest.Digest;
-import com.trilead.ssh2.crypto.digest.HMAC;
 import com.trilead.ssh2.crypto.digest.MD5;
+import com.trilead.ssh2.crypto.digest.MessageMac;
 import com.trilead.ssh2.crypto.digest.SHA1;
 import com.trilead.ssh2.log.Logger;
 
@@ -162,26 +162,26 @@ public class KnownHosts
 
 	private static byte[] hmacSha1Hash(byte[] salt, String hostname)
 	{
-		SHA1 sha1 = new SHA1();
 
-		if (salt.length != sha1.getDigestLength())
+		if (salt.length != 20) {
 			throw new IllegalArgumentException("Salt has wrong length (" + salt.length + ")");
-
-		HMAC hmac = new HMAC(sha1, salt, salt.length);
-
-		try
-		{
-			hmac.update(hostname.getBytes("ISO-8859-1"));
-		}catch(UnsupportedEncodingException ignore)
-		{
-			/* Actually, ISO-8859-1 is supported by all correct
-			 * Java implementations. But... you never know. */
-			hmac.update(hostname.getBytes());
 		}
-		
-		byte[] dig = new byte[hmac.getDigestLength()];
 
-		hmac.digest(dig);
+		MessageMac messageMac = new MessageMac("hmac-sha1", salt);
+
+		try {
+			byte[] message = hostname.getBytes("ISO-8859-1");
+			messageMac.update(message, 0, message.length);
+		} catch (UnsupportedEncodingException ignore) {
+		/* Actually, ISO-8859-1 is supported by all correct
+		 * Java implementations. But... you never know. */
+			byte[] message = hostname.getBytes();
+			messageMac.update(message, 0, message.length);
+		}
+
+		byte[] dig = new byte[20];
+
+		messageMac.getMac(dig, 0);
 
 		return dig;
 	}
