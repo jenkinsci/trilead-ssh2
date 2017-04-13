@@ -199,7 +199,11 @@ public abstract class ECDSAKeyAlgorithm extends KeyAlgorithm<ECPublicKey, ECPriv
     }
 
     @Override
-    public boolean supportsKey(ECPrivateKey key) {
+    public boolean supportsKey(PrivateKey originalKey) {
+        if (!(originalKey instanceof ECPrivateKey)) {
+            return false;
+        }
+        ECPrivateKey key = (ECPrivateKey) originalKey;
         return super.supportsKey(key) && key.getParams().getCurve().getField().getFieldSize() == getEcParameterSpec().getCurve().getField().getFieldSize();
     }
 

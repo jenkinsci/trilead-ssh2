@@ -69,7 +69,7 @@ public abstract class KeyAlgorithm<U extends PublicKey, R extends PrivateKey> {
 
     public abstract List<CertificateDecoder> getCertificateDecoders();
 
-    public boolean supportsKey(R key) {
+    public boolean supportsKey(PrivateKey key) {
         return keyType.isAssignableFrom(key.getClass());
     }
 
