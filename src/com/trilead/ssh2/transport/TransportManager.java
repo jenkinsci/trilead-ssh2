@@ -2,8 +2,8 @@ package com.trilead.ssh2.transport;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.io.InterruptedIOException;
+import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
@@ -122,6 +122,7 @@ public class TransportManager
 		}
 	}
 
+	final private String sourceAddress;
 	String hostname;
 	int port;
 	final Socket sock = new Socket();
@@ -203,11 +204,17 @@ public class TransportManager
 
 		return InetAddress.getByAddress(host, addr);
 	}
-
+	
 	public TransportManager(String host, int port) throws IOException
+	{
+		this(host, port, null);
+	}
+
+	public TransportManager(String host, int port, String sourceAddress) throws IOException
 	{
 		this.hostname = host;
 		this.port = port;
+		this.sourceAddress = sourceAddress;
 	}
 
 	public int getPacketOverheadEstimate()
@@ -350,6 +357,12 @@ public class TransportManager
 
 		if (proxyData == null)
 		{
+
+			if (sourceAddress != null)
+			{
+				InetAddress sourceaddr = createInetAddress(this.sourceAddress);
+				sock.bind(new InetSocketAddress(sourceaddr,0));
+			}
 			InetAddress addr = createInetAddress(hostname);
 			sock.connect(new InetSocketAddress(addr, port), connectTimeout);
 			sock.setSoTimeout(readTimeout);
