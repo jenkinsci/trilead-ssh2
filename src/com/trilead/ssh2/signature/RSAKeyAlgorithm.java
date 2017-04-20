@@ -16,6 +16,7 @@ import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.interfaces.RSAPublicKey;
 import java.security.interfaces.RSAPrivateKey;
+import java.security.spec.RSAPrivateCrtKeySpec;
 import java.security.spec.RSAPrivateKeySpec;
 import java.security.spec.RSAPublicKeySpec;
 import java.util.Arrays;
@@ -125,12 +126,21 @@ public class RSAKeyAlgorithm extends KeyAlgorithm<RSAPublicKey, RSAPrivateKey> {
                 BigInteger e = typesReader.readMPINT();
                 BigInteger d = typesReader.readMPINT();
 
-                //P and Q may be null and we don't actually use them, so parse the value but don't use it
-                /*BigInteger p = */typesReader.readMPINT();
-                /*BigInteger q = */typesReader.readMPINT();
+                BigInteger c = typesReader.readMPINT();
+                BigInteger p = typesReader.readMPINT();
+
 
                 RSAPublicKeySpec publicKeySpec = new RSAPublicKeySpec(n, e);
-                RSAPrivateKeySpec privateKeySpec = new RSAPrivateKeySpec(n, d);
+                RSAPrivateKeySpec privateKeySpec;
+
+                if (null == p || null == c) {
+                    privateKeySpec = new RSAPrivateKeySpec(n, d);
+                } else {
+                    BigInteger q = c.modInverse(p);
+                    BigInteger pE = d.mod(p.subtract(BigInteger.ONE));
+                    BigInteger qE = d.mod(q.subtract(BigInteger.ONE));
+                    privateKeySpec = new RSAPrivateCrtKeySpec(n, e, d, p, q, pE, qE, c);
+                }
 
                 KeyFactory factory = KeyFactory.getInstance("RSA");
                 return new KeyPair(factory.generatePublic(publicKeySpec), factory.generatePrivate(privateKeySpec));
@@ -170,9 +180,14 @@ public class RSAKeyAlgorithm extends KeyAlgorithm<RSAPublicKey, RSAPrivateKey> {
             BigInteger n = dr.readInt();
             BigInteger e = dr.readInt();
             BigInteger d = dr.readInt();
+            BigInteger p = dr.readInt();
+            BigInteger q = dr.readInt();
+            BigInteger pE = dr.readInt();
+            BigInteger qE = dr.readInt();
+            BigInteger c = dr.readInt();
 
             try {
-                RSAPrivateKeySpec privateKeySpec = new RSAPrivateKeySpec(n, d);
+                RSAPrivateKeySpec privateKeySpec = new RSAPrivateCrtKeySpec(n, e, d, p, q, pE, qE, c);
                 RSAPublicKeySpec publicKeySpec = new RSAPublicKeySpec(n, e);
                 KeyFactory factory = KeyFactory.getInstance("RSA");
                 PrivateKey privateKey = factory.generatePrivate(privateKeySpec);
