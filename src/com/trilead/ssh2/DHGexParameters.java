@@ -24,13 +24,13 @@ public class DHGexParameters
 	private static final int MAX_ALLOWED = 8192;
 
 	/**
-	 * Same as calling {@link #DHGexParameters(int, int, int) DHGexParameters(1024, 1024, 4096)}.
+	 * Same as calling {@link #DHGexParameters(int, int, int) DHGexParameters(1024, 2048, 4096)}.
 	 * This is also the default used by the Connection class.
 	 * 
 	 */
 	public DHGexParameters()
 	{
-		this(1024, 1024, 4096);
+		this(1024, 2048, 4096);
 	}
 
 	/**
