@@ -14,6 +14,7 @@ import java.security.interfaces.ECPublicKey;
 import java.security.interfaces.RSAPublicKey;
 
 import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
 /**
@@ -67,6 +68,19 @@ public class KnownHostsTest {
         KeyPairGenerator rsaGenerator = KeyPairGenerator.getInstance("RSA");
         testCase.addHostkey(new String[]{"localhost"}, "ssh-rsa", new RSAKeyAlgorithm().encodePublicKey((RSAPublicKey) rsaGenerator.generateKeyPair().getPublic()));
         assertNull(testCase.getPreferredServerHostkeyAlgorithmOrder("localhost"));
+    }
+
+
+    @Test
+    public void testVerifyKnownHostKey() throws IOException, NoSuchAlgorithmException {
+        KnownHosts testCase = new KnownHosts();
+        KeyPairGenerator rsaGenerator = KeyPairGenerator.getInstance("RSA");
+        byte[] encodedPublicKey = new RSAKeyAlgorithm().encodePublicKey((RSAPublicKey) rsaGenerator.generateKeyPair().getPublic());
+        byte[] encodedPublicKey2 = new RSAKeyAlgorithm().encodePublicKey((RSAPublicKey) rsaGenerator.generateKeyPair().getPublic());
+        testCase.addHostkey(new String[]{"testhost"}, "ssh-rsa", encodedPublicKey);
+        assertEquals(KnownHosts.HOSTKEY_IS_NEW, testCase.verifyHostkey("testhost2", "ssh-rsa", encodedPublicKey));
+        assertEquals(KnownHosts.HOSTKEY_HAS_CHANGED, testCase.verifyHostkey("testhost", "ssh-rsa", encodedPublicKey2));
+        assertEquals(KnownHosts.HOSTKEY_IS_OK, testCase.verifyHostkey("testhost", "ssh-rsa", encodedPublicKey));
     }
 
 }
