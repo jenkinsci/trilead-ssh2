@@ -599,7 +599,7 @@ public class KnownHosts
 
 	private PublicKey decodeHostKey(String hostKeyAlgorithm, byte[] encodedHostKey) throws IOException {
 		for (KeyAlgorithm<PublicKey, PrivateKey> algorithm : KeyAlgorithmManager.getSupportedAlgorithms()) {
-			if (algorithm.getKeyFormat().equals(encodedHostKey)) {
+			if (algorithm.getKeyFormat().equals(hostKeyAlgorithm)) {
 				return algorithm.decodePublicKey(encodedHostKey);
 			}
 		}
