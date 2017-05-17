@@ -444,7 +444,7 @@ public class KexManager implements MessageHandler
 			if (kxs.np.kex_algo.equals("diffie-hellman-group1-sha1")
 					|| kxs.np.kex_algo.equals("diffie-hellman-group14-sha1"))
 			{
-				kxs.dhx = new DhExchange(kxs.dhx.getHashAlgorithm());
+				kxs.dhx = new DhExchange("SHA1");
 
 				if (kxs.np.kex_algo.equals("diffie-hellman-group1-sha1"))
 					kxs.dhx.init(1, rnd);
