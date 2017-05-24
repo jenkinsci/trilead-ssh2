@@ -54,11 +54,13 @@
       <version>4.10</version>
       <scope>test</scope>
     </dependency>
-    <dependency>
+    <!-- disable this temporarily and re enable when sshd 1.5.0 is released
+    this would have conflicted in jenkins core-->
+    <!--<dependency>
       <groupId>net.i2p.crypto</groupId>
       <artifactId>eddsa</artifactId>
       <version>0.2.0</version>
-    </dependency>
+    </dependency>-->
     <dependency>
       <groupId>org.connectbot.jbcrypt</groupId>
       <artifactId>jbcrypt</artifactId>
