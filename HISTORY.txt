@@ -2,6 +2,10 @@
 Release Notes:
 ==============
 
+build217-jenkins-9, 2017-04-14:
+
+- Added support for eddsa, hmac 256 and 512.
+
 build217, 2013-06-03:
 
 - Support for SSH agent based authentication.
@@ -348,7 +352,7 @@ build207, 2005-07-21:
 
 build206, 2005-07-04:
 
-- Fixed small resource issue with SCP (thanks to Michaël Giraud).
+- Fixed small resource issue with SCP (thanks to MichaÃ«l Giraud).
 
 - Added LocalStreamForwarder.
 
