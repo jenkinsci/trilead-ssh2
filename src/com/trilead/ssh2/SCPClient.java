@@ -43,11 +43,15 @@ public class SCPClient
 	{
 		int c = is.read();
 
-		if (c == 0) {
+		if (c == 0)
 			return;
-		} else {
-			throw new IOException("Remote scp terminated with error code " + c);
+
+		if (c == 1) {
+			String err = receiveLine(is);
+			throw new IOException("Remote scp terminated with error (" + err + ").");
 		}
+
+		throw new IOException("Remote scp terminated with error code " + c);
 	}
 
 	private String receiveLine(InputStream is) throws IOException
