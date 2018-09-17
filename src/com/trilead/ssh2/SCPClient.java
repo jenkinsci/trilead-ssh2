@@ -46,17 +46,12 @@ public class SCPClient
 		if (c == 0)
 			return;
 
-		if (c == -1)
-			throw new IOException("Remote scp terminated unexpectedly.");
+		if (c == 1) {
+			String err = receiveLine(is);
+			throw new IOException("Remote scp terminated with error (" + err + ").");
+		}
 
-		if ((c != 1) && (c != 2))
-			throw new IOException("Remote scp sent illegal error code.");
-
-		if (c == 2)
-			throw new IOException("Remote scp terminated with error.");
-
-		String err = receiveLine(is);
-		throw new IOException("Remote scp terminated with error (" + err + ").");
+		throw new IOException("Remote scp terminated with error code " + c);
 	}
 
 	private String receiveLine(InputStream is) throws IOException
