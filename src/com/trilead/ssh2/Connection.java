@@ -1553,7 +1553,7 @@ public class Connection
      * return a non-null object indicating the cause of the connection loss.
      */
     public Throwable getReasonClosedCause() {
-        return tm.getReasonClosedCause();
+        return tm != null ? tm.getReasonClosedCause() : null;
     }
 
     /**
