@@ -27,6 +27,7 @@ public class DSAKeyAlgorithmTest {
     public void testEncodeDecodePublicKey() throws GeneralSecurityException, IOException {
         DSAKeyAlgorithm testCase = new DSAKeyAlgorithm();
         KeyPairGenerator factory = KeyPairGenerator.getInstance("DSA");
+        factory.initialize(1024);
         DSAPublicKey publicKey = (DSAPublicKey) factory.generateKeyPair().getPublic();
         byte[] encoded = testCase.encodePublicKey(publicKey);
         DSAPublicKey decoded = testCase.decodePublicKey(encoded);
@@ -37,6 +38,7 @@ public class DSAKeyAlgorithmTest {
     public void testEncodeDecodeSignature() throws GeneralSecurityException, IOException {
         DSAKeyAlgorithm testCase = new DSAKeyAlgorithm();
         KeyPairGenerator factory = KeyPairGenerator.getInstance("DSA");
+        factory.initialize(1024);
         DSAPrivateKey privateKey = (DSAPrivateKey) factory.generateKeyPair().getPrivate();
         byte[] signature = testCase.generateSignature("Sign Me".getBytes(StandardCharsets.UTF_8), privateKey, new SecureRandom());
         byte[] encoded = testCase.encodeSignature(signature);
@@ -49,6 +51,7 @@ public class DSAKeyAlgorithmTest {
         DSAKeyAlgorithm testCase = new DSAKeyAlgorithm();
         byte[] message = "Signature Test".getBytes(StandardCharsets.UTF_8);
         KeyPairGenerator factory = KeyPairGenerator.getInstance("DSA");
+        factory.initialize(1024);
         KeyPair keyPair = factory.generateKeyPair();
         DSAPrivateKey privateKey = (DSAPrivateKey) keyPair.getPrivate();
         DSAPublicKey publicKey = (DSAPublicKey) keyPair.getPublic();
@@ -62,6 +65,7 @@ public class DSAKeyAlgorithmTest {
         DSAKeyAlgorithm testCase = new DSAKeyAlgorithm();
         byte[] message = "Signature Test 2".getBytes(StandardCharsets.UTF_8);
         KeyPairGenerator factory = KeyPairGenerator.getInstance("DSA");
+        factory.initialize(1024);
         KeyPair keyPair = factory.generateKeyPair();
         DSAPrivateKey privateKey = (DSAPrivateKey) keyPair.getPrivate();
         DSAPublicKey publicKey = (DSAPublicKey) keyPair.getPublic();
