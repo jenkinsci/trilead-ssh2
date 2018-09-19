@@ -17,7 +17,6 @@ import java.util.concurrent.Future;
 /**
  * @author Kohsuke Kawaguchi
  */
-@Ignore("Needs an active SSH host to run")
 public class RoundtripTest {
     @Rule
     public ConnectionRule con = new ConnectionRule();
