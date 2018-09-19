@@ -1506,7 +1506,7 @@ public class Connection
 		{
 			if (logger == null)
 			{
-				logger = new DebugLogger()
+				Logger.logger = new DebugLogger()
 				{
 
 					public void log(int level, String className, String message)
@@ -1515,6 +1515,8 @@ public class Connection
 						System.err.println(now + " : " + className + ": " + message);
 					}
 				};
+			} else {
+				Logger.logger = logger;
 			}
 		}
 	}
