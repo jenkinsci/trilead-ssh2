@@ -16,6 +16,19 @@
     </license>
   </licenses>
 
+  <developers>
+    <developer>
+      <id>mc1arke</id>
+      <name>Michael Clarke</name>
+      <email>michael.m.clarke@gmail.com</email>
+    </developer>
+    <developer>
+      <id>kuisathaverat</id>
+      <name>Ivan Fernandez</name>
+      <email>kuisathaverat@gmail.com</email>
+    </developer>
+  </developers>
+
   <scm>
     <connection>scm:git:git://github.com/jenkinsci/trilead-ssh2.git</connection>
     <developerConnection>scm:git:ssh://git@github.com/jenkinsci/trilead-ssh2.git</developerConnection>
