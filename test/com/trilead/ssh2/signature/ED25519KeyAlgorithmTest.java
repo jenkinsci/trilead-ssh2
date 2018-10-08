@@ -69,14 +69,18 @@ public class ED25519KeyAlgorithmTest {
         byte[] signature = testCase.generateSignature("Other Message".getBytes(StandardCharsets.UTF_8), privateKey, new SecureRandom());
         assertFalse(testCase.verifySignature(message, signature, publicKey));
     }
-    
-    
+
+
     @Test
     public void testParsePrivateKey() throws IOException {
         KeyPair expected = PEMDecoder.decodeKeyPair(IOUtils.toCharArray(getClass().getResourceAsStream("ed25519-testkey-unprotected.txt")), null);
         KeyPair actual = PEMDecoder.decodeKeyPair(IOUtils.toCharArray(getClass().getResourceAsStream("ed25519-testkey-protected.txt")), "password");
+        KeyPair actualCtr = PEMDecoder.decodeKeyPair(IOUtils.toCharArray(getClass().getResourceAsStream("ed25519-testkey-protected-ctr.txt")), "password");
 
         assertEquals(expected.getPrivate(), actual.getPrivate());
         assertEquals(expected.getPublic(), actual.getPublic());
+
+        assertEquals(expected.getPrivate(), actualCtr.getPrivate());
+        assertEquals(expected.getPublic(), actualCtr.getPublic());
     }
 }
