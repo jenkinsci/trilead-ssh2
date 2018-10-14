@@ -16,6 +16,7 @@ import java.security.PublicKey;
 import java.security.SecureRandom;
 import java.util.Collection;
 import java.util.Vector;
+import java.util.concurrent.TimeUnit;
 
 
 /**
@@ -26,6 +27,8 @@ import java.util.Vector;
  */
 public class AuthenticationManager implements MessageHandler
 {
+	public static final String PROPERTY_TIMEOUT = AuthenticationManager.class.getName() + ".timeout";
+	public static final long TIMEOUT = Long.valueOf(System.getProperty(PROPERTY_TIMEOUT,"120000"));
 	TransportManager tm;
 
 	Vector packets = new Vector();
@@ -60,20 +63,28 @@ public class AuthenticationManager implements MessageHandler
 	{
 		synchronized (packets)
 		{
-			while (packets.size() == 0)
+			long waitUntil = System.currentTimeMillis() + TIMEOUT;
+			long now = System.currentTimeMillis();
+
+			while (packets.size() == 0 && now < waitUntil)
 			{
 				if (connectionClosed)
-					throw new IOException("The connection is closed.", tm
-							.getReasonClosedCause());
+					throw new IOException("The connection is closed.", tm.getReasonClosedCause());
 
 				try
 				{
-					packets.wait();
+					packets.wait(TIMEOUT);
 				}
 				catch (InterruptedException ign)
 				{
-                    throw new InterruptedIOException();
+                    throw new InterruptedIOException(ign.getMessage());
 				}
+				now = System.currentTimeMillis();
+			}
+			
+			if(packets.size()==0){
+				throw new IOException("No valid packets after " + TIMEOUT + " milliseconds, " +
+						"you can increase the timeout by setting the property -D" + PROPERTY_TIMEOUT + "=<MILLISECONDS>");
 			}
 			/* This sequence works with J2ME */
 			byte[] res = (byte[]) packets.firstElement();
