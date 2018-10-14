@@ -3,24 +3,28 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-            infra.checkout()
+                script {
+                    infra.checkout()
+                }
             }
         }
         stage('Build') {
             String command
             steps {
-                m2repo = "${pwd tmp: true}/m2repo"
-                String jdk = "8"
-                List<String> mavenOptions = [
-                        '--update-snapshots',
-                        "-Dmaven.repo.local=$m2repo",
-                        '-Dmaven.test.failure.ignore',
-                        "-Dfindbugs.failOnError=false",
-                        "clean install",
-                        "findbugs:findbugs"
-                ]
+                script {
+                    m2repo = "${pwd tmp: true}/m2repo"
+                    String jdk = "8"
+                    List<String> mavenOptions = [
+                            '--update-snapshots',
+                            "-Dmaven.repo.local=$m2repo",
+                            '-Dmaven.test.failure.ignore',
+                            "-Dfindbugs.failOnError=false",
+                            "clean install",
+                            "findbugs:findbugs"
+                    ]
 
-                infra.runMaven(mavenOptions, jdk)
+                    infra.runMaven(mavenOptions, jdk)
+                }
              }
         }
         post {
