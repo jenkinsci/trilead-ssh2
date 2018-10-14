@@ -81,6 +81,7 @@ public class AuthenticationManager implements MessageHandler
 				}
 				now = System.currentTimeMillis();
 			}
+			
 			if(packets.size()==0){
 				throw new IOException("No valid packets after " + TIMEOUT + " milliseconds, " +
 						"you can increase the timeout by setting the property -D" + PROPERTY_TIMEOUT + "=<MILLISECONDS>");
