@@ -9,7 +9,6 @@ pipeline {
             }
         }
         stage('Build') {
-            String command
             steps {
                 script {
                     m2repo = "${pwd tmp: true}/m2repo"
@@ -26,16 +25,16 @@ pipeline {
                     infra.runMaven(mavenOptions, jdk)
                 }
              }
-        }
-        post {
-            always {
-                archiveArtifacts(allowEmptyArchive: true,
-                    artifacts: "**/target/*.jar",
-                    onlyIfSuccessful: false)
-                junit(allowEmptyResults: true,
-                    keepLongStdio: true,
-                    testResults: "**/target/surefire-reports/**/*.xml")
-            }
+             post {
+                 always {
+                     archiveArtifacts(allowEmptyArchive: true,
+                         artifacts: "**/target/*.jar",
+                         onlyIfSuccessful: false)
+                     junit(allowEmptyResults: true,
+                         keepLongStdio: true,
+                         testResults: "**/target/surefire-reports/**/*.xml")
+                 }
+             }
         }
     }
 }
