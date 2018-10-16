@@ -14,7 +14,7 @@ import com.trilead.ssh2.packets.PacketSignal;
 
 
 /**
- * A <code>Session</code> is a remote execution of a program. "Program" means
+ * A Session is a remote execution of a program. "Program" means
  * in this context either a shell, an application or a system command. The
  * program may or may not have a tty. Only one single program can be started on
  * a session. However, multiple sessions can be active simultaneously.
@@ -45,9 +45,9 @@ public class Session
 
 	/**
 	 * Basically just a wrapper for lazy people - identical to calling
-	 * <code>requestPTY("dumb", 0, 0, 0, 0, null)</code>.
+	 * requestPTY("dumb", 0, 0, 0, 0, null).
 	 * 
-	 * @throws IOException
+	 * @throws IOException the io exception
 	 */
 	public void requestDumbPTY() throws IOException
 	{
@@ -56,9 +56,10 @@ public class Session
 
 	/**
 	 * Basically just another wrapper for lazy people - identical to calling
-	 * <code>requestPTY(term, 0, 0, 0, 0, null)</code>.
-	 * 
-	 * @throws IOException
+	 * requestPTY(term, 0, 0, 0, 0, null).
+	 *
+	 * @param term the term
+	 * @throws IOException the io exception
 	 */
 	public void requestPTY(String term) throws IOException
 	{
@@ -72,7 +73,7 @@ public class Session
 	 * this session.
 	 * <p>
 	 * Different aspects can be specified:
-	 * <p>
+	 *
 	 * <ul>
 	 * <li>The TERM environment variable value (e.g., vt100)</li>
 	 * <li>The terminal's dimensions.</li>
@@ -82,7 +83,7 @@ public class Session
 	 * override the pixel dimensions (when nonzero). Pixel dimensions refer to
 	 * the drawable area of the window. The dimension parameters are only
 	 * informational. The encoding of terminal modes (parameter
-	 * <code>terminal_modes</code>) is described in RFC4254.
+	 * terminal_modes) is described in RFC4254.
 	 * 
 	 * @param term
 	 *            The TERM environment variable value (e.g., vt100)
@@ -95,8 +96,8 @@ public class Session
 	 * @param term_height_pixels
 	 *            terminal height, pixels (e.g., 480)
 	 * @param terminal_modes
-	 *            encoded terminal modes (may be <code>null</code>)
-	 * @throws IOException
+	 *            encoded terminal modes (may be null)
+	 * @throws IOException the io exception
 	 */
 	public void requestPTY(String term, int term_width_characters, int term_height_characters, int term_width_pixels,
 			int term_height_pixels, byte[] terminal_modes) throws IOException
@@ -145,7 +146,7 @@ public class Session
    	 *            terminal width, pixels (e.g., 640)
    	 * @param term_height_pixels
    	 *            terminal height, pixels (e.g., 480)
-   	 * @throws IOException
+   	 * @throws IOException the io exception
    	 */
    	public void requestWindowChange(int term_width_characters, int term_height_characters, int term_width_pixels,
    			int term_height_pixels) throws IOException
@@ -163,10 +164,13 @@ public class Session
    		cn.requestWindowChange(term_width_characters, term_height_characters, term_width_pixels, term_height_pixels);
    	}
 
-    /**
-     * Sends a signal to the remote process.
-     */
-    public void signal(String name) throws IOException {
+	/**
+	 * Sends a signal to the remote process.
+	 *
+	 * @param name the name
+	 * @throws IOException the io exception
+	 */
+	public void signal(String name) throws IOException {
         synchronized (this) {
             /* The following is just a nicer error, we would catch it anyway later in the channel code */
             if (flag_closed)
@@ -176,12 +180,15 @@ public class Session
         cn.signal(name);
     }
 
-    /**
-     * Sends a signal to the remote process.
-     *
-     * For better portability, specify signal by name, not by its number.
-     */
-    public void signal(int code) throws IOException {
+	/**
+	 * Sends a signal to the remote process.
+	 * <p>
+	 * For better portability, specify signal by name, not by its number.
+	 *
+	 * @param code the code
+	 * @throws IOException the io exception
+	 */
+	public void signal(int code) throws IOException {
         String sig = PacketSignal.strsignal(code);
         if (sig==null)  throw new IllegalArgumentException("Unrecognized signal code: "+code);
         signal(sig);
@@ -201,7 +208,7 @@ public class Session
 	 * @param singleConnection if true, then the server is instructed to only forward one single
 	 *        connection, no more connections shall be forwarded after first, or after the session
 	 *        channel has been closed
-	 * @throws IOException
+	 * @throws IOException the io exception
 	 */
 	public void requestX11Forwarding(String hostname, int port, byte[] cookie, boolean singleConnection)
 			throws IOException
@@ -284,7 +291,7 @@ public class Session
 	 * 
 	 * @param cmd
 	 *            The command to execute on the remote host.
-	 * @throws IOException
+	 * @throws IOException the io exception
 	 */
 	public void execCommand(String cmd) throws IOException
 	{
@@ -309,7 +316,7 @@ public class Session
 	/**
 	 * Start a shell on the remote machine.
 	 * 
-	 * @throws IOException
+	 * @throws IOException the io exception
 	 */
 	public void startShell() throws IOException
 	{
@@ -333,7 +340,7 @@ public class Session
 	 * Unless you know what you are doing, you will never need this.
 	 * 
 	 * @param name the name of the subsystem.
-	 * @throws IOException
+	 * @throws IOException the io exception
 	 */
 	public void startSubSystem(String name) throws IOException
 	{
@@ -396,64 +403,71 @@ public class Session
 		return cn.getStdinStream();
 	}
 
-    /**
-     * Write stdout received from the other side to the specified {@link OutputStream}.
-     *
-     * <p>
-     * By default, when data arrives from the other side, trilead buffers them and lets
-     * you read it at your convenience from {@link #getStdout()}. This is normally convenient,
-     * but if all you are doing is to send the data to another {@link OutputStream} by
-     * copying a stream, then you'll be end up wasting a thread just for this.
-     * In such a situation, you can call this method and let the I/O handling thread of trilead
-     * directly pass the received data to the output stream. This also eliminates the internal
-     * buffer used for spooling.
-     *
-     * <p>
-     * When you do this, beware of a blocking write! If a write blocks, it'll affect
-     * all the other channels and sessions that are sharing the same SSH connection,
-     * as there's only one I/O thread. For example, this can happen if you are writing to
-     * {@link Socket}.
-     *
-     * <p>
-     * If any data has already been received and spooled before calling this method,
-     * the data will be sent to the given stream immediately.
-     *
-     * <p>
-     * To signal the end of the stream, when the other side notifies us of EOF or when
-     * the channel closes, the output stream gets closed. If this is not desirable,
-     * you must wrap the output stream and ignore the {@link OutputStream#close()} call.
-     */
-    public void pipeStdout(OutputStream os) throws IOException {
+	/**
+	 * Write stdout received from the other side to the specified {@link OutputStream}.
+	 *
+	 * <p>
+	 * By default, when data arrives from the other side, trilead buffers them and lets
+	 * you read it at your convenience from {@link #getStdout()}. This is normally convenient,
+	 * but if all you are doing is to send the data to another {@link OutputStream} by
+	 * copying a stream, then you'll be end up wasting a thread just for this.
+	 * In such a situation, you can call this method and let the I/O handling thread of trilead
+	 * directly pass the received data to the output stream. This also eliminates the internal
+	 * buffer used for spooling.
+	 *
+	 * <p>
+	 * When you do this, beware of a blocking write! If a write blocks, it'll affect
+	 * all the other channels and sessions that are sharing the same SSH connection,
+	 * as there's only one I/O thread. For example, this can happen if you are writing to
+	 * {@link Socket}.
+	 *
+	 * <p>
+	 * If any data has already been received and spooled before calling this method,
+	 * the data will be sent to the given stream immediately.
+	 *
+	 * <p>
+	 * To signal the end of the stream, when the other side notifies us of EOF or when
+	 * the channel closes, the output stream gets closed. If this is not desirable,
+	 * you must wrap the output stream and ignore the {@link OutputStream#close()} call.
+	 *
+	 * @param os the os
+	 * @throws IOException the io exception
+	 */
+	public void pipeStdout(OutputStream os) throws IOException {
         cn.pipeStdoutStream(os);
     }
 
-    /**
-     * The same as {@link #pipeStdout(OutputStream)} except for stderr, not for stdout.
-     */
-    public void pipeStderr(OutputStream os) throws IOException {
+	/**
+	 * The same as {@link #pipeStdout(OutputStream)} except for stderr, not for stdout.
+	 *
+	 * @param os the os
+	 * @throws IOException the io exception
+	 */
+	public void pipeStderr(OutputStream os) throws IOException {
         cn.pipeStderrStream(os);
     }
 
 	/**
 	 * This method blocks until there is more data available on either the
-	 * stdout or stderr InputStream of this <code>Session</code>. Very useful
+	 * stdout or stderr InputStream of this Session. Very useful
 	 * if you do not want to use two parallel threads for reading from the two
 	 * InputStreams. One can also specify a timeout. NOTE: do NOT call this
 	 * method if you use concurrent threads that operate on either of the two
-	 * InputStreams of this <code>Session</code> (otherwise this method may
+	 * InputStreams of this Session (otherwise this method may
 	 * block, even though more data is available).
 	 * 
 	 * @param timeout
-	 *            The (non-negative) timeout in <code>ms</code>. <code>0</code> means no
+	 *            The (non-negative) timeout in ms. 0 means no
 	 *            timeout, the call may block forever.
 	 * @return
 	 *            <ul>
-	 *            <li><code>0</code> if no more data will arrive.</li>
-	 *            <li><code>1</code> if more data is available.</li>
-	 *            <li><code>-1</code> if a timeout occurred.</li>
+	 *            <li>0 if no more data will arrive.</li>
+	 *            <li>1 if more data is available.</li>
+	 *            <li>-1 if a timeout occurred.</li>
 	 *            </ul>
 	 *            
-	 * @throws    IOException
+	 * @throws    IOException the io exception
+	 * @throws    InterruptedException the interrupted exception
 	 * @deprecated This method has been replaced with a much more powerful wait-for-condition
 	 *             interface and therefore acts only as a wrapper.
 	 * 
@@ -485,24 +499,24 @@ public class Session
 	 * This method returns as soon as one of the following happens:
 	 * <ul>
 	 * <li>at least of the specified conditions (see {@link ChannelCondition}) holds true</li>
-	 * <li>timeout > 0 and a timeout occured (TIMEOUT will be set in result conditions)</a> 
-	 * <li>the underlying channel was closed (CLOSED will be set in result conditions)</a>
+	 * <li>timeout &gt; 0 and a timeout occured (TIMEOUT will be set in result conditions)</li>
+	 * <li>the underlying channel was closed (CLOSED will be set in result conditions)</li>
 	 * </ul>
 	 * <p>
 	 * In any case, the result value contains ALL current conditions, which may be more
 	 * than the specified condition set (i.e., never use the "==" operator to test for conditions
-	 * in the bitmask, see also comments in {@link ChannelCondition}). 
+	 * in the bitmask, see also comments in {@link ChannelCondition}).
 	 * <p>
 	 * Note: do NOT call this method if you want to wait for STDOUT_DATA or STDERR_DATA and
 	 * there are concurrent threads (e.g., StreamGobblers) that operate on either of the two
-	 * InputStreams of this <code>Session</code> (otherwise this method may
+	 * InputStreams of this Session (otherwise this method may
 	 * block, even though more data is available in the StreamGobblers).
-	 * 
+	 *
 	 * @param condition_set a bitmask based on {@link ChannelCondition} values
-	 * @param timeout non-negative timeout in ms, <code>0</code> means no timeout
+	 * @param timeout       non-negative timeout in ms, 0 means no timeout
 	 * @return all bitmask specifying all current conditions that are true
+	 * @throws InterruptedException the interrupted exception
 	 */
-
 	public int waitForCondition(int condition_set, long timeout) throws InterruptedException {
 		if (timeout < 0)
 			throw new IllegalArgumentException("timeout must be non-negative!");
@@ -514,10 +528,10 @@ public class Session
 	 * Get the exit code/status from the remote command - if available. Be
 	 * careful - not all server implementations return this value. It is
 	 * generally a good idea to call this method only when all data from the
-	 * remote side has been consumed (see also the <code<WaitForCondition</code> method).
+	 * remote side has been consumed (see also the WaitForCondition method).
 	 * 
-	 * @return An <code>Integer</code> holding the exit code, or
-	 *         <code>null</code> if no exit code is (yet) available.
+	 * @return An Integer holding the exit code, or
+	 *         null if no exit code is (yet) available.
 	 */
 	public Integer getExitStatus()
 	{
@@ -529,8 +543,8 @@ public class Session
 	 * stopped - if available and applicable. Be careful - not all server
 	 * implementations return this value.
 	 * 
-	 * @return An <code>String</code> holding the name of the signal, or
-	 *         <code>null</code> if the process exited normally or is still
+	 * @return An String holding the name of the signal, or
+	 *         null if the process exited normally or is still
 	 *         running (or if the server forgot to send this information).
 	 */
 	public String getExitSignal()
@@ -544,7 +558,7 @@ public class Session
 	 * getting an Exception on the Input- or OutputStreams). Sometimes these other
 	 * methods may throw an exception, saying that the underlying channel is
 	 * closed (this can happen, e.g., if the other server sent a close message.)
-	 * However, as long as you have not called the <code>close()</code>
+	 * However, as long as you have not called the close()
 	 * method, you may be wasting (local) resources.
 	 * 
 	 */
@@ -570,19 +584,21 @@ public class Session
 		}
 	}
 
-    /**
-     * Sets the receive window size.
-     *
-     * The receive window is a maximum number of bytes that the remote side can send to this channel without
-     * waiting for us to consume them (AKA "in-flight bytes").
-     *
-     * When your connection is over a large-latency/high-bandiwdth network, specifying a bigger value
-     * allows the network to be efficiently utilized. OTOH, if you don't drain this channel quickly enough
-     * all those bytes in flight can end up getting buffered.
-     *
-     * This value can be adjusted at runtime.
-     */
-    public synchronized void setWindowSize(int newSize) {
+	/**
+	 * Sets the receive window size.
+	 * <p>
+	 * The receive window is a maximum number of bytes that the remote side can send to this channel without
+	 * waiting for us to consume them (AKA "in-flight bytes").
+	 * <p>
+	 * When your connection is over a large-latency/high-bandiwdth network, specifying a bigger value
+	 * allows the network to be efficiently utilized. OTOH, if you don't drain this channel quickly enough
+	 * all those bytes in flight can end up getting buffered.
+	 * <p>
+	 * This value can be adjusted at runtime.
+	 *
+	 * @param newSize the new size
+	 */
+	public synchronized void setWindowSize(int newSize) {
         cn.setWindowSize(newSize);
     }
 }

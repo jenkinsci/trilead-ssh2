@@ -92,7 +92,7 @@ public class DhExchange
 
 	/**
 	 * @return Returns the e.
-	 * @throws IllegalStateException
+	 *
 	 */
 	public BigInteger getE()
 	{
@@ -104,7 +104,7 @@ public class DhExchange
 
 	/**
 	 * @return Returns the shared secret k.
-	 * @throws IllegalStateException
+	 *
 	 */
 	public BigInteger getK()
 	{
@@ -115,7 +115,7 @@ public class DhExchange
 	}
 
 	/**
-	 * @param f
+	 * @param f f
 	 */
 	public void setF(BigInteger f)
 	{

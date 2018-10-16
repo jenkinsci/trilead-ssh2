@@ -34,8 +34,10 @@ public class FifoBufferTest {
 
     /**
      * Read/write ops that go around the buffer.
-     *
+     * <p>
      * Read are smaller so that we leave more stuff in the buffer
+     *
+     * @throws Exception the exception
      */
     @Test
     public void wrapAround() throws Exception {
@@ -60,6 +62,8 @@ public class FifoBufferTest {
     /**
      * Read/write operation whose buffer is bigger than what the ring buffer holds.
      * This tests the thread notification.
+     *
+     * @throws Exception the exception
      */
     @Test
     public void bigAccess() throws Exception {

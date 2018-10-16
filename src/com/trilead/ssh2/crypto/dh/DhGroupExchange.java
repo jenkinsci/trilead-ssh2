@@ -81,6 +81,7 @@ public class DhGroupExchange
 
 	/**
 	 * Sets f and calculates the shared secret.
+	 * @param f f.
 	 */
 	public void setF(BigInteger f)
 	{

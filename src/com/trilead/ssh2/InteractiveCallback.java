@@ -49,6 +49,7 @@ public interface InteractiveCallback
 	 *            not the user input should be echoed as characters are typed.
 	 * @return an array of reponses - the array size must match the parameter
 	 *         <code>numPrompts</code>.
+	 * @throws Exception exception
 	 */
 	public String[] replyToChallenge(String name, String instruction, int numPrompts, String[] prompt, boolean[] echo)
 			throws Exception;

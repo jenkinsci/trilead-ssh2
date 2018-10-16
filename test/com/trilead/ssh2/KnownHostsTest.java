@@ -58,7 +58,9 @@ public class KnownHostsTest {
      * The Known Hosts implementation currently expects multiple known hosts entries for the same hosts to result in
      * a null value being returned for the preferred algorithms, rather than a list of all those known algorithms. This
      * seems an odd choice, but I'll protect that feature for now.
-     * @throws IOException if failing to add the test keys
+     *
+     * @throws IOException              if failing to add the test keys
+     * @throws GeneralSecurityException the general security exception
      */
     @Test
     public void testKnownHostsPreferredAlgorithmsRsaAndDssHosts() throws IOException, GeneralSecurityException {

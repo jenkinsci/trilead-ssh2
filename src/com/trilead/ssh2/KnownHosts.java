@@ -32,16 +32,17 @@ import com.trilead.ssh2.signature.KeyAlgorithmManager;
 
 
 /**
- * The <code>KnownHosts</code> class is a handy tool to verify received server hostkeys
+ * The KnownHosts class is a handy tool to verify received server hostkeys
  * based on the information in <code>known_hosts</code> files (the ones used by OpenSSH).
  * <p>
  * It offers basically an in-memory database for known_hosts entries, as well as some
  * helper functions. Entries from a <code>known_hosts</code> file can be loaded at construction time.
  * It is also possible to add more keys later (e.g., one can parse different
- * <code>known_hosts<code> files).
+ * known_hosts files).
+ *
  * <p>
  * It is a thread safe implementation, therefore, you need only to instantiate one
- * <code>KnownHosts</code> for your whole application.
+ * KnownHosts for your whole application.
  * 
  * @author Christian Plattner, plattner@trilead.com
  * @version $Id: KnownHosts.java,v 1.2 2008/04/01 12:38:09 cplattne Exp $

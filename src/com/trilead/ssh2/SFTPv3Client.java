@@ -79,8 +79,8 @@ public class SFTPv3Client
 	 * Create a SFTP v3 client.
 	 * 
 	 * @param conn The underlying SSH-2 connection to be used.
-	 * @param debug
-	 * @throws IOException
+	 * @param debug debug
+	 * @throws IOException the io exception
 	 * 
 	 * @deprecated this constructor (debug version) will disappear in the future,
 	 *             use {@link #SFTPv3Client(Connection)} instead.
@@ -112,7 +112,7 @@ public class SFTPv3Client
 	 * Create a SFTP v3 client.
 	 * 
 	 * @param conn The underlying SSH-2 connection to be used.
-	 * @throws IOException
+	 * @throws IOException the io exception
 	 */
 	public SFTPv3Client(Connection conn) throws IOException
 	{
@@ -136,7 +136,7 @@ public class SFTPv3Client
 	 * 
 	 * @param charset the name of the charset to be used or <code>null</code> to use the platform's
 	 *        default encoding.
-	 * @throws IOException
+	 * @throws IOException the io exception
 	 */
 	public void setCharset(String charset) throws IOException
 	{
@@ -231,7 +231,7 @@ public class SFTPv3Client
 	 * 
 	 * @param maxlen
 	 * @return the message contents
-	 * @throws IOException
+	 * @throws IOException the io exception
 	 */
 	private final byte[] receiveMessage(int maxlen) throws IOException
 	{
@@ -348,7 +348,7 @@ public class SFTPv3Client
 	 * 
 	 * @param handle a SFTPv3FileHandle handle.
 	 * @return a SFTPv3FileAttributes object.
-	 * @throws IOException
+	 * @throws IOException the io exception
 	 */
 	public SFTPv3FileAttributes fstat(SFTPv3FileHandle handle) throws IOException
 	{
@@ -448,7 +448,7 @@ public class SFTPv3Client
 	 * 
 	 * @param path See the {@link SFTPv3Client comment} for the class for more details.
 	 * @return a SFTPv3FileAttributes object.
-	 * @throws IOException
+	 * @throws IOException the io exception
 	 */
 	public SFTPv3FileAttributes stat(String path) throws IOException
 	{
@@ -463,7 +463,7 @@ public class SFTPv3Client
 	 * 
 	 * @param path See the {@link SFTPv3Client comment} for the class for more details.
 	 * @return a SFTPv3FileAttributes object.
-	 * @throws IOException
+	 * @throws IOException the io exception
 	 */
 	public SFTPv3FileAttributes lstat(String path) throws IOException
 	{
@@ -475,7 +475,7 @@ public class SFTPv3Client
 	 * 
 	 * @param path See the {@link SFTPv3Client comment} for the class for more details.
 	 * @return The target of the link.
-	 * @throws IOException
+	 * @throws IOException the io exception
 	 */
 	public String readLink(String path) throws IOException
 	{
@@ -562,7 +562,7 @@ public class SFTPv3Client
 	 * @param path See the {@link SFTPv3Client comment} for the class for more details.
 	 * @param attr A SFTPv3FileAttributes object. Specifies the modifications to be
 	 *             made to the attributes of the file. Empty fields will be ignored.
-	 * @throws IOException
+	 * @throws IOException the io exception
 	 */
 	public void setstat(String path, SFTPv3FileAttributes attr) throws IOException
 	{
@@ -590,7 +590,7 @@ public class SFTPv3Client
 	 * @param handle a SFTPv3FileHandle handle
 	 * @param attr A SFTPv3FileAttributes object. Specifies the modifications to be
 	 *             made to the attributes of the file. Empty fields will be ignored.
-	 * @throws IOException
+	 * @throws IOException the io exception
 	 */
 	public void fsetstat(SFTPv3FileHandle handle, SFTPv3FileAttributes attr) throws IOException
 	{
@@ -619,7 +619,7 @@ public class SFTPv3Client
 	 * 
 	 * @param src See the {@link SFTPv3Client comment} for the class for more details.
 	 * @param target See the {@link SFTPv3Client comment} for the class for more details.
-	 * @throws IOException
+	 * @throws IOException the io exception
 	 */
 	public void createSymlink(String src, String target) throws IOException
 	{
@@ -651,7 +651,7 @@ public class SFTPv3Client
 	 * 
 	 * @param path See the {@link SFTPv3Client comment} for the class for more details.
 	 * @return An absolute path.
-	 * @throws IOException
+	 * @throws IOException the io exception
 	 */
 	public String canonicalPath(String path) throws IOException
 	{
@@ -922,7 +922,7 @@ public class SFTPv3Client
 	 * 
 	 * @param dirName See the {@link SFTPv3Client comment} for the class for more details.
 	 * @return A Vector containing {@link SFTPv3DirectoryEntry} objects.
-	 * @throws IOException
+	 * @throws IOException the io exception
 	 */
 	public Vector ls(String dirName) throws IOException
 	{
@@ -939,7 +939,7 @@ public class SFTPv3Client
 	 * @param posixPermissions the permissions for this directory, e.g., "0700" (remember that
 	 *                         this is octal noation). The server will likely apply a umask.
 	 * 
-	 * @throws IOException
+	 * @throws IOException the io exception
 	 */
 	public void mkdir(String dirName, int posixPermissions) throws IOException
 	{
@@ -959,7 +959,7 @@ public class SFTPv3Client
 	 * Remove a file.
 	 * 
 	 * @param fileName See the {@link SFTPv3Client comment} for the class for more details.
-	 * @throws IOException
+	 * @throws IOException the io exception
 	 */
 	public void rm(String fileName) throws IOException
 	{
@@ -977,7 +977,7 @@ public class SFTPv3Client
 	 * Remove an empty directory. 
 	 * 
 	 * @param dirName See the {@link SFTPv3Client comment} for the class for more details.
-	 * @throws IOException
+	 * @throws IOException the io exception
 	 */
 	public void rmdir(String dirName) throws IOException
 	{
@@ -996,7 +996,7 @@ public class SFTPv3Client
 	 * 
 	 * @param oldPath See the {@link SFTPv3Client comment} for the class for more details.
 	 * @param newPath See the {@link SFTPv3Client comment} for the class for more details.
-	 * @throws IOException
+	 * @throws IOException the io exception
 	 */
 	public void mv(String oldPath, String newPath) throws IOException
 	{
@@ -1016,7 +1016,7 @@ public class SFTPv3Client
 	 * 
 	 * @param fileName See the {@link SFTPv3Client comment} for the class for more details.
 	 * @return a SFTPv3FileHandle handle
-	 * @throws IOException
+	 * @throws IOException the io exception
 	 */
 	public SFTPv3FileHandle openFileRO(String fileName) throws IOException
 	{
@@ -1028,7 +1028,7 @@ public class SFTPv3Client
 	 * 
 	 * @param fileName See the {@link SFTPv3Client comment} for the class for more details.
 	 * @return a SFTPv3FileHandle handle
-	 * @throws IOException
+	 * @throws IOException the io exception
 	 */
 	public SFTPv3FileHandle openFileRW(String fileName) throws IOException
 	{
@@ -1048,7 +1048,7 @@ public class SFTPv3Client
 	 * 
 	 * @param fileName See the {@link SFTPv3Client comment} for the class for more details.
 	 * @return a SFTPv3FileHandle handle
-	 * @throws IOException
+	 * @throws IOException the io exception
 	 */
 	public SFTPv3FileHandle createFile(String fileName) throws IOException
 	{
@@ -1067,7 +1067,7 @@ public class SFTPv3Client
 	 *             structure make sense. You need only to set those fields where you want
 	 *             to override the server's defaults.
 	 * @return a SFTPv3FileHandle handle
-	 * @throws IOException
+	 * @throws IOException the io exception
 	 */
 	public SFTPv3FileHandle createFile(String fileName, SFTPv3FileAttributes attr) throws IOException
 	{
@@ -1080,7 +1080,7 @@ public class SFTPv3Client
 	 * 
 	 * @param fileName See the {@link SFTPv3Client comment} for the class for more details.
 	 * @return a SFTPv3FileHandle handle
-	 * @throws IOException
+	 * @throws IOException the io exception
 	 */
 	public SFTPv3FileHandle createFileTruncate(String fileName) throws IOException
 	{
@@ -1099,7 +1099,7 @@ public class SFTPv3Client
 	 *             structure make sense. You need only to set those fields where you want
 	 *             to override the server's defaults.
 	 * @return a SFTPv3FileHandle handle
-	 * @throws IOException
+	 * @throws IOException the io exception
 	 */
 	public SFTPv3FileHandle createFileTruncate(String fileName, SFTPv3FileAttributes attr) throws IOException
 	{
@@ -1204,12 +1204,12 @@ public class SFTPv3Client
 	/**
 	 * Read bytes from a file. No more than 32768 bytes may be read at once.
 	 * Be aware that the semantics of read() are different than for Java streams.
-	 * <p>
+	 *
 	 * <ul>
 	 * <li>The server will read as many bytes as it can from the file (up to <code>len</code>),
 	 * and return them.</li>
 	 * <li>If EOF is encountered before reading any data, <code>-1</code> is returned.
-	 * <li>If an error occurs, an exception is thrown</li>.
+	 * <li>If an error occurs, an exception is thrown</li>
 	 * <li>For normal disk files, it is guaranteed that the server will return the specified
 	 * number of bytes, or up to end of file. For, e.g., device files this may return
 	 * fewer bytes than requested.</li>
@@ -1222,7 +1222,7 @@ public class SFTPv3Client
 	 * @param len how many bytes to read, 0 &lt; len &lt;= 32768 bytes
 	 * @return the number of bytes that could be read, may be less than requested if
 	 *         the end of the file is reached, -1 is returned in case of <code>EOF</code>
-	 * @throws IOException
+	 * @throws IOException the io exception
 	 */
 	public int read(SFTPv3FileHandle handle, long fileOffset, byte[] dst, int dstoff, int len) throws IOException
 	{
@@ -1304,7 +1304,7 @@ public class SFTPv3Client
 	 * @param src the source byte array.
 	 * @param srcoff offset in the source byte array.
 	 * @param len how many bytes to write.
-	 * @throws IOException
+	 * @throws IOException the io exception
 	 */
 	public void write(SFTPv3FileHandle handle, long fileOffset, byte[] src, int srcoff, int len) throws IOException
 	{
@@ -1365,7 +1365,7 @@ public class SFTPv3Client
 	 * Close a file.
 	 * 
 	 * @param handle a SFTPv3FileHandle handle
-	 * @throws IOException
+	 * @throws IOException the io exception
 	 */
 	public void closeFile(SFTPv3FileHandle handle) throws IOException
 	{
@@ -1385,17 +1385,25 @@ public class SFTPv3Client
 		}
 	}
 
-    /**
-     * Checks if the given path exists.
-     */
-    public boolean exists(String path) throws IOException {
+	/**
+	 * Checks if the given path exists.
+	 *
+	 * @param path the path
+	 * @return the boolean
+	 * @throws IOException the io exception
+	 */
+	public boolean exists(String path) throws IOException {
         return _stat(path)!=null;
     }
 
-    /**
-     * Graceful {@link #stat(String)} that returns null if the path doesn't exist.
-     */
-    public SFTPv3FileAttributes _stat(String path) throws IOException {
+	/**
+	 * Graceful {@link #stat(String)} that returns null if the path doesn't exist.
+	 *
+	 * @param path the path
+	 * @return the sft pv 3 file attributes
+	 * @throws IOException the io exception
+	 */
+	public SFTPv3FileAttributes _stat(String path) throws IOException {
         try {
             return stat(path);
         } catch (SFTPException e) {
@@ -1407,10 +1415,14 @@ public class SFTPv3Client
         }
     }
 
-    /**
-     * Makes sure that the directory exists, by creating it if necessary.
-     */
-    public void mkdirs(String path, int posixPermission) throws IOException {
+	/**
+	 * Makes sure that the directory exists, by creating it if necessary.
+	 *
+	 * @param path            the path
+	 * @param posixPermission the posix permission
+	 * @throws IOException the io exception
+	 */
+	public void mkdirs(String path, int posixPermission) throws IOException {
         SFTPv3FileAttributes atts = _stat(path);
         if (atts!=null && atts.isDirectory())
             return;
@@ -1426,10 +1438,14 @@ public class SFTPv3Client
         }
     }
 
-    /**
-     * Creates a new file and writes to it.
-     */
-    public OutputStream writeToFile(String path) throws IOException {
+	/**
+	 * Creates a new file and writes to it.
+	 *
+	 * @param path the path
+	 * @return the output stream
+	 * @throws IOException the io exception
+	 */
+	public OutputStream writeToFile(String path) throws IOException {
         final SFTPv3FileHandle h = createFile(path);
         return new OutputStream() {
             private long offset = 0;
@@ -1448,7 +1464,14 @@ public class SFTPv3Client
         };
     }
 
-    public InputStream read(String file) throws IOException {
+	/**
+	 * Read input stream.
+	 *
+	 * @param file the file
+	 * @return the input stream
+	 * @throws IOException the io exception
+	 */
+	public InputStream read(String file) throws IOException {
         final SFTPv3FileHandle h = openFileRO(file);
         return new InputStream() {
             private long offset = 0;
@@ -1478,7 +1501,14 @@ public class SFTPv3Client
         };
     }
 
-    public void chmod(String path, int permissions) throws IOException {
+	/**
+	 * Chmod.
+	 *
+	 * @param path        the path
+	 * @param permissions the permissions
+	 * @throws IOException the io exception
+	 */
+	public void chmod(String path, int permissions) throws IOException {
         SFTPv3FileAttributes atts = new SFTPv3FileAttributes();
         atts.permissions = Integer.valueOf(permissions);
         setstat(path, atts);

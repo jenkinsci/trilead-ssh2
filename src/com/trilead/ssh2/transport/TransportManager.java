@@ -243,7 +243,7 @@ public class TransportManager
 
     /**
      * If the socket connection is lost (either by this side closing down or the other side closing down),
-     * return a non-null object indicating the cause of the connection loss.
+     * @return a non-null object indicating the cause of the connection loss.
      */
 	public Throwable getReasonClosedCause()
 	{

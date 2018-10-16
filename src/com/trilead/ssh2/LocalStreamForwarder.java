@@ -39,7 +39,7 @@ public class LocalStreamForwarder
 
 	/**
 	 * @return An <code>InputStream</code> object.
-	 * @throws IOException
+	 * @throws IOException the io exception
 	 */
 	public InputStream getInputStream() throws IOException
 	{
@@ -54,7 +54,7 @@ public class LocalStreamForwarder
 	 * <code>close</code> method of the <code>OutputStream</code>.
 	 * 
 	 * @return An <code>OutputStream</code> object.
-	 * @throws IOException
+	 * @throws IOException the io exception
 	 */
 	public OutputStream getOutputStream() throws IOException
 	{
@@ -69,7 +69,7 @@ public class LocalStreamForwarder
 	 * operation is already in progress (initiated from either side), then this
 	 * call is a no-op.
 	 * 
-	 * @throws IOException
+	 * @throws IOException the io exception
 	 */
 	public void close() throws IOException
 	{
