@@ -851,15 +851,12 @@ public class ChannelManager implements MessageHandler
 
 	/**
 	 * Wait until for a condition.
-	 * 
-	 * @param c
-	 *            Channel
-	 * @param timeout
-	 *            in ms, 0 means no timeout.
-	 * @param condition_mask
-	 *            minimum event mask
+	 *
+	 * @param c              Channel
+	 * @param timeout        in ms, 0 means no timeout.
+	 * @param condition_mask minimum event mask
 	 * @return all current events
-	 * 
+	 * @throws InterruptedException the interrupted exception
 	 */
 	public int waitForCondition(Channel c, long timeout, int condition_mask) throws InterruptedException {
 		long end_time = 0;

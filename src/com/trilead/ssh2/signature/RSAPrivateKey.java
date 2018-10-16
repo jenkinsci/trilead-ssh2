@@ -50,10 +50,13 @@ public class RSAPrivateKey
 		return new RSAPublicKey(e, n);
 	}
 
-    /**
-     * Converts this to a JCE API representation of the RSA key pair.
-     */
-    public KeyPair toJCEKeyPair() throws GeneralSecurityException {
+	/**
+	 * Converts this to a JCE API representation of the RSA key pair.
+	 *
+	 * @return the key pair
+	 * @throws GeneralSecurityException the general security exception
+	 */
+	public KeyPair toJCEKeyPair() throws GeneralSecurityException {
         KeyFactory kf = KeyFactory.getInstance("RSA");
         return new KeyPair(
                 kf.generatePublic(new RSAPublicKeySpec(getN(), getE())),

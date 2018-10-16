@@ -53,8 +53,8 @@ public class LocalPortForwarder
 
 	/**
 	 * Stop TCP/IP forwarding of newly arriving connections.
-	 * 
-	 * @throws IOException
+	 *
+	 * @throws IOException the io exception
 	 */
 	public void close() throws IOException
 	{

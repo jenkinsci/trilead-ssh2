@@ -26,6 +26,9 @@ public class MAC
 	int size;
 
 	/**
+	 * Get mac list string [ ].
+	 *
+	 * @return the string [ ]
 	 * @deprecated Use {@link MessageMac#getMacs()}
 	 */
 	@Deprecated
@@ -38,6 +41,9 @@ public class MAC
 
 
 	/**
+	 * Check mac list.
+	 *
+	 * @param macs the macs
 	 * @deprecated Use {@link MessageMac#checkMacs(String[])}
 	 */
 	@Deprecated
@@ -49,6 +55,10 @@ public class MAC
 
 
 	/**
+	 * Gets key len.
+	 *
+	 * @param type the type
+	 * @return the key len
 	 * @deprecated Use {@link MessageMac#getKeyLength(String)}
 	 */
 	@Deprecated

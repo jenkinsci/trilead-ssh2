@@ -40,11 +40,10 @@ import java.util.Vector;
  * <li>finally, one must close the connection and release resources with the
  * {@link #close() close()} method.</li>
  * </ol>
- * 
+ *
  * @author Christian Plattner, plattner@trilead.com
- * @version $Id: Connection.java,v 1.3 2008/04/01 12:38:09 cplattne Exp $
+ * @version $Id : Connection.java,v 1.3 2008/04/01 12:38:09 cplattne Exp $
  */
-
 public class Connection
 {
 	/**
@@ -60,7 +59,7 @@ public class Connection
 
 	/**
 	 * Unless you know what you are doing, you will never need this.
-	 * 
+	 *
 	 * @return The list of supported cipher algorithms by this implementation.
 	 */
 	public static synchronized String[] getAvailableCiphers()
@@ -70,7 +69,7 @@ public class Connection
 
 	/**
 	 * Unless you know what you are doing, you will never need this.
-	 * 
+	 *
 	 * @return The list of supported MAC algorthims by this implementation.
 	 */
 	public static synchronized String[] getAvailableMACs()
@@ -80,9 +79,8 @@ public class Connection
 
 	/**
 	 * Unless you know what you are doing, you will never need this.
-	 * 
-	 * @return The list of supported server host key algorthims by this
-	 *         implementation.
+	 *
+	 * @return The list of supported server host key algorthims by this         implementation.
 	 */
 	public static synchronized String[] getAvailableServerHostKeyAlgorithms()
 	{
@@ -116,9 +114,8 @@ public class Connection
 	 * to establish a connection to the specified SSH-2 server.
 	 * <p>
 	 * Same as {@link #Connection(String, int) Connection(hostname, 22)}.
-	 * 
-	 * @param hostname
-	 *            the hostname of the SSH-2 server.
+	 *
+	 * @param hostname the hostname of the SSH-2 server.
 	 */
 	public Connection(String hostname)
 	{
@@ -128,25 +125,22 @@ public class Connection
 	/**
 	 * Prepares a fresh <code>Connection</code> object which can then be used
 	 * to establish a connection to the specified SSH-2 server.
-	 * 
-	 * @param hostname
-	 *            the host where we later want to connect to.
-	 * @param port
-	 *            port on the server, normally 22.
+	 *
+	 * @param hostname the host where we later want to connect to.
+	 * @param port     port on the server, normally 22.
 	 */
 	public Connection(String hostname, int port)
 	{
 		this(hostname, port, null);
 	}
-	
+
 	/**
 	 * Prepares a fresh <code>Connection</code> object which can then be used
 	 * to establish a connection to the specified SSH-2 server.
-	 * 
-	 * @param hostname
-	 *            the host where we later want to connect to.
-	 * @param port
-	 *            port on the server, normally 22.
+	 *
+	 * @param hostname      the host where we later want to connect to.
+	 * @param port          port on the server, normally 22.
+	 * @param sourceAddress the source address
 	 */
 	public Connection(String hostname, int port, String sourceAddress)
 	{
@@ -165,27 +159,13 @@ public class Connection
 	 * one can retry either by using this or any other authentication method
 	 * (use the <code>getRemainingAuthMethods</code> method to get a list of
 	 * the remaining possible methods).
-	 * 
-	 * @param user
-	 *            A <code>String</code> holding the username.
-	 * @param pem
-	 *            A <code>String</code> containing the DSA private key of the
-	 *            user in OpenSSH key format (PEM, you can't miss the
-	 *            "-----BEGIN DSA PRIVATE KEY-----" tag). The string may contain
-	 *            linefeeds.
-	 * @param password
-	 *            If the PEM string is 3DES encrypted ("DES-EDE3-CBC"), then you
-	 *            must specify the password. Otherwise, this argument will be
-	 *            ignored and can be set to <code>null</code>.
-	 * 
+	 *
+	 * @param user     A <code>String</code> holding the username.
+	 * @param pem      A <code>String</code> containing the DSA private key of the            user in OpenSSH key format (PEM, you can't miss the            "-----BEGIN DSA PRIVATE KEY-----" tag). The string may contain            linefeeds.
+	 * @param password If the PEM string is 3DES encrypted ("DES-EDE3-CBC"), then you            must specify the password. Otherwise, this argument will be            ignored and can be set to <code>null</code>.
 	 * @return whether the connection is now authenticated.
-	 * @throws IOException
-	 * 
-	 * @deprecated You should use one of the
-	 *             {@link #authenticateWithPublicKey(String, File, String) authenticateWithPublicKey()}
-	 *             methods, this method is just a wrapper for it and will
-	 *             disappear in future builds.
-	 * 
+	 * @throws IOException the io exception
+	 * @deprecated You should use one of the             {@link #authenticateWithPublicKey(String, File, String) authenticateWithPublicKey()}             methods, this method is just a wrapper for it and will             disappear in future builds.
 	 */
 	public synchronized boolean authenticateWithDSA(String user, String pem, String password) throws IOException
 	{
@@ -215,16 +195,13 @@ public class Connection
 	/**
 	 * A wrapper that calls
 	 * {@link #authenticateWithKeyboardInteractive(String, String[], InteractiveCallback)
-	 * authenticateWithKeyboardInteractivewith} a <code>null</code> submethod
+	 * authenticateWithKeyboardInteractivewith}* a <code>null</code> submethod
 	 * list.
-	 * 
-	 * @param user
-	 *            A <code>String</code> holding the username.
-	 * @param cb
-	 *            An <code>InteractiveCallback</code> which will be used to
-	 *            determine the responses to the questions asked by the server.
+	 *
+	 * @param user A <code>String</code> holding the username.
+	 * @param cb   An <code>InteractiveCallback</code> which will be used to            determine the responses to the questions asked by the server.
 	 * @return whether the connection is now authenticated.
-	 * @throws IOException
+	 * @throws IOException the io exception
 	 */
 	public synchronized boolean authenticateWithKeyboardInteractive(String user, InteractiveCallback cb)
 			throws IOException
@@ -232,6 +209,14 @@ public class Connection
 		return authenticateWithKeyboardInteractive(user, null, cb);
 	}
 
+	/**
+	 * Authenticate with agent boolean.
+	 *
+	 * @param user  the user
+	 * @param proxy the proxy
+	 * @return the boolean
+	 * @throws IOException the io exception
+	 */
 	public synchronized boolean authenticateWithAgent(String user, AgentProxy proxy) throws IOException {
 		if (tm == null)
 			throw new IllegalStateException("Connection is not established!");
@@ -273,19 +258,12 @@ public class Connection
 	 * Note: some SSH servers advertise "keyboard-interactive", however, any
 	 * interactive request will be denied (without having sent any challenge to
 	 * the client).
-	 * 
-	 * @param user
-	 *            A <code>String</code> holding the username.
-	 * @param submethods
-	 *            An array of submethod names, see
-	 *            draft-ietf-secsh-auth-kbdinteract-XX. May be <code>null</code>
-	 *            to indicate an empty list.
-	 * @param cb
-	 *            An <code>InteractiveCallback</code> which will be used to
-	 *            determine the responses to the questions asked by the server.
-	 * 
+	 *
+	 * @param user       A <code>String</code> holding the username.
+	 * @param submethods An array of submethod names, see            draft-ietf-secsh-auth-kbdinteract-XX. May be <code>null</code>            to indicate an empty list.
+	 * @param cb         An <code>InteractiveCallback</code> which will be used to            determine the responses to the questions asked by the server.
 	 * @return whether the connection is now authenticated.
-	 * @throws IOException
+	 * @throws IOException the io exception
 	 */
 	public synchronized boolean authenticateWithKeyboardInteractive(String user, String[] submethods,
 			InteractiveCallback cb) throws IOException
@@ -333,11 +311,11 @@ public class Connection
 	 * However, even though "keyboard-interactive" *feels* like password
 	 * authentication (e.g., when using the putty or openssh clients) it is
 	 * *not* the same mechanism.
-	 * 
-	 * @param user
-	 * @param password
+	 *
+	 * @param user     the user
+	 * @param password the password
 	 * @return if the connection is now authenticated.
-	 * @throws IOException
+	 * @throws IOException the io exception
 	 */
 	public synchronized boolean authenticateWithPassword(String user, String password) throws IOException
 	{
@@ -385,10 +363,10 @@ public class Connection
 	 * is returned and one can retry by any other authentication method (use the
 	 * <code>getRemainingAuthMethods</code> method to get a list of the
 	 * remaining possible methods).
-	 * 
-	 * @param user
+	 *
+	 * @param user the user
 	 * @return if the connection is now authenticated.
-	 * @throws IOException
+	 * @throws IOException the io exception
 	 */
 	public synchronized boolean authenticateWithNone(String user) throws IOException
 	{
@@ -442,22 +420,12 @@ public class Connection
 	 * to the OpenSSH key format by using the "puttygen" tool (can be downloaded
 	 * from the Putty website). Simply load your key and then use the
 	 * "Conversions/Export OpenSSH key" functionality to get a proper PEM file.
-	 * 
-	 * @param user
-	 *            A <code>String</code> holding the username.
-	 * @param pemPrivateKey
-	 *            A <code>char[]</code> containing a DSA or RSA private key of
-	 *            the user in OpenSSH key format (PEM, you can't miss the
-	 *            "-----BEGIN DSA PRIVATE KEY-----" or "-----BEGIN RSA PRIVATE
-	 *            KEY-----" tag). The char array may contain
-	 *            linebreaks/linefeeds.
-	 * @param password
-	 *            If the PEM structure is encrypted ("Proc-Type: 4,ENCRYPTED")
-	 *            then you must specify a password. Otherwise, this argument
-	 *            will be ignored and can be set to <code>null</code>.
-	 * 
+	 *
+	 * @param user          A <code>String</code> holding the username.
+	 * @param pemPrivateKey A <code>char[]</code> containing a DSA or RSA private key of            the user in OpenSSH key format (PEM, you can't miss the            "-----BEGIN DSA PRIVATE KEY-----" or "-----BEGIN RSA PRIVATE            KEY-----" tag). The char array may contain            linebreaks/linefeeds.
+	 * @param password      If the PEM structure is encrypted ("Proc-Type: 4,ENCRYPTED")            then you must specify a password. Otherwise, this argument            will be ignored and can be set to <code>null</code>.
 	 * @return whether the connection is now authenticated.
-	 * @throws IOException
+	 * @throws IOException the io exceptionn
 	 */
 	public synchronized boolean authenticateWithPublicKey(String user, char[] pemPrivateKey, String password)
 			throws IOException
@@ -495,21 +463,12 @@ public class Connection
 	 * to the OpenSSH key format by using the "puttygen" tool (can be downloaded
 	 * from the Putty website). Simply load your key and then use the
 	 * "Conversions/Export OpenSSH key" functionality to get a proper PEM file.
-	 * 
-	 * @param user
-	 *            A <code>String</code> holding the username.
-	 * @param pemFile
-	 *            A <code>File</code> object pointing to a file containing a
-	 *            DSA or RSA private key of the user in OpenSSH key format (PEM,
-	 *            you can't miss the "-----BEGIN DSA PRIVATE KEY-----" or
-	 *            "-----BEGIN RSA PRIVATE KEY-----" tag).
-	 * @param password
-	 *            If the PEM file is encrypted then you must specify the
-	 *            password. Otherwise, this argument will be ignored and can be
-	 *            set to <code>null</code>.
-	 * 
+	 *
+	 * @param user     A <code>String</code> holding the username.
+	 * @param pemFile  A <code>File</code> object pointing to a file containing a            DSA or RSA private key of the user in OpenSSH key format (PEM,            you can't miss the "-----BEGIN DSA PRIVATE KEY-----" or            "-----BEGIN RSA PRIVATE KEY-----" tag).
+	 * @param password If the PEM file is encrypted then you must specify the            password. Otherwise, this argument will be ignored and can be            set to <code>null</code>.
 	 * @return whether the connection is now authenticated.
-	 * @throws IOException
+	 * @throws IOException the io exception
 	 */
 	public synchronized boolean authenticateWithPublicKey(String user, File pemFile, String password)
 			throws IOException
@@ -544,12 +503,9 @@ public class Connection
 	 * mean time. Then, your connection monitor won't be notified.)
 	 * <p>
 	 * You can add as many monitors as you like.
-	 * 
+	 *
+	 * @param cmon An object implementing the <code>ConnectionMonitor</code>            interface.
 	 * @see ConnectionMonitor
-	 * 
-	 * @param cmon
-	 *            An object implementing the <code>ConnectionMonitor</code>
-	 *            interface.
 	 */
 	public synchronized void addConnectionMonitor(ConnectionMonitor cmon)
 	{
@@ -592,11 +548,9 @@ public class Connection
 	/**
 	 * Same as
 	 * {@link #connect(ServerHostKeyVerifier, int, int) connect(null, 0, 0)}.
-	 * 
-	 * @return see comments for the
-	 *         {@link #connect(ServerHostKeyVerifier, int, int) connect(ServerHostKeyVerifier, int, int)}
-	 *         method.
-	 * @throws IOException
+	 *
+	 * @return see comments for the         {@link #connect(ServerHostKeyVerifier, int, int) connect(ServerHostKeyVerifier, int, int)}         method.
+	 * @throws IOException the io exception
 	 */
 	public synchronized ConnectionInfo connect() throws IOException
 	{
@@ -606,11 +560,10 @@ public class Connection
 	/**
 	 * Same as
 	 * {@link #connect(ServerHostKeyVerifier, int, int) connect(verifier, 0, 0)}.
-	 * 
-	 * @return see comments for the
-	 *         {@link #connect(ServerHostKeyVerifier, int, int) connect(ServerHostKeyVerifier, int, int)}
-	 *         method.
-	 * @throws IOException
+	 *
+	 * @param verifier the verifier
+	 * @return see comments for the         {@link #connect(ServerHostKeyVerifier, int, int) connect(ServerHostKeyVerifier, int, int)}         method.
+	 * @throws IOException the io exception
 	 */
 	public synchronized ConnectionInfo connect(ServerHostKeyVerifier verifier) throws IOException
 	{
@@ -621,7 +574,7 @@ public class Connection
 	 * Connect to the SSH-2 server and, as soon as the server has presented its
 	 * host key, use the
 	 * {@link ServerHostKeyVerifier#verifyServerHostKey(String, int, String,
-	 * byte[]) ServerHostKeyVerifier.verifyServerHostKey()} method of the
+	 * byte[]) ServerHostKeyVerifier.verifyServerHostKey()}* method of the
 	 * <code>verifier</code> to ask for permission to proceed. If
 	 * <code>verifier</code> is <code>null</code>, then any host key will
 	 * be accepted - this is NOT recommended, since it makes man-in-the-middle
@@ -641,7 +594,7 @@ public class Connection
 	 * diffie-hellman exchange).
 	 * <p>
 	 * Note 2: The {@link ServerHostKeyVerifier#verifyServerHostKey(String, int,
-	 * String, byte[]) ServerHostKeyVerifier.verifyServerHostKey()} method will
+	 * String, byte[]) ServerHostKeyVerifier.verifyServerHostKey()}* method will
 	 * *NOT* be called from the current thread, the call is being made from a
 	 * background thread (there is a background dispatcher thread for every
 	 * established connection).
@@ -653,57 +606,28 @@ public class Connection
 	 * Note 4: If you want to re-use a connection object that was successfully
 	 * connected, then you must call the {@link #close()} method before invoking
 	 * <code>connect()</code> again.
-	 * 
-	 * @param verifier
-	 *            An object that implements the {@link ServerHostKeyVerifier}
-	 *            interface. Pass <code>null</code> to accept any server host
-	 *            key - NOT recommended.
-	 * 
-	 * @param connectTimeout
-	 *            Connect the underlying TCP socket to the server with the given
-	 *            timeout value (non-negative, in milliseconds). Zero means no
-	 *            timeout. If a proxy is being used (see
-	 *            {@link #setProxyData(ProxyData)}), then this timeout is used
-	 *            for the connection establishment to the proxy.
-	 * 
-	 * @param kexTimeout
-	 *            Timeout for complete connection establishment (non-negative,
-	 *            in milliseconds). Zero means no timeout. The timeout counts
-	 *            from the moment you invoke the connect() method and is
-	 *            cancelled as soon as the first key-exchange round has
-	 *            finished. It is possible that the timeout event will be fired
-	 *            during the invocation of the <code>verifier</code> callback,
-	 *            but it will only have an effect after the
-	 *            <code>verifier</code> returns.
-	 * 
-	 * @return A {@link ConnectionInfo} object containing the details of the
-	 *         established connection.
-	 * 
-	 * @throws IOException
-	 *             If any problem occurs, e.g., the server's host key is not
-	 *             accepted by the <code>verifier</code> or there is problem
-	 *             during the initial crypto setup (e.g., the signature sent by
-	 *             the server is wrong).
-	 *             <p>
-	 *             In case of a timeout (either connectTimeout or kexTimeout) a
-	 *             SocketTimeoutException is thrown.
-	 *             <p>
-	 *             An exception may also be thrown if the connection was already
-	 *             successfully connected (no matter if the connection broke in
-	 *             the mean time) and you invoke <code>connect()</code> again
-	 *             without having called {@link #close()} first.
-	 *             <p>
-	 *             If a HTTP proxy is being used and the proxy refuses the
-	 *             connection, then a {@link HTTPProxyException} may be thrown,
-	 *             which contains the details returned by the proxy. If the
-	 *             proxy is buggy and does not return a proper HTTP response,
-	 *             then a normal IOException is thrown instead.
+	 *
+	 * @param verifier       An object that implements the {@link ServerHostKeyVerifier}            interface. Pass <code>null</code> to accept any server host            key - NOT recommended.
+	 * @param connectTimeout Connect the underlying TCP socket to the server with the given            timeout value (non-negative, in milliseconds). Zero means no            timeout. If a proxy is being used (see            {@link #setProxyData(ProxyData)}), then this timeout is used            for the connection establishment to the proxy.
+	 * @param kexTimeout     Timeout for complete connection establishment (non-negative,            in milliseconds). Zero means no timeout. The timeout counts            from the moment you invoke the connect() method and is            cancelled as soon as the first key-exchange round has            finished. It is possible that the timeout event will be fired            during the invocation of the <code>verifier</code> callback,            but it will only have an effect after the            <code>verifier</code> returns.
+	 * @return A {@link ConnectionInfo} object containing the details of the         established connection.
+	 * @throws IOException If any problem occurs, e.g., the server's host key is not             accepted by the <code>verifier</code> or there is problem             during the initial crypto setup (e.g., the signature sent by             the server is wrong).             <p>             In case of a timeout (either connectTimeout or kexTimeout) a             SocketTimeoutException is thrown.             <p>             An exception may also be thrown if the connection was already             successfully connected (no matter if the connection broke in             the mean time) and you invoke <code>connect()</code> again             without having called {@link #close()} first.             <p>             If a HTTP proxy is being used and the proxy refuses the             connection, then a {@link HTTPProxyException} may be thrown,             which contains the details returned by the proxy. If the             proxy is buggy and does not return a proper HTTP response,             then a normal IOException is thrown instead.
 	 */
 	public synchronized ConnectionInfo connect(ServerHostKeyVerifier verifier, int connectTimeout, int kexTimeout) throws IOException {
 			return connect(verifier, connectTimeout, 0, kexTimeout);
     }
 
-    public synchronized ConnectionInfo connect(ServerHostKeyVerifier verifier, int connectTimeout, int readTimeout, int kexTimeout)
+	/**
+	 * Connect connection info.
+	 *
+	 * @param verifier       the verifier
+	 * @param connectTimeout the connect timeout
+	 * @param readTimeout    the read timeout
+	 * @param kexTimeout     the kex timeout
+	 * @return the connection info
+	 * @throws IOException the io exception
+	 */
+	public synchronized ConnectionInfo connect(ServerHostKeyVerifier verifier, int connectTimeout, int readTimeout, int kexTimeout)
 		            throws IOException {
 		final class TimeoutState
 		{
@@ -845,15 +769,12 @@ public class Connection
 	 * This method must only be called after one has passed successfully the
 	 * authentication step. There is no limit on the number of concurrent
 	 * forwardings.
-	 * 
-	 * @param local_port
-	 *            the local port the LocalPortForwarder shall bind to.
-	 * @param host_to_connect
-	 *            target address (IP or hostname)
-	 * @param port_to_connect
-	 *            target port
+	 *
+	 * @param local_port      the local port the LocalPortForwarder shall bind to.
+	 * @param host_to_connect target address (IP or hostname)
+	 * @param port_to_connect target port
 	 * @return A {@link LocalPortForwarder} object.
-	 * @throws IOException
+	 * @throws IOException the io exception
 	 */
 	public synchronized LocalPortForwarder createLocalPortForwarder(int local_port, String host_to_connect,
 			int port_to_connect) throws IOException
@@ -876,16 +797,12 @@ public class Connection
 	 * This method must only be called after one has passed successfully the
 	 * authentication step. There is no limit on the number of concurrent
 	 * forwardings.
-	 * 
-	 * @param addr
-	 *            specifies the InetSocketAddress where the local socket shall
-	 *            be bound to.
-	 * @param host_to_connect
-	 *            target address (IP or hostname)
-	 * @param port_to_connect
-	 *            target port
+	 *
+	 * @param addr            specifies the InetSocketAddress where the local socket shall            be bound to.
+	 * @param host_to_connect target address (IP or hostname)
+	 * @param port_to_connect target port
 	 * @return A {@link LocalPortForwarder} object.
-	 * @throws IOException
+	 * @throws IOException the io exception
 	 */
 	public synchronized LocalPortForwarder createLocalPortForwarder(InetSocketAddress addr, String host_to_connect,
 			int port_to_connect) throws IOException
@@ -905,11 +822,11 @@ public class Connection
 	 * that is being forwarded via the secure tunnel into a TCP/IP connection to
 	 * another host (which may or may not be identical to the remote SSH-2
 	 * server).
-	 * 
-	 * @param host_to_connect
-	 * @param port_to_connect
+	 *
+	 * @param host_to_connect the host to connect
+	 * @param port_to_connect the port to connect
 	 * @return A {@link LocalStreamForwarder} object.
-	 * @throws IOException
+	 * @throws IOException the io exception
 	 */
 	public synchronized LocalStreamForwarder createLocalStreamForwarder(String host_to_connect, int port_to_connect)
 			throws IOException
@@ -931,9 +848,9 @@ public class Connection
 	 * There is no limit on the number of concurrent SCP clients.
 	 * <p>
 	 * Note: This factory method will probably disappear in the future.
-	 * 
+	 *
 	 * @return A {@link SCPClient} object.
-	 * @throws IOException
+	 * @throws IOException the io exception
 	 */
 	public synchronized SCPClient createSCPClient() throws IOException
 	{
@@ -955,9 +872,8 @@ public class Connection
 	 * <p>
 	 * Note: This implementation will never start a key exchange (other than the
 	 * initial one) unless you or the SSH-2 server ask for it.
-	 * 
-	 * @throws IOException
-	 *             In case of any failure behind the scenes.
+	 *
+	 * @throws IOException In case of any failure behind the scenes.
 	 */
 	public synchronized void forceKeyExchange() throws IOException
 	{
@@ -969,7 +885,7 @@ public class Connection
 
 	/**
 	 * Returns the hostname that was passed to the constructor.
-	 * 
+	 *
 	 * @return the hostname
 	 */
 	public synchronized String getHostname()
@@ -979,7 +895,7 @@ public class Connection
 
 	/**
 	 * Returns the port that was passed to the constructor.
-	 * 
+	 *
 	 * @return the TCP port
 	 */
 	public synchronized int getPort()
@@ -991,10 +907,9 @@ public class Connection
 	 * Returns a {@link ConnectionInfo} object containing the details of the
 	 * connection. Can be called as soon as the connection has been established
 	 * (successfully connected).
-	 * 
+	 *
 	 * @return A {@link ConnectionInfo} object.
-	 * @throws IOException
-	 *             In case of any failure behind the scenes.
+	 * @throws IOException In case of any failure behind the scenes.
 	 */
 	public synchronized ConnectionInfo getConnectionInfo() throws IOException
 	{
@@ -1003,7 +918,13 @@ public class Connection
 					"Cannot get details of connection, you need to establish a connection first.");
 		return tm.getConnectionInfo(1);
 	}
-	
+
+	/**
+	 * Gets version info.
+	 *
+	 * @return the version info
+	 * @throws IOException the io exception
+	 */
 	public synchronized ClientServerHello getVersionInfo() throws IOException {
 		if (tm == null)
 			throw new IllegalStateException(
@@ -1030,12 +951,10 @@ public class Connection
 	 * <p>
 	 * After a successful authentication, this method must not be called
 	 * anymore.
-	 * 
-	 * @param user
-	 *            A <code>String</code> holding the username.
-	 * 
+	 *
+	 * @param user A <code>String</code> holding the username.
 	 * @return a (possibly emtpy) array holding authentication method names.
-	 * @throws IOException
+	 * @throws IOException the io exception
 	 */
 	public synchronized String[] getRemainingAuthMethods(String user) throws IOException
 	{
@@ -1060,9 +979,8 @@ public class Connection
 	/**
 	 * Determines if the authentication phase is complete. Can be called at any
 	 * time.
-	 * 
-	 * @return <code>true</code> if no further authentication steps are
-	 *         needed.
+	 *
+	 * @return <code>true</code> if no further authentication steps are         needed.
 	 */
 	public synchronized boolean isAuthenticationComplete()
 	{
@@ -1077,9 +995,8 @@ public class Connection
 	 * request (i.e., multiple authentication steps are needed.)
 	 * <p>
 	 * If you are interested in the details, then have a look at RFC4252.
-	 * 
-	 * @return if the there was a failed authentication step and the last one
-	 *         was marked as a "partial success".
+	 *
+	 * @return if the there was a failed authentication step and the last one         was marked as a "partial success".
 	 */
 	public synchronized boolean isAuthenticationPartialSuccess()
 	{
@@ -1092,15 +1009,12 @@ public class Connection
 	/**
 	 * Checks if a specified authentication method is available. This method is
 	 * actually just a wrapper for {@link #getRemainingAuthMethods(String)
-	 * getRemainingAuthMethods()}.
-	 * 
-	 * @param user
-	 *            A <code>String</code> holding the username.
-	 * @param method
-	 *            An authentication method name (e.g., "publickey", "password",
-	 *            "keyboard-interactive") as specified by the SSH-2 standard.
+	 * getRemainingAuthMethods()}*.
+	 *
+	 * @param user   A <code>String</code> holding the username.
+	 * @param method An authentication method name (e.g., "publickey", "password",            "keyboard-interactive") as specified by the SSH-2 standard.
 	 * @return if the specified authentication method is currently available.
-	 * @throws IOException
+	 * @throws IOException the io exception
 	 */
 	public synchronized boolean isAuthMethodAvailable(String user, String method) throws IOException
 	{
@@ -1130,9 +1044,9 @@ public class Connection
 	 * Open a new {@link Session} on this connection. Works only after one has
 	 * passed successfully the authentication step. There is no limit on the
 	 * number of concurrent sessions.
-	 * 
+	 *
 	 * @return A {@link Session} object.
-	 * @throws IOException
+	 * @throws IOException the io exception
 	 */
 	public synchronized Session openSession() throws IOException
 	{
@@ -1151,8 +1065,8 @@ public class Connection
 	 * contents are random bytes).
 	 * <p>
 	 * This method must only be called once the connection is established.
-	 * 
-	 * @throws IOException
+	 *
+	 * @throws IOException the io exception
 	 */
 	public synchronized void sendIgnorePacket() throws IOException
 	{
@@ -1168,8 +1082,9 @@ public class Connection
 	 * Send an SSH_MSG_IGNORE packet with the given data attribute.
 	 * <p>
 	 * This method must only be called once the connection is established.
-	 * 
-	 * @throws IOException
+	 *
+	 * @param data the data
+	 * @throws IOException the io exception
 	 */
 	public synchronized void sendIgnorePacket(byte[] data) throws IOException
 	{
@@ -1236,8 +1151,8 @@ public class Connection
 
 	/**
 	 * Unless you know what you are doing, you will never need this.
-	 * 
-	 * @param ciphers
+	 *
+	 * @param ciphers ciphers
 	 */
 	public synchronized void setClient2ServerCiphers(String[] ciphers)
 	{
@@ -1250,8 +1165,8 @@ public class Connection
 
 	/**
 	 * Unless you know what you are doing, you will never need this.
-	 * 
-	 * @param macs
+	 *
+	 * @param macs macs
 	 */
 	public synchronized void setClient2ServerMACs(String[] macs)
 	{
@@ -1266,10 +1181,8 @@ public class Connection
 	 * Sets the parameters for the diffie-hellman group exchange. Unless you
 	 * know what you are doing, you will never need this. Default values are
 	 * defined in the {@link DHGexParameters} class.
-	 * 
-	 * @param dgp
-	 *            {@link DHGexParameters}, non null.
-	 * 
+	 *
+	 * @param dgp {@link DHGexParameters}, non null.
 	 */
 	public synchronized void setDHGexParameters(DHGexParameters dgp)
 	{
@@ -1281,8 +1194,8 @@ public class Connection
 
 	/**
 	 * Unless you know what you are doing, you will never need this.
-	 * 
-	 * @param ciphers
+	 *
+	 * @param ciphers ciphers
 	 */
 	public synchronized void setServer2ClientCiphers(String[] ciphers)
 	{
@@ -1295,8 +1208,8 @@ public class Connection
 
 	/**
 	 * Unless you know what you are doing, you will never need this.
-	 * 
-	 * @param macs
+	 *
+	 * @param macs macs
 	 */
 	public synchronized void setServer2ClientMACs(String[] macs)
 	{
@@ -1313,12 +1226,8 @@ public class Connection
 	 * following key exchange operations.
 	 * <p>
 	 * Unless you know what you are doing, you will never need this.
-	 * 
-	 * @param algos
-	 *            An array of allowed server host key algorithms. The
-	 *            entries of the array must be ordered after preference, i.e.,
-	 *            the entry at index 0 is the most preferred one. You must
-	 *            specify at least one entry.
+	 *
+	 * @param algos An array of allowed server host key algorithms. The            entries of the array must be ordered after preference, i.e.,            the entry at index 0 is the most preferred one. You must            specify at least one entry.
 	 */
 	public synchronized void setServerHostKeyAlgorithms(String[] algos)
 	{
@@ -1337,11 +1246,9 @@ public class Connection
 	 * Can be called at any time. If the connection has not yet been established
 	 * then the passed value will be stored and set after the socket has been
 	 * set up. The default value that will be used is <code>false</code>.
-	 * 
-	 * @param enable
-	 *            the argument passed to the <code>Socket.setTCPNoDelay()</code>
-	 *            method.
-	 * @throws IOException
+	 *
+	 * @param enable the argument passed to the <code>Socket.setTCPNoDelay()</code>            method.
+	 * @throws IOException the io exception
 	 */
 	public synchronized void setTCPNoDelay(boolean enable) throws IOException
 	{
@@ -1361,13 +1268,9 @@ public class Connection
 	 * Note: This method can be called any number of times. The
 	 * {@link #connect() connect()} method will use the value set in the last
 	 * preceding invocation of this method.
-	 * 
+	 *
+	 * @param proxyData Connection information about the proxy. If <code>null</code>,            then no proxy will be used (non surprisingly, this is also the            default).
 	 * @see HTTPProxyData
-	 * 
-	 * @param proxyData
-	 *            Connection information about the proxy. If <code>null</code>,
-	 *            then no proxy will be used (non surprisingly, this is also the
-	 *            default).
 	 */
 	public synchronized void setProxyData(ProxyData proxyData)
 	{
@@ -1396,27 +1299,12 @@ public class Connection
 	 * overriden by specifying a bind address. Specifying a remote bind address
 	 * will only succeed if the server's <b>GatewayPorts</b> option is enabled
 	 * (see sshd_config(5)).
-	 * 
-	 * @param bindAddress
-	 *            address to bind to on the server:
-	 *            <ul>
-	 *            <li>"" means that connections are to be accepted on all
-	 *            protocol families supported by the SSH implementation</li>
-	 *            <li>"0.0.0.0" means to listen on all IPv4 addresses</li>
-	 *            <li>"::" means to listen on all IPv6 addresses</li>
-	 *            <li>"localhost" means to listen on all protocol families
-	 *            supported by the SSH implementation on loopback addresses
-	 *            only, [RFC3330] and RFC3513]</li>
-	 *            <li>"127.0.0.1" and "::1" indicate listening on the loopback
-	 *            interfaces for IPv4 and IPv6 respectively</li>
-	 *            </ul>
-	 * @param bindPort
-	 *            port number to bind on the server (must be &gt; 0)
-	 * @param targetAddress
-	 *            the target address (IP or hostname)
-	 * @param targetPort
-	 *            the target port
-	 * @throws IOException
+	 *
+	 * @param bindAddress   address to bind to on the server:            <ul>            <li>"" means that connections are to be accepted on all            protocol families supported by the SSH implementation</li>            <li>"0.0.0.0" means to listen on all IPv4 addresses</li>            <li>"::" means to listen on all IPv6 addresses</li>            <li>"localhost" means to listen on all protocol families            supported by the SSH implementation on loopback addresses            only, [RFC3330] and RFC3513]</li>            <li>"127.0.0.1" and "::1" indicate listening on the loopback            interfaces for IPv4 and IPv6 respectively</li>            </ul>
+	 * @param bindPort      port number to bind on the server (must be &gt; 0)
+	 * @param targetAddress the target address (IP or hostname)
+	 * @param targetPort    the target port
+	 * @throws IOException the io exception
 	 */
 	public synchronized void requestRemotePortForwarding(String bindAddress, int bindPort, String targetAddress,
 			int targetPort) throws IOException
@@ -1438,13 +1326,9 @@ public class Connection
 	 * forwardings will not be affected (e.g., disrupted). Note that further
 	 * connection forwarding requests may be received until this method has
 	 * returned.
-	 * 
-	 * @param bindPort
-	 *            the allocated port number on the server
-	 * @throws IOException
-	 *             if the remote side refuses the cancel request or another low
-	 *             level error occurs (e.g., the underlying connection is
-	 *             closed)
+	 *
+	 * @param bindPort the allocated port number on the server
+	 * @throws IOException if the remote side refuses the cancel request or another low             level error occurs (e.g., the underlying connection is             closed)
 	 */
 	public synchronized void cancelRemotePortForwarding(int bindPort) throws IOException
 	{
@@ -1463,9 +1347,8 @@ public class Connection
 	 * <p>
 	 * The SecureRandom instance is used during key exchanges, public key
 	 * authentication, x11 cookie generation and the like.
-	 * 
-	 * @param rnd
-	 *            a SecureRandom instance
+	 *
+	 * @param rnd a SecureRandom instance
 	 */
 	public synchronized void setSecureRandom(SecureRandom rnd)
 	{
@@ -1484,15 +1367,10 @@ public class Connection
 	 * dynamicaly enable/disable debug logging, then some threads may still use
 	 * the old setting. To be on the safe side, enable debugging before doing
 	 * the <code>connect()</code> call.
-	 * 
-	 * @param enable
-	 *            on/off
-	 * @param logger
-	 *            a {@link DebugLogger DebugLogger} instance, <code>null</code>
-	 *            means logging using the simple logger which logs all messages
-	 *            to to stderr. Ignored if enabled is <code>false</code>
-     * @deprecated
-     *      Logging is now sent automatically to java.util.logging, and never to the {@link DebugLogger}.
+	 *
+	 * @param enable on/off
+	 * @param logger a {@link DebugLogger DebugLogger} instance, <code>null</code>            means logging using the simple logger which logs all messages            to to stderr. Ignored if enabled is <code>false</code>
+	 * @deprecated Logging       is now sent automatically to java.util.logging, and never to the {@link DebugLogger}.
 	 */
 	public synchronized void enableDebugging(boolean enable, DebugLogger logger)
 	{
@@ -1535,9 +1413,8 @@ public class Connection
 	 * Implementation details: this method sends a SSH_MSG_GLOBAL_REQUEST
 	 * request ('trilead-ping') to the server and waits for the
 	 * SSH_MSG_REQUEST_FAILURE reply packet from the server.
-	 * 
-	 * @throws IOException
-	 *             in case of any problem
+	 *
+	 * @throws IOException in case of any problem
 	 */
 	public synchronized void ping() throws IOException
 	{
@@ -1550,21 +1427,26 @@ public class Connection
 		cm.requestGlobalTrileadPing();
 	}
 
-    /**
-     * If the socket connection is lost (either by this side closing down or the other side closing down),
-     * return a non-null object indicating the cause of the connection loss.
-     */
-    public Throwable getReasonClosedCause() {
+	/**
+	 * If the socket connection is lost (either by this side closing down or the other side closing down),
+	 * return a non-null object indicating the cause of the connection loss.
+	 *
+	 * @return the reason closed cause
+	 */
+	public Throwable getReasonClosedCause() {
         return tm != null ? tm.getReasonClosedCause() : null;
     }
 
-    /**
-     * Executes a process remotely and blocks until its completion.
-     *
-     * @param output
-     *      The stdout/stderr will be sent to this stream.
-     */
-    public int exec(String command, OutputStream output) throws IOException, InterruptedException {
+	/**
+	 * Executes a process remotely and blocks until its completion.
+	 *
+	 * @param command the command
+	 * @param output  The stdout/stderr will be sent to this stream.
+	 * @return the int
+	 * @throws IOException          the io exception
+	 * @throws InterruptedException the interrupted exception
+	 */
+	public int exec(String command, OutputStream output) throws IOException, InterruptedException {
         Session session = openSession();
         try {
             session.execCommand(command);
@@ -1595,7 +1477,13 @@ public class Connection
         private final InputStream in;
         private final OutputStream out;
 
-        public PumpThread(InputStream in, OutputStream out) {
+		/**
+		 * Instantiates a new Pump thread.
+		 *
+		 * @param in  the in
+		 * @param out the out
+		 */
+		public PumpThread(InputStream in, OutputStream out) {
             super("pump thread");
             this.in = in;
             this.out = out;

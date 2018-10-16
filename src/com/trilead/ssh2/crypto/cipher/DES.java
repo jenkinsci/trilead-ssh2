@@ -186,9 +186,14 @@ public class DES implements BlockCipher
 	/**
 	 * generate an integer based working key based on our secret key and what we
 	 * processing we are planning to do.
-	 * 
-	 * Acknowledgements for this routine go to James Gillogly & Phil Karn.
+	 * <p>
+	 * Acknowledgements for this routine go to James Gillogly &amp; Phil Karn.
 	 * (whoever, and wherever they are!).
+	 *
+	 * @param encrypting the encrypting
+	 * @param key        the key
+	 * @param off        the off
+	 * @return the int [ ]
 	 */
 	protected int[] generateWorkingKey(boolean encrypting, byte[] key, int off)
 	{
@@ -280,6 +285,12 @@ public class DES implements BlockCipher
 
 	/**
 	 * the DES engine.
+	 *
+	 * @param wKey   the w key
+	 * @param in     the in
+	 * @param inOff  the in off
+	 * @param out    the out
+	 * @param outOff the out off
 	 */
 	protected void desFunc(int[] wKey, byte[] in, int inOff, byte[] out, int outOff)
 	{
