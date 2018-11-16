@@ -307,10 +307,12 @@ public class Channel
 	}
 
     /**
-     * @deprecated
-     *      Use {@link #getReasonClosedCause()}
+     * Gets reason closed.
+     *
+     * @return the reason closed
+     * @deprecated Use       {@link #getReasonClosedCause()}
      */
-	public String getReasonClosed()
+    public String getReasonClosed()
 	{
 		synchronized (reasonClosedLock)
 		{

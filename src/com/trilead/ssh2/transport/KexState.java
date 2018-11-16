@@ -29,4 +29,13 @@ public class KexState
 	public DhExchange dhx;
 	public DhGroupExchange dhgx;
 	public DHGexParameters dhgexParameters;
+	private String hashAlgorithm;
+
+    public void setHashAlgorithm(String hashAlgorithm) {
+        this.hashAlgorithm = hashAlgorithm;
+    }
+
+    public String getHashAlgorithm() {
+    	return hashAlgorithm;
+	}
 }

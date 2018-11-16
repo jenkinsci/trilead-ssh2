@@ -17,11 +17,15 @@ import com.trilead.ssh2.packets.TypesWriter;
  * 
  * @author Christian Plattner, plattner@trilead.com
  * @version $Id: DSASHA1Verify.java,v 1.2 2008/04/01 12:38:09 cplattne Exp $
+ * @deprecated user {@link DSAKeyAlgorithm}
  */
+@Deprecated
 public class DSASHA1Verify
 {
 	private static final Logger log = Logger.getLogger(DSASHA1Verify.class);
 
+
+	@Deprecated
 	public static DSAPublicKey decodeSSHDSAPublicKey(byte[] key) throws IOException {
 		final TypesReader tr = new TypesReader(key);
 
@@ -42,6 +46,7 @@ public class DSASHA1Verify
 		return new DSAPublicKey(p, q, g, y);
 	}
 
+	@Deprecated
 	public static byte[] encodeSSHDSAPublicKey(DSAPublicKey pk) throws IOException
 	{
 		TypesWriter tw = new TypesWriter();
@@ -55,6 +60,7 @@ public class DSASHA1Verify
 		return tw.getBytes();
 	}
 
+	@Deprecated
 	public static byte[] encodeSSHDSASignature(DSASignature ds)
 	{
 		TypesWriter tw = new TypesWriter();
@@ -79,6 +85,7 @@ public class DSASHA1Verify
 		return tw.getBytes();
 	}
 
+	@Deprecated
 	public static DSASignature decodeSSHDSASignature(byte[] sig) throws IOException
 	{
 		byte[] rsArray = null;
@@ -95,7 +102,7 @@ public class DSASHA1Verify
 
 			String sig_format = tr.readString();
 
-			if (sig_format.equals("ssh-dss") == false)
+			if (!sig_format.equals("ssh-dss"))
 				throw new IOException("Peer sent wrong signature format");
 
 			rsArray = tr.readByteString();
@@ -126,6 +133,7 @@ public class DSASHA1Verify
 		return new DSASignature(r, s);
 	}
 
+	@Deprecated
 	public static boolean verifySignature(byte[] message, DSASignature ds, DSAPublicKey dpk) throws IOException
 	{
 		/* Inspired by Bouncycastle's DSASigner class */
@@ -183,6 +191,7 @@ public class DSASHA1Verify
 		return v.equals(r);
 	}
 
+	@Deprecated
 	public static DSASignature generateSignature(byte[] message, DSAPrivateKey pk, SecureRandom rnd)
 	{
 		SHA1 md = new SHA1();

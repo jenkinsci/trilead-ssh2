@@ -20,7 +20,7 @@ public class HTTPProxyData implements ProxyData
 	public final String[] requestHeaderLines;
 
 	/**
-	 * Same as calling {@link #HTTPProxyData(String, int, String, String) HTTPProxyData(proxyHost, proxyPort, <code>null</code>, <code>null</code>)}
+	 * Same as calling {@link #HTTPProxyData(String, int, String, String) HTTPProxyData(proxyHost, proxyPort, null, null)}
 	 * 
 	 * @param proxyHost Proxy hostname.
 	 * @param proxyPort Proxy port.
@@ -31,12 +31,12 @@ public class HTTPProxyData implements ProxyData
 	}
 
 	/**
-	 * Same as calling {@link #HTTPProxyData(String, int, String, String, String[]) HTTPProxyData(proxyHost, proxyPort, <code>null</code>, <code>null</code>, <code>null</code>)}
+	 * Same as calling {@link #HTTPProxyData(String, int, String, String, String[]) HTTPProxyData(proxyHost, proxyPort, null, null, null)}
 	 *
 	 * @param proxyHost Proxy hostname.
 	 * @param proxyPort Proxy port.
-	 * @param proxyUser Username for basic authentication (<code>null</code> if no authentication is needed).
-	 * @param proxyPass Password for basic authentication (<code>null</code> if no authentication is needed).
+	 * @param proxyUser Username for basic authentication (null if no authentication is needed).
+	 * @param proxyPass Password for basic authentication (null if no authentication is needed).
 	 */
 	public HTTPProxyData(String proxyHost, int proxyPort, String proxyUser, String proxyPass)
 	{
@@ -59,10 +59,10 @@ public class HTTPProxyData implements ProxyData
 	 * 
 	 * @param proxyHost Proxy hostname.
 	 * @param proxyPort Proxy port.
-	 * @param proxyUser Username for basic authentication (<code>null</code> if no authentication is needed).
-	 * @param proxyPass Password for basic authentication (<code>null</code> if no authentication is needed).
+	 * @param proxyUser Username for basic authentication (null if no authentication is needed).
+	 * @param proxyPass Password for basic authentication (null if no authentication is needed).
 	 * @param requestHeaderLines An array with additional request header lines (without end-of-line markers)
-	 *        that have to be sent to the server. May be <code>null</code>.
+	 *        that have to be sent to the server. May be null.
 	 */
 
 	public HTTPProxyData(String proxyHost, int proxyPort, String proxyUser, String proxyPass,

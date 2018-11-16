@@ -17,11 +17,14 @@ import com.trilead.ssh2.packets.TypesWriter;
  * 
  * @author Christian Plattner, plattner@trilead.com
  * @version $Id: RSASHA1Verify.java,v 1.1 2007/10/15 12:49:57 cplattne Exp $
+ * @deprecated Use {@link RSAKeyAlgorithm}
  */
+@Deprecated
 public class RSASHA1Verify
 {
 	private static final Logger log = Logger.getLogger(RSASHA1Verify.class);
 
+	@Deprecated
 	public static RSAPublicKey decodeSSHRSAPublicKey(byte[] key) throws IOException {
 		final TypesReader tr = new TypesReader(key);
 
@@ -40,6 +43,8 @@ public class RSASHA1Verify
 		return new RSAPublicKey(e, n);
 	}
 
+
+	@Deprecated
 	public static byte[] encodeSSHRSAPublicKey(RSAPublicKey pk) throws IOException
 	{
 		TypesWriter tw = new TypesWriter();
@@ -51,13 +56,14 @@ public class RSASHA1Verify
 		return tw.getBytes();
 	}
 
+	@Deprecated
 	public static RSASignature decodeSSHRSASignature(byte[] sig) throws IOException
 	{
 		TypesReader tr = new TypesReader(sig);
 
 		String sig_format = tr.readString();
 
-		if (sig_format.equals("ssh-rsa") == false)
+		if (!sig_format.equals("ssh-rsa"))
 			throw new IOException("Peer sent wrong signature format");
 
 		/* S is NOT an MPINT. "The value for 'rsa_signature_blob' is encoded as a string
@@ -81,6 +87,7 @@ public class RSASHA1Verify
 		return new RSASignature(new BigInteger(1, s));
 	}
 
+	@Deprecated
 	public static byte[] encodeSSHRSASignature(RSASignature sig) throws IOException
 	{
 		TypesWriter tw = new TypesWriter();
@@ -104,6 +111,7 @@ public class RSASHA1Verify
 		return tw.getBytes();
 	}
 
+	@Deprecated
 	public static RSASignature generateSignature(byte[] message, RSAPrivateKey pk) throws IOException
 	{
 		SHA1 md = new SHA1();
@@ -142,6 +150,7 @@ public class RSASHA1Verify
 		return new RSASignature(s);
 	}
 
+	@Deprecated
 	public static boolean verifySignature(byte[] message, RSASignature ds, RSAPublicKey dpk) throws IOException
 	{
 		SHA1 md = new SHA1();

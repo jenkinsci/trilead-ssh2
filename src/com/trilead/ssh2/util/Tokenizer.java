@@ -14,7 +14,7 @@ public class Tokenizer
 	 * Returns an array with at least 1 entry.
 	 * 
 	 * @param source must be non-null
-	 * @param delimiter
+	 * @param delimiter delimiter
 	 * @return an array of Strings
 	 */
 	public static String[] parseTokens(String source, char delimiter)

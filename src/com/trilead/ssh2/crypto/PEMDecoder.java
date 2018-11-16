@@ -5,6 +5,9 @@ import java.io.BufferedReader;
 import java.io.CharArrayReader;
 import java.io.IOException;
 import java.math.BigInteger;
+import java.security.KeyPair;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import com.trilead.ssh2.crypto.cipher.AES;
 import com.trilead.ssh2.crypto.cipher.BlockCipher;
@@ -13,6 +16,8 @@ import com.trilead.ssh2.crypto.cipher.DES;
 import com.trilead.ssh2.crypto.cipher.DESede;
 import com.trilead.ssh2.crypto.digest.MD5;
 import com.trilead.ssh2.signature.DSAPrivateKey;
+import com.trilead.ssh2.signature.KeyAlgorithm;
+import com.trilead.ssh2.signature.KeyAlgorithmManager;
 import com.trilead.ssh2.signature.RSAPrivateKey;
 
 /**
@@ -23,10 +28,11 @@ import com.trilead.ssh2.signature.RSAPrivateKey;
  */
 public class PEMDecoder
 {
+	private static final Logger LOGGER = Logger.getLogger(PEMDecoder.class.getName());
 	private static final int PEM_RSA_PRIVATE_KEY = 1;
 	private static final int PEM_DSA_PRIVATE_KEY = 2;
 
-	private static final int hexToInt(char c)
+	private static int hexToInt(char c)
 	{
 		if ((c >= 'a') && (c <= 'f'))
 		{
@@ -67,7 +73,7 @@ public class PEMDecoder
 		return decoded;
 	}
 
-	private static byte[] generateKeyFromPasswordSaltWithMD5(byte[] password, byte[] salt, int keyLen)
+	public static byte[] generateKeyFromPasswordSaltWithMD5(byte[] password, byte[] salt, int keyLen)
 			throws IOException
 	{
 		if (salt.length < 8)
@@ -120,15 +126,15 @@ public class PEMDecoder
 		return tmp;
 	}
 
-	private static final PEMStructure parsePEM(char[] pem) throws IOException
+	private static PEMStructure parsePEM(char[] pem) throws IOException
 	{
 		PEMStructure ps = new PEMStructure();
 
-		String line = null;
+		String line;
 
 		BufferedReader br = new BufferedReader(new CharArrayReader(pem));
 
-		String endLine = null;
+		String endLine;
 
 		while (true)
 		{
@@ -193,7 +199,7 @@ public class PEMDecoder
 			/* Ignore line */
 		}
 
-		StringBuffer keyData = new StringBuffer();
+		StringBuilder keyData = new StringBuilder();
 
 		while (true)
 		{
@@ -221,7 +227,103 @@ public class PEMDecoder
 		return ps;
 	}
 
-	private static final void decryptPEM(PEMStructure ps, byte[] pw) throws IOException
+
+
+	private static PEMStructure parsePEM(char[] pem, CertificateDecoder certificateDecoder) throws IOException
+	{
+		PEMStructure ps = new PEMStructure();
+
+		String line;
+
+		BufferedReader br = new BufferedReader(new CharArrayReader(pem));
+
+		String endLine;
+
+		while (true)
+		{
+			line = br.readLine();
+
+			if (line == null)
+				throw new IOException("Invalid PEM structure, '-----BEGIN...' missing");
+
+			line = line.trim();
+
+			if (line.startsWith(certificateDecoder.getStartLine()))
+			{
+				endLine = certificateDecoder.getEndLine();
+				break;
+			}
+
+		}
+
+		while (true)
+		{
+			line = br.readLine();
+
+			if (line == null)
+				throw new IOException("Invalid PEM structure, " + endLine + " missing");
+
+			line = line.trim();
+
+			int sem_idx = line.indexOf(':');
+
+			if (sem_idx == -1)
+				break;
+
+			String name = line.substring(0, sem_idx + 1);
+			String value = line.substring(sem_idx + 1);
+
+			String values[] = value.split(",");
+
+			for (int i = 0; i < values.length; i++)
+				values[i] = values[i].trim();
+
+			// Proc-Type: 4,ENCRYPTED
+			// DEK-Info: DES-EDE3-CBC,579B6BE3E5C60483
+
+			if ("Proc-Type:".equals(name))
+			{
+				ps.procType = values;
+				continue;
+			}
+
+			if ("DEK-Info:".equals(name))
+			{
+				ps.dekInfo = values;
+				continue;
+			}
+			/* Ignore line */
+		}
+
+		StringBuilder keyData = new StringBuilder();
+
+		while (true)
+		{
+			if (line == null)
+				throw new IOException("Invalid PEM structure, " + endLine + " missing");
+
+			line = line.trim();
+
+			if (line.startsWith(endLine))
+				break;
+
+			keyData.append(line);
+
+			line = br.readLine();
+		}
+
+		char[] pem_chars = new char[keyData.length()];
+		keyData.getChars(0, pem_chars.length, pem_chars, 0);
+
+		ps.data = Base64.decode(pem_chars);
+
+		if (ps.data.length == 0)
+			throw new IOException("Invalid PEM structure, no data available");
+
+		return ps;
+	}
+
+	private static void decryptPEM(PEMStructure ps, byte[] pw) throws IOException
 	{
 		if (ps.dekInfo == null)
 			throw new IOException("Broken PEM, no mode and salt given, but encryption enabled");
@@ -232,7 +334,7 @@ public class PEMDecoder
 		String algo = ps.dekInfo[0];
 		byte[] salt = hexToByteArray(ps.dekInfo[1]);
 
-		BlockCipher bc = null;
+		BlockCipher bc;
 
 		if (algo.equals("DES-EDE3-CBC"))
 		{
@@ -291,7 +393,7 @@ public class PEMDecoder
 		ps.procType = null;
 	}
 
-	public static final boolean isPEMEncrypted(PEMStructure ps) throws IOException
+	public static boolean isPEMEncrypted(PEMStructure ps) throws IOException
 	{
 		if (ps.procType == null)
 			return false;
@@ -299,15 +401,13 @@ public class PEMDecoder
 		if (ps.procType.length != 2)
 			throw new IOException("Unknown Proc-Type field.");
 
-		if ("4".equals(ps.procType[0]) == false)
+		if (!"4".equals(ps.procType[0]))
 			throw new IOException("Unknown Proc-Type field (" + ps.procType[0] + ")");
 
-		if ("ENCRYPTED".equals(ps.procType[1]))
-			return true;
-
-		return false;
+		return ("ENCRYPTED".equals(ps.procType[1]));
 	}
 
+	@Deprecated
 	public static Object decode(char[] pem, String password) throws IOException
 	{
 		PEMStructure ps = parsePEM(pem);
@@ -371,6 +471,32 @@ public class PEMDecoder
 			return new RSAPrivateKey(d, e, n);
 		}
 
+		throw new IOException("PEM problem: it is of unknown type");
+	}
+
+
+	public static KeyPair decodeKeyPair(char[] pem, String password) throws IOException
+	{
+
+		for (KeyAlgorithm<?, ?> algorithm : KeyAlgorithmManager.getSupportedAlgorithms()) {
+			for (CertificateDecoder decoder : algorithm.getCertificateDecoders()) {
+				try {
+					PEMStructure ps = parsePEM(pem, decoder);
+
+					if (isPEMEncrypted(ps)) {
+						if (password == null)
+							throw new IOException("PEM is encrypted, but no password was specified");
+
+						decryptPEM(ps, password.getBytes("ISO-8859-1"));
+					}
+
+					return decoder.createKeyPair(ps, password);
+				} catch (IOException ex) {
+					LOGGER.log(Level.FINE, "Could not decode PEM Key using current decoder: " + decoder.getClass().getName(), ex);
+					// we couldn't decode the input, try another decoder
+				}
+			}
+		}
 		throw new IOException("PEM problem: it is of unknown type");
 	}
 

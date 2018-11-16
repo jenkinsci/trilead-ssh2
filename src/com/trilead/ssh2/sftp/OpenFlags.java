@@ -9,7 +9,7 @@ package com.trilead.ssh2.sftp;
  * to equivalent SFTP file open parameters:
  * <p>
  * TODO: This comment should be moved to the open method.
- * <p>
+ *
  * <ul>
  * <li>O_RDONLY
  * <ul><li>desired-access = READ_DATA | READ_ATTRIBUTES</li></ul>

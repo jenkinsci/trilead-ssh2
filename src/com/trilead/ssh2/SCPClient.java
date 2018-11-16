@@ -46,17 +46,12 @@ public class SCPClient
 		if (c == 0)
 			return;
 
-		if (c == -1)
-			throw new IOException("Remote scp terminated unexpectedly.");
+		if (c == 1) {
+			String err = receiveLine(is);
+			throw new IOException("Remote scp terminated with error (" + err + ").");
+		}
 
-		if ((c != 1) && (c != 2))
-			throw new IOException("Remote scp sent illegal error code.");
-
-		if (c == 2)
-			throw new IOException("Remote scp terminated with error.");
-
-		String err = receiveLine(is);
-		throw new IOException("Remote scp terminated with error (" + err + ").");
+		throw new IOException("Remote scp terminated with error code " + c);
 	}
 
 	private String receiveLine(InputStream is) throws IOException
@@ -391,7 +386,7 @@ public class SCPClient
 	 *            Remote target directory. Use an empty string to specify the
 	 *            default directory.
 	 * 
-	 * @throws IOException
+	 * @throws IOException the io exception
 	 */
 	public void put(String localFile, String remoteTargetDirectory) throws IOException
 	{
@@ -408,7 +403,7 @@ public class SCPClient
 	 *            Remote target directory. Use an empty string to specify the
 	 *            default directory.
 	 * 
-	 * @throws IOException
+	 * @throws IOException the io exception
 	 */
 
 	public void put(String[] localFiles, String remoteTargetDirectory) throws IOException
@@ -427,7 +422,7 @@ public class SCPClient
 	 *            default directory.
 	 * @param mode
 	 *            a four digit string (e.g., 0644, see "man chmod", "man open")
-	 * @throws IOException
+	 * @throws IOException the io exception
 	 */
 	public void put(String localFile, String remoteTargetDirectory, String mode) throws IOException
 	{
@@ -448,7 +443,7 @@ public class SCPClient
 	 *            default directory.
 	 * @param mode
 	 *            a four digit string (e.g., 0644, see "man chmod", "man open")
-	 * @throws IOException
+	 * @throws IOException the io exception
 	 */
 	public void put(String localFile, String remoteFileName, String remoteTargetDirectory, String mode)
 			throws IOException
@@ -468,7 +463,7 @@ public class SCPClient
 	 * @param remoteTargetDirectory
 	 *            Remote target directory. Use an empty string to specify the
 	 *            default directory.
-	 * @throws IOException
+	 * @throws IOException the io exception
 	 */
 
 	public void put(byte[] data, String remoteFileName, String remoteTargetDirectory) throws IOException
@@ -491,7 +486,7 @@ public class SCPClient
 	 *            default directory.
 	 * @param mode
 	 *            a four digit string (e.g., 0644, see "man chmod", "man open")
-	 * @throws IOException
+	 * @throws IOException the io exception
 	 */
 	public void put(byte[] data, String remoteFileName, String remoteTargetDirectory, String mode) throws IOException
 	{
@@ -540,7 +535,7 @@ public class SCPClient
 	 *            default directory.
 	 * @param mode
 	 *            a four digit string (e.g., 0644, see "man chmod", "man open")
-	 * @throws IOException
+	 * @throws IOException the io exception
 	 */
 	public void put(String[] localFiles, String remoteTargetDirectory, String mode) throws IOException
 	{
@@ -606,7 +601,7 @@ public class SCPClient
 	 * @param localTargetDirectory
 	 *            Local directory to put the downloaded file.
 	 * 
-	 * @throws IOException
+	 * @throws IOException the io exception
 	 */
 	public void get(String remoteFile, String localTargetDirectory) throws IOException
 	{
@@ -623,7 +618,7 @@ public class SCPClient
 	 *            Path and name of the remote file.
 	 * @param target
 	 *            OutputStream where the contents of the file will be sent to.
-	 * @throws IOException
+	 * @throws IOException the io exception
 	 */
 	public void get(String remoteFile, OutputStream target) throws IOException
 	{
@@ -683,7 +678,7 @@ public class SCPClient
 	 * @param localTargetDirectory
 	 *            Local directory to put the downloaded files.
 	 * 
-	 * @throws IOException
+	 * @throws IOException the io exception
 	 */
 	public void get(String remoteFiles[], String localTargetDirectory) throws IOException
 	{

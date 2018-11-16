@@ -34,10 +34,19 @@ public class DhGroupExchange
 
 	private BigInteger k;
 
-	public DhGroupExchange(BigInteger p, BigInteger g)
+	private final String hashAlgorithm;
+
+	@Deprecated
+	public DhGroupExchange(BigInteger p, BigInteger g) {
+		this("SHA1", p, g);
+	}
+
+
+	public DhGroupExchange(String algorithm, BigInteger p, BigInteger g)
 	{
 		this.p = p;
 		this.g = g;
+		this.hashAlgorithm = algorithm;
 	}
 
 	public void init(SecureRandom rnd)
@@ -72,6 +81,7 @@ public class DhGroupExchange
 
 	/**
 	 * Sets f and calculates the shared secret.
+	 * @param f f.
 	 */
 	public void setF(BigInteger f)
 	{
@@ -90,7 +100,7 @@ public class DhGroupExchange
 	public byte[] calculateH(byte[] clientversion, byte[] serverversion, byte[] clientKexPayload,
 			byte[] serverKexPayload, byte[] hostKey, DHGexParameters para)
 	{
-		HashForSSH2Types hash = new HashForSSH2Types("SHA1");
+		HashForSSH2Types hash = new HashForSSH2Types(getHashAlgorithm());
 
 		hash.updateByteString(clientversion);
 		hash.updateByteString(serverversion);
@@ -109,5 +119,9 @@ public class DhGroupExchange
 		hash.updateBigInt(k);
 
 		return hash.getDigest();
+	}
+
+	public String getHashAlgorithm() {
+		return hashAlgorithm;
 	}
 }

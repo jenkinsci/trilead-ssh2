@@ -61,8 +61,17 @@ public class DhExchange
 		g = new BigInteger("2");
 	}
 
+	private final String hashAlgorithm;
+
+	@Deprecated
 	public DhExchange()
 	{
+		this("SHA1");
+	}
+
+	public DhExchange(String hashAlgorightm) {
+		super();
+		this.hashAlgorithm = hashAlgorightm;
 	}
 
 	public void init(int group, SecureRandom rnd)
@@ -83,7 +92,7 @@ public class DhExchange
 
 	/**
 	 * @return Returns the e.
-	 * @throws IllegalStateException
+	 *
 	 */
 	public BigInteger getE()
 	{
@@ -95,7 +104,7 @@ public class DhExchange
 
 	/**
 	 * @return Returns the shared secret k.
-	 * @throws IllegalStateException
+	 *
 	 */
 	public BigInteger getK()
 	{
@@ -106,7 +115,7 @@ public class DhExchange
 	}
 
 	/**
-	 * @param f
+	 * @param f f
 	 */
 	public void setF(BigInteger f)
 	{
@@ -125,7 +134,7 @@ public class DhExchange
 	public byte[] calculateH(byte[] clientversion, byte[] serverversion, byte[] clientKexPayload,
 			byte[] serverKexPayload, byte[] hostKey) throws UnsupportedEncodingException
 	{
-		HashForSSH2Types hash = new HashForSSH2Types("SHA1");
+		HashForSSH2Types hash = new HashForSSH2Types(getHashAlgorithm());
 
 		if (log.isEnabled())
 		{
@@ -143,5 +152,9 @@ public class DhExchange
 		hash.updateBigInt(k);
 
 		return hash.getDigest();
+	}
+
+	public String getHashAlgorithm() {
+		return hashAlgorithm;
 	}
 }

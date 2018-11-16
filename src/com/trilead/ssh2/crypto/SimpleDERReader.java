@@ -75,7 +75,7 @@ public class SimpleDERReader
 
 		int remain = len & 0x7F;
 
-		if (remain == 0)
+		if (remain == 0 || remain > 4)
 			return -1;
 
 		len = 0;
@@ -86,6 +86,9 @@ public class SimpleDERReader
 			len = len | (readByte() & 0xff);
 			remain--;
 		}
+
+		if (len < 0)
+			return -1;
 
 		return len;
 	}
@@ -118,7 +121,7 @@ public class SimpleDERReader
 
 		byte[] b = readBytes(len);
 		
-		BigInteger bi = new BigInteger(b);
+		BigInteger bi = new BigInteger(1, b);
 		
 		return bi;
 	}
@@ -140,11 +143,77 @@ public class SimpleDERReader
 		return b;
 	}
 	
+	public String readOid() throws IOException {
+		int type = readByte() & 0xff;
+
+		if (type != 0x06)
+			throw new IOException("Expected DER OID, but found type " + type);
+
+		int len = readLength();
+
+		if ((len < 1) || len > available())
+			throw new IOException("Illegal len in DER object (" + len  + ")");
+
+		byte[] b = readBytes(len);
+
+		long value = 0;
+
+		StringBuilder sb = new StringBuilder(64);
+		switch(b[0] / 40) {
+			case 0:
+				sb.append('0');
+				break;
+			case 1:
+				sb.append('1');
+				b[0] -= 40;
+				break;
+			default:
+				sb.append('2');
+				b[0] -= 80;
+				break;
+		}
+
+		for (int i = 0; i < len; i++) {
+			value = (value << 7) + (b[i] & 0x7F);
+			if ((b[i] & 0x80) == 0) {
+				sb.append('.');
+				sb.append(value);
+				value = 0;
+			}
+		}
+
+		return sb.toString();
+	}
+	
+	public SimpleDERReader readConstructed() throws IOException {
+		int length = readLength();
+		if ((length < 0) || length > available()) {
+			throw new IOException("Illegal length in DER object (" + length + ")");
+		}
+		
+		SimpleDERReader reader = new SimpleDERReader(buffer, pos, length);
+		
+		pos += length;
+		count -= length;
+		
+		return reader;
+	}
+	
+	public int readConstructedType() throws IOException {
+		int type = readByte() & 0xff;
+
+		if ((type & 0x20) != 0x20) {
+			throw new IOException("Expected constructed type, but was " + type);
+		}
+		
+		return type & 0x1f;
+	}
+
 	public byte[] readOctetString() throws IOException
 	{
 		int type = readByte() & 0xff;
 		
-		if (type != 0x04)
+		if (type != 0x04 && type != 0x03)
 			throw new IOException("Expected DER Octetstring, but found type " + type);
 		
 		int len = readLength();

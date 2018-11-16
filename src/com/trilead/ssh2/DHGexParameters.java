@@ -24,13 +24,13 @@ public class DHGexParameters
 	private static final int MAX_ALLOWED = 8192;
 
 	/**
-	 * Same as calling {@link #DHGexParameters(int, int, int) DHGexParameters(1024, 1024, 4096)}.
+	 * Same as calling {@link #DHGexParameters(int, int, int) DHGexParameters(1024, 2048, 4096)}.
 	 * This is also the default used by the Connection class.
 	 * 
 	 */
 	public DHGexParameters()
 	{
-		this(1024, 1024, 4096);
+		this(1024, 2048, 4096);
 	}
 
 	/**
@@ -39,7 +39,7 @@ public class DHGexParameters
 	 * Internally, the minimum and maximum group lengths will
 	 * be set to zero.
 	 * 
-	 * @param pref_group_len has to be &gt= 1024 and &lt;= 8192
+	 * @param pref_group_len has to be &gt;= 1024 and &lt;= 8192
 	 */
 	public DHGexParameters(int pref_group_len)
 	{
@@ -58,12 +58,12 @@ public class DHGexParameters
 	 * Note: older OpenSSH servers don't understand this request, in which
 	 * case you should use the {@link #DHGexParameters(int)} constructor.
 	 * <p>
-	 * All values have to be &gt= 1024 and &lt;= 8192. Furthermore,
+	 * All values have to be &gt;= 1024 and &lt;= 8192. Furthermore,
 	 * min_group_len &lt;= pref_group_len &lt;= max_group_len.
 	 * 
-	 * @param min_group_len
-	 * @param pref_group_len
-	 * @param max_group_len
+	 * @param min_group_len min_group_len
+	 * @param pref_group_len pref_group_len
+	 * @param max_group_len max_group_len
 	 */
 	public DHGexParameters(int min_group_len, int pref_group_len, int max_group_len)
 	{

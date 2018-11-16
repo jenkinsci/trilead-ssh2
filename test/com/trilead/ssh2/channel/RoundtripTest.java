@@ -1,13 +1,12 @@
 package com.trilead.ssh2.channel;
 
 import com.trilead.ssh2.Session;
-import com.trilead.ssh2.StreamGobbler;
 import org.apache.commons.io.IOUtils;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.util.Random;
 import java.util.concurrent.Callable;

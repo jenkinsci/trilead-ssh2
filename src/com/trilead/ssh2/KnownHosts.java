@@ -12,34 +12,37 @@ import java.io.Reader;
 import java.io.UnsupportedEncodingException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.security.PrivateKey;
+import java.security.PublicKey;
 import java.security.SecureRandom;
-import java.util.Iterator;
+import java.util.ArrayList;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Vector;
 
 import com.trilead.ssh2.crypto.Base64;
 import com.trilead.ssh2.crypto.digest.Digest;
-import com.trilead.ssh2.crypto.digest.HMAC;
 import com.trilead.ssh2.crypto.digest.MD5;
+import com.trilead.ssh2.crypto.digest.MessageMac;
 import com.trilead.ssh2.crypto.digest.SHA1;
 import com.trilead.ssh2.log.Logger;
-import com.trilead.ssh2.signature.DSAPublicKey;
-import com.trilead.ssh2.signature.DSASHA1Verify;
-import com.trilead.ssh2.signature.RSAPublicKey;
-import com.trilead.ssh2.signature.RSASHA1Verify;
+
+import com.trilead.ssh2.signature.KeyAlgorithm;
+import com.trilead.ssh2.signature.KeyAlgorithmManager;
 
 
 /**
- * The <code>KnownHosts</code> class is a handy tool to verify received server hostkeys
+ * The KnownHosts class is a handy tool to verify received server hostkeys
  * based on the information in <code>known_hosts</code> files (the ones used by OpenSSH).
  * <p>
  * It offers basically an in-memory database for known_hosts entries, as well as some
  * helper functions. Entries from a <code>known_hosts</code> file can be loaded at construction time.
  * It is also possible to add more keys later (e.g., one can parse different
- * <code>known_hosts<code> files).
+ * known_hosts files).
+ *
  * <p>
  * It is a thread safe implementation, therefore, you need only to instantiate one
- * <code>KnownHosts</code> for your whole application.
+ * KnownHosts for your whole application.
  * 
  * @author Christian Plattner, plattner@trilead.com
  * @version $Id: KnownHosts.java,v 1.2 2008/04/01 12:38:09 cplattne Exp $
@@ -56,17 +59,19 @@ public class KnownHosts
 
 	private class KnownHostsEntry
 	{
-		String[] patterns;
-		Object key;
+		private final String[] patterns;
+		private final PublicKey key;
+		private final String algorithm;
 
-		KnownHostsEntry(String[] patterns, Object key)
+		private KnownHostsEntry(String[] patterns, PublicKey key, String algorithm)
 		{
 			this.patterns = patterns;
 			this.key = key;
+			this.algorithm = algorithm;
 		}
 	}
 
-	private LinkedList publicKeys = new LinkedList();
+	private final LinkedList<KnownHostsEntry> publicKeys = new LinkedList<>();
 
 	public KnownHosts()
 	{
@@ -91,37 +96,31 @@ public class KnownHosts
 	 *        OpenSSH sshd man page for a description of the pattern matching algorithm.
 	 * @param serverHostKeyAlgorithm as passed to the {@link ServerHostKeyVerifier}.
 	 * @param serverHostKey as passed to the {@link ServerHostKeyVerifier}.
-	 * @throws IOException
+	 * @throws IOException on failure trying to convert the host key to a saveable format
 	 */
 	public void addHostkey(String[] hostnames, String serverHostKeyAlgorithm, byte[] serverHostKey) throws IOException {
 		if (hostnames == null) {
 			throw new IllegalArgumentException("hostnames may not be null");
 		}
 
-		if ("ssh-rsa".equals(serverHostKeyAlgorithm)) {
-			final RSAPublicKey rpk = RSASHA1Verify.decodeSSHRSAPublicKey(serverHostKey);
-
-			synchronized (publicKeys) {
-				publicKeys.add(new KnownHostsEntry(hostnames, rpk));
+		for (KeyAlgorithm<PublicKey, PrivateKey> algorithm : KeyAlgorithmManager.getSupportedAlgorithms()) {
+			if (serverHostKeyAlgorithm.equals(algorithm.getKeyFormat())) {
+				PublicKey publicKey = algorithm.decodePublicKey(serverHostKey);
+				synchronized (publicKeys) {
+					publicKeys.add(new KnownHostsEntry(hostnames, publicKey, serverHostKeyAlgorithm));
+				}
+				return;
 			}
 		}
-		else if ("ssh-dss".equals(serverHostKeyAlgorithm)) {
-			final DSAPublicKey dpk = DSASHA1Verify.decodeSSHDSAPublicKey(serverHostKey);
 
-			synchronized (publicKeys) {
-				publicKeys.add(new KnownHostsEntry(hostnames, dpk));
-			}
-		}
-		else {
-			throw new IOWarningException("Unknwon host key type (" + serverHostKeyAlgorithm + ")");
-		}
+		throw new IOWarningException("Unknwon host key type (" + serverHostKeyAlgorithm + ")");
 	}
 
 	/**
 	 * Parses the given known_hosts data and adds entries to the database.
 	 * 
-	 * @param knownHostsData
-	 * @throws IOException
+	 * @param knownHostsData the known hosts data to parse
+	 * @throws IOException on failure reading the parsing the known hosts data
 	 */
 	public void addHostkeys(char[] knownHostsData) throws IOException
 	{
@@ -131,8 +130,8 @@ public class KnownHosts
 	/**
 	 * Parses the given known_hosts file and adds entries to the database.
 	 * 
-	 * @param knownHosts
-	 * @throws IOException
+	 * @param knownHosts the file to read the existing known hosts entries feom, add to add any new entries to
+	 * @throws IOException on failure reading the existing known hosts file
 	 */
 	public void addHostkeys(File knownHosts) throws IOException
 	{
@@ -143,10 +142,10 @@ public class KnownHosts
 	 * Generate the hashed representation of the given hostname. Useful for adding entries
 	 * with hashed hostnames to a known_hosts file. (see -H option of OpenSSH key-gen).
 	 *  
-	 * @param hostname
+	 * @param hostname the hostname to hash
 	 * @return the hashed representation, e.g., "|1|cDhrv7zwEUV3k71CEPHnhHZezhA=|Xo+2y6rUXo2OIWRAYhBOIijbJMA="
 	 */
-	public static final String createHashedHostname(String hostname)
+	public static String createHashedHostname(String hostname)
 	{
 		SHA1 sha1 = new SHA1();
 
@@ -159,38 +158,38 @@ public class KnownHosts
 		String base64_salt = new String(Base64.encode(salt));
 		String base64_hash = new String(Base64.encode(hash));
 
-		return new String("|1|" + base64_salt + "|" + base64_hash);
+		return "|1|" + base64_salt + "|" + base64_hash;
 	}
 
-	private static final byte[] hmacSha1Hash(byte[] salt, String hostname)
+	private static byte[] hmacSha1Hash(byte[] salt, String hostname)
 	{
-		SHA1 sha1 = new SHA1();
 
-		if (salt.length != sha1.getDigestLength())
+		if (salt.length != 20) {
 			throw new IllegalArgumentException("Salt has wrong length (" + salt.length + ")");
-
-		HMAC hmac = new HMAC(sha1, salt, salt.length);
-
-		try
-		{
-			hmac.update(hostname.getBytes("ISO-8859-1"));
-		}catch(UnsupportedEncodingException ignore)
-		{
-			/* Actually, ISO-8859-1 is supported by all correct
-			 * Java implementations. But... you never know. */
-			hmac.update(hostname.getBytes());
 		}
-		
-		byte[] dig = new byte[hmac.getDigestLength()];
 
-		hmac.digest(dig);
+		MessageMac messageMac = new MessageMac("hmac-sha1", salt);
+
+		try {
+			byte[] message = hostname.getBytes("ISO-8859-1");
+			messageMac.update(message, 0, message.length);
+		} catch (UnsupportedEncodingException ignore) {
+		/* Actually, ISO-8859-1 is supported by all correct
+		 * Java implementations. But... you never know. */
+			byte[] message = hostname.getBytes();
+			messageMac.update(message, 0, message.length);
+		}
+
+		byte[] dig = new byte[20];
+
+		messageMac.getMac(dig, 0);
 
 		return dig;
 	}
 
-	private final boolean checkHashed(String entry, String hostname)
+	private boolean checkHashed(String entry, String hostname)
 	{
-		if (entry.startsWith("|1|") == false)
+		if (!entry.startsWith("|1|"))
 			return false;
 
 		int delim_idx = entry.indexOf('|', 3);
@@ -228,24 +227,20 @@ public class KnownHosts
 		return true;
 	}
 
-	private int checkKey(String remoteHostname, Object remoteKey)
+	private int checkKey(String remoteHostname, PublicKey remoteKey)
 	{
 		int result = HOSTKEY_IS_NEW;
 
 		synchronized (publicKeys)
 		{
-			Iterator i = publicKeys.iterator();
-			
-			while (i.hasNext())
-			{
-				KnownHostsEntry ke = (KnownHostsEntry) i.next();
 
-				if (hostnameMatches(ke.patterns, remoteHostname) == false)
+			for (KnownHostsEntry ke : publicKeys) {
+				if (!hostnameMatches(ke.patterns, remoteHostname))
 					continue;
 
 				boolean res = matchKeys(ke.key, remoteKey);
 
-				if (res == true)
+				if (res)
 					return HOSTKEY_IS_OK;
 
 				result = HOSTKEY_HAS_CHANGED;
@@ -254,39 +249,33 @@ public class KnownHosts
 		return result;
 	}
 
-	private Vector getAllKeys(String hostname)
+	private Vector<KnownHostsEntry> getAllKnownHostEntries(String hostname)
 	{
-		Vector keys = new Vector();
+		Vector<KnownHostsEntry> knownHostsEntries = new Vector<>();
 
 		synchronized (publicKeys)
 		{
-			Iterator i = publicKeys.iterator();
 
-			while (i.hasNext())
-			{
-				KnownHostsEntry ke = (KnownHostsEntry) i.next();
-
-				if (hostnameMatches(ke.patterns, hostname) == false)
-					continue;
-
-				keys.addElement(ke.key);
+			for (KnownHostsEntry ke : publicKeys) {
+				if (hostnameMatches(ke.patterns, hostname)) {
+					knownHostsEntries.addElement(ke);
+				}
 			}
 		}
 
-		return keys;
+		return knownHostsEntries;
 	}
 
 	/**
 	 * Try to find the preferred order of hostkey algorithms for the given hostname.
-	 * Based on the type of hostkey that is present in the internal database
-	 * (i.e., either <code>ssh-rsa</code> or <code>ssh-dss</code>)
+	 * Based on the type of hostkey that is present in the internal database.
 	 * an ordered list of hostkey algorithms is returned which can be passed
 	 * to <code>Connection.setServerHostKeyAlgorithms</code>. 
 	 * 
-	 * @param hostname
+	 * @param hostname the hostname (or hostname pattern) to search for
 	 * @return <code>null</code> if no key for the given hostname is present or
 	 * there are keys of multiple types present for the given hostname. Otherwise,
-	 * an array with hostkey algorithms is returned (i.e., an array of length 2).
+	 * an array with hostkey algorithms is returned.
 	 */
 	public String[] getPreferredServerHostkeyAlgorithmOrder(String hostname)
 	{
@@ -295,20 +284,19 @@ public class KnownHosts
 		if (algos != null)
 			return algos;
 
-		InetAddress[] ipAdresses = null;
+		InetAddress[] ipAddresses;
 
 		try
 		{
-			ipAdresses = InetAddress.getAllByName(hostname);
+			ipAddresses = InetAddress.getAllByName(hostname);
 		}
 		catch (UnknownHostException e)
 		{
 			return null;
 		}
 
-		for (int i = 0; i < ipAdresses.length; i++)
-		{
-			algos = recommendHostkeyAlgorithms(ipAdresses[i].getHostAddress());
+		for (InetAddress ipAddress : ipAddresses) {
+			algos = recommendHostkeyAlgorithms(ipAddress.getHostAddress());
 
 			if (algos != null)
 				return algos;
@@ -317,16 +305,15 @@ public class KnownHosts
 		return null;
 	}
 
-	private final boolean hostnameMatches(String[] hostpatterns, String hostname)
+	private boolean hostnameMatches(String[] hostpatterns, String hostname)
 	{
 		boolean isMatch = false;
 		boolean negate = false;
 
 		hostname = hostname.toLowerCase();
 
-		for (int k = 0; k < hostpatterns.length; k++)
-		{
-			if (hostpatterns[k] == null)
+		for (String hostpattern : hostpatterns) {
+			if (hostpattern == null)
 				continue;
 
 			String pattern = null;
@@ -335,61 +322,46 @@ public class KnownHosts
 			 * entries in lines with multiple entries).
 			 */
 
-			if ((hostpatterns[k].length() > 0) && (hostpatterns[k].charAt(0) == '!'))
-			{
-				pattern = hostpatterns[k].substring(1);
+			if ((hostpattern.length() > 0) && (hostpattern.charAt(0) == '!')) {
+				pattern = hostpattern.substring(1);
 				negate = true;
-			}
-			else
-			{
-				pattern = hostpatterns[k];
+			} else {
+				pattern = hostpattern;
 				negate = false;
 			}
 
 			/* Optimize, no need to check this entry */
 
-			if ((isMatch) && (negate == false))
+			if (isMatch && !negate)
 				continue;
 
 			/* Now compare */
 
-			if (pattern.charAt(0) == '|')
-			{
-				if (checkHashed(pattern, hostname))
-				{
+			if (pattern.charAt(0) == '|') {
+				if (checkHashed(pattern, hostname)) {
 					if (negate)
 						return false;
 					isMatch = true;
 				}
-			}
-			else
-			{
+			} else {
 				pattern = pattern.toLowerCase();
 
-				if ((pattern.indexOf('?') != -1) || (pattern.indexOf('*') != -1))
-				{
-					if (pseudoRegex(pattern.toCharArray(), 0, hostname.toCharArray(), 0))
-					{
+				if ((pattern.indexOf('?') != -1) || (pattern.indexOf('*') != -1)) {
+					if (pseudoRegex(pattern.toCharArray(), 0, hostname.toCharArray(), 0)) {
 						if (negate)
 							return false;
 						isMatch = true;
 					}
-				}
-				else if (pattern.compareTo(hostname) == 0)
-				{
+				} else if (pattern.compareTo(hostname) == 0) {
 					if (negate)
 						return false;
 					isMatch = true;
-				}
-				else
-				{
+				} else {
 					final int indexColon = pattern.indexOf(':');
 					final int indexLastColon = pattern.indexOf(':');
-					if (indexColon > 0 && indexColon < pattern.length() - 2 && indexColon == indexLastColon)
-					{
+					if (indexColon > 0 && indexColon < pattern.length() - 2 && indexColon == indexLastColon) {
 						final String bracketizedHost = '[' + hostname + ']';
-						if (pattern.startsWith(bracketizedHost))
-						{
+						if (pattern.startsWith(bracketizedHost)) {
 							if (negate)
 								return false;
 							isMatch = true;
@@ -416,7 +388,18 @@ public class KnownHosts
 			}
 
 			final String serverHostKeyAlgorithm = arr[1];
-			if (!"ssh-rsa".equals(serverHostKeyAlgorithm) && !"ssh-dss".equals(serverHostKeyAlgorithm)) {
+
+			boolean supportedKeyType = false;
+
+			for (KeyAlgorithm<PublicKey, PrivateKey> algorithm : KeyAlgorithmManager.getSupportedAlgorithms()) {
+				if (algorithm.getKeyFormat().equals(serverHostKeyAlgorithm)) {
+					supportedKeyType = true;
+					break;
+				}
+			}
+
+			if (!supportedKeyType) {
+				LOGGER.log(1, "Unsupported key type: " + serverHostKeyAlgorithm);
 				continue;
 			}
 
@@ -437,10 +420,11 @@ public class KnownHosts
 
 		final CharArrayWriter charWriter = new CharArrayWriter();
 
-		knownHosts.createNewFile();
+		if (!knownHosts.createNewFile()) {
+			LOGGER.log(10, "Could not create known hosts file");
+		}
 
-		final Reader reader = new FileReader(knownHosts);
-		try {
+		try (Reader reader = new FileReader(knownHosts)) {
 			while (true) {
 				final int readCharCount = reader.read(buffer);
 				if (readCharCount < 0) {
@@ -450,53 +434,19 @@ public class KnownHosts
 				charWriter.write(buffer, 0, readCharCount);
 			}
 		}
-		finally {
-			reader.close();
-		}
 
 		initialize(charWriter.toCharArray());
 	}
 
-	private final boolean matchKeys(Object key1, Object key2)
+	private boolean matchKeys(PublicKey key1, PublicKey key2)
 	{
-		if ((key1 instanceof RSAPublicKey) && (key2 instanceof RSAPublicKey))
-		{
-			RSAPublicKey savedRSAKey = (RSAPublicKey) key1;
-			RSAPublicKey remoteRSAKey = (RSAPublicKey) key2;
-
-			if (savedRSAKey.getE().equals(remoteRSAKey.getE()) == false)
-				return false;
-
-			if (savedRSAKey.getN().equals(remoteRSAKey.getN()) == false)
-				return false;
-
-			return true;
-		}
-
-		if ((key1 instanceof DSAPublicKey) && (key2 instanceof DSAPublicKey))
-		{
-			DSAPublicKey savedDSAKey = (DSAPublicKey) key1;
-			DSAPublicKey remoteDSAKey = (DSAPublicKey) key2;
-
-			if (savedDSAKey.getG().equals(remoteDSAKey.getG()) == false)
-				return false;
-
-			if (savedDSAKey.getP().equals(remoteDSAKey.getP()) == false)
-				return false;
-
-			if (savedDSAKey.getQ().equals(remoteDSAKey.getQ()) == false)
-				return false;
-
-			if (savedDSAKey.getY().equals(remoteDSAKey.getY()) == false)
-				return false;
-
-			return true;
-		}
-
-		return false;
+		if (null == key1) {
+		    return null == key2;
+        }
+        return key1.equals(key2);
 	}
 
-	private final boolean pseudoRegex(char[] pattern, int i, char[] match, int j)
+	private boolean pseudoRegex(char[] pattern, int i, char[] match, int j)
 	{
 		/* This matching logic is equivalent to the one present in OpenSSH 4.1 */
 
@@ -551,29 +501,20 @@ public class KnownHosts
 	{
 		String preferredAlgo = null;
 
-		Vector keys = getAllKeys(hostname);
+		Vector<KnownHostsEntry> keys = getAllKnownHostEntries(hostname);
 
-		for (int i = 0; i < keys.size(); i++)
-		{
-			String thisAlgo = null;
+		for (KnownHostsEntry key : keys) {
+			String thisAlgo = key.algorithm;
 
-			if (keys.elementAt(i) instanceof RSAPublicKey)
-				thisAlgo = "ssh-rsa";
-			else if (keys.elementAt(i) instanceof DSAPublicKey)
-				thisAlgo = "ssh-dss";
-			else
-				continue;
-
-			if (preferredAlgo != null)
-			{
+			if (preferredAlgo != null) {
 				/* If we find different key types, then return null */
 
-				if (preferredAlgo.compareTo(thisAlgo) != 0)
+				if (!preferredAlgo.equals(thisAlgo)) {
 					return null;
+				}
 
-				/* OK, we found the same algo again, optimize */
-
-				continue;
+			} else {
+				preferredAlgo = thisAlgo;
 			}
 		}
 
@@ -587,17 +528,25 @@ public class KnownHosts
 		 * return only the preferred algorithm: since we have a saved key of that
 		 * type (sent earlier from the remote host), then that should work out.
 		 * However, imagine that the server is (for whatever reasons) not offering
-		 * that type of hostkey anymore (e.g., "ssh-rsa" was disabled and
-		 * now "ssh-dss" is being used). If we then do not let the server send us
+		 * that type of hostkey anymore (e.g., "algorithm-a" was disabled and
+		 * now "algorithm-b" is being used). If we then do not let the server send us
 		 * a fresh key of the new type, then we shoot ourself into the foot:
 		 * the connection cannot be established and hence the user cannot decide
 		 * if he/she wants to accept the new key.
 		 */
 
-		if (preferredAlgo.equals("ssh-rsa"))
-			return new String[] { "ssh-rsa", "ssh-dss" };
+		List<String> supportedAlgorithms = new ArrayList<>();
 
-		return new String[] { "ssh-dss", "ssh-rsa" };
+		for (KeyAlgorithm<?, ?> algorithm : KeyAlgorithmManager.getSupportedAlgorithms()) {
+			supportedAlgorithms.add(supportedAlgorithms.size(), algorithm.getKeyFormat());
+		}
+
+		if (supportedAlgorithms.contains(preferredAlgo)) {
+			supportedAlgorithms.remove(preferredAlgo);
+			supportedAlgorithms.add(0, preferredAlgo);
+		}
+		return supportedAlgorithms.toArray(new String[supportedAlgorithms.size()]);
+
 	}
 
 	/**
@@ -606,7 +555,7 @@ public class KnownHosts
 	 * and the search is repeated using that IP address.
 	 * 
 	 * @param hostname the server's hostname, will be matched with all hostname patterns
-	 * @param serverHostKeyAlgorithm type of hostkey, either <code>ssh-rsa</code> or <code>ssh-dss</code>
+	 * @param serverHostKeyAlgorithm type of hostkey being verified
 	 * @param serverHostKey the key blob
 	 * @return <ul>
 	 *         <li><code>HOSTKEY_IS_OK</code>: the given hostkey matches an entry for the given hostname</li>
@@ -618,25 +567,14 @@ public class KnownHosts
 	 */
 	public int verifyHostkey(String hostname, String serverHostKeyAlgorithm, byte[] serverHostKey) throws IOException
 	{
-		Object remoteKey = null;
-
-		if ("ssh-rsa".equals(serverHostKeyAlgorithm))
-		{
-			remoteKey = RSASHA1Verify.decodeSSHRSAPublicKey(serverHostKey);
-		}
-		else if ("ssh-dss".equals(serverHostKeyAlgorithm))
-		{
-			remoteKey = DSASHA1Verify.decodeSSHDSAPublicKey(serverHostKey);
-		}
-		else
-			throw new IllegalArgumentException("Unknown hostkey type " + serverHostKeyAlgorithm);
+		PublicKey remoteKey = decodeHostKey(serverHostKeyAlgorithm, serverHostKey);
 
 		int result = checkKey(hostname, remoteKey);
 
 		if (result == HOSTKEY_IS_OK)
 			return result;
 
-		InetAddress[] ipAdresses = null;
+		InetAddress[] ipAdresses;
 
 		try
 		{
@@ -647,9 +585,8 @@ public class KnownHosts
 			return result;
 		}
 
-		for (int i = 0; i < ipAdresses.length; i++)
-		{
-			int newresult = checkKey(ipAdresses[i].getHostAddress(), remoteKey);
+		for (InetAddress ipAdress : ipAdresses) {
+			int newresult = checkKey(ipAdress.getHostAddress(), remoteKey);
 
 			if (newresult == HOSTKEY_IS_OK)
 				return newresult;
@@ -661,6 +598,16 @@ public class KnownHosts
 		return result;
 	}
 
+	private PublicKey decodeHostKey(String hostKeyAlgorithm, byte[] encodedHostKey) throws IOException {
+		for (KeyAlgorithm<PublicKey, PrivateKey> algorithm : KeyAlgorithmManager.getSupportedAlgorithms()) {
+			if (algorithm.getKeyFormat().equals(hostKeyAlgorithm)) {
+				return algorithm.decodePublicKey(encodedHostKey);
+			}
+		}
+
+		throw new IllegalArgumentException("Unknown hostkey type " + hostKeyAlgorithm);
+	}
+
 	/**
 	 * Adds a single public key entry to the a known_hosts file.
 	 * This method is designed to be used in a {@link ServerHostKeyVerifier}.
@@ -670,9 +617,9 @@ public class KnownHosts
 	 *        OpenSSH sshd man page for a description of the pattern matching algorithm.
 	 * @param serverHostKeyAlgorithm as passed to the {@link ServerHostKeyVerifier}.
 	 * @param serverHostKey as passed to the {@link ServerHostKeyVerifier}.
-	 * @throws IOException
+	 * @throws IOException on failure parsing the key or writing to file
 	 */
-	public final static void addHostkeyToFile(File knownHosts, String[] hostnames, String serverHostKeyAlgorithm,
+	public static void addHostkeyToFile(File knownHosts, String[] hostnames, String serverHostKeyAlgorithm,
 			byte[] serverHostKey) throws IOException
 	{
 		if ((hostnames == null) || (hostnames.length == 0))
@@ -718,13 +665,13 @@ public class KnownHosts
 	 * Generates a "raw" fingerprint of a hostkey.
 	 * 
 	 * @param type either "md5" or "sha1"
-	 * @param keyType either "ssh-rsa" or "ssh-dss"
+	 * @param keyType the type of key being fingerprinted
 	 * @param hostkey the hostkey
 	 * @return the raw fingerprint
 	 */
-	static final private byte[] rawFingerPrint(String type, String keyType, byte[] hostkey)
+	private static byte[] rawFingerPrint(String type, String keyType, byte[] hostkey)
 	{
-		Digest dig = null;
+		Digest dig;
 
 		if ("md5".equals(type))
 		{
@@ -737,14 +684,18 @@ public class KnownHosts
 		else
 			throw new IllegalArgumentException("Unknown hash type " + type);
 
-		if ("ssh-rsa".equals(keyType))
-		{
+		boolean supportedKeyType = false;
+
+		for (KeyAlgorithm<PublicKey, PrivateKey> algorithm : KeyAlgorithmManager.getSupportedAlgorithms()) {
+			if (algorithm.getKeyFormat().equals(keyType)) {
+				supportedKeyType = true;
+				break;
+			}
 		}
-		else if ("ssh-dss".equals(keyType))
-		{
-		}
-		else
+
+		if (!supportedKeyType) {
 			throw new IllegalArgumentException("Unknown key type " + keyType);
+		}
 
 		if (hostkey == null)
 			throw new IllegalArgumentException("hostkey is null");
@@ -760,11 +711,11 @@ public class KnownHosts
 	 * @param fingerprint raw fingerprint
 	 * @return the hex representation
 	 */
-	static final private String rawToHexFingerprint(byte[] fingerprint)
+	private static String rawToHexFingerprint(byte[] fingerprint)
 	{
 		final char[] alpha = "0123456789abcdef".toCharArray();
 
-		StringBuffer sb = new StringBuffer();
+		StringBuilder sb = new StringBuilder();
 
 		for (int i = 0; i < fingerprint.length; i++)
 		{
@@ -783,12 +734,12 @@ public class KnownHosts
 	 * @param raw raw fingerprint
 	 * @return the bubblebabble representation
 	 */
-	static final private String rawToBubblebabbleFingerprint(byte[] raw)
+	private static String rawToBubblebabbleFingerprint(byte[] raw)
 	{
 		final char[] v = "aeiouy".toCharArray();
 		final char[] c = "bcdfghklmnprstvzx".toCharArray();
 
-		StringBuffer sb = new StringBuffer();
+		StringBuilder sb = new StringBuilder();
 
 		int seed = 1;
 
@@ -832,11 +783,11 @@ public class KnownHosts
 	 * <p>
 	 * Example fingerprint: d0:cb:76:19:99:5a:03:fc:73:10:70:93:f2:44:63:47.
 
-	 * @param keytype either "ssh-rsa" or "ssh-dss"
+	 * @param keytype the type of key being fingerprinted
 	 * @param publickey key blob
 	 * @return Hex fingerprint
 	 */
-	public final static String createHexFingerprint(String keytype, byte[] publickey)
+	public static String createHexFingerprint(String keytype, byte[] publickey)
 	{
 		byte[] raw = rawFingerPrint("md5", keytype, publickey);
 		return rawToHexFingerprint(raw);
@@ -849,11 +800,11 @@ public class KnownHosts
 	 * <p>
 	 * Example fingerprint: xofoc-bubuz-cazin-zufyl-pivuk-biduk-tacib-pybur-gonar-hotat-lyxux.
 	 * 
-	 * @param keytype either "ssh-rsa" or "ssh-dss"
+	 * @param keytype the type of key being fingerprinted
 	 * @param publickey key data
 	 * @return Bubblebabble fingerprint
 	 */
-	public final static String createBubblebabbleFingerprint(String keytype, byte[] publickey)
+	public static String createBubblebabbleFingerprint(String keytype, byte[] publickey)
 	{
 		byte[] raw = rawFingerPrint("sha1", keytype, publickey);
 		return rawToBubblebabbleFingerprint(raw);

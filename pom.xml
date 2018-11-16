@@ -4,7 +4,7 @@
 
   <groupId>org.jenkins-ci</groupId>
   <artifactId>trilead-ssh2</artifactId>
-  <version>build217-jenkins-9-sumo2</version>
+  <version>build-217-jenkins-15-SNAPSHOT</version>
 
   <name>Ganymed SSH2 for Java</name>
   <description>Ganymed SSH2 for Java is a library which implements the SSH-2 protocol in pure Java</description>
@@ -16,16 +16,34 @@
     </license>
   </licenses>
 
+  <developers>
+    <developer>
+      <id>mc1arke</id>
+      <name>Michael Clarke</name>
+      <email>michael.m.clarke@gmail.com</email>
+    </developer>
+    <developer>
+      <id>kuisathaverat</id>
+      <name>Ivan Fernandez</name>
+      <email>kuisathaverat@gmail.com</email>
+    </developer>
+  </developers>
+
   <scm>
+    <connection>scm:git:git://github.com/jenkinsci/trilead-ssh2.git</connection>
     <developerConnection>scm:git:ssh://git@github.com/jenkinsci/trilead-ssh2.git</developerConnection>
-    <connection>scm:git:https://kohsuke@github.com/jenkinsci/trilead-ssh2.git</connection>
+    <url>https://github.com/jenkinsci/trilead-ssh2</url>
     <tag>HEAD</tag>
   </scm>
   <distributionManagement>
     <repository>
       <id>maven.jenkins-ci.org</id>
-      <url>http://maven.jenkins-ci.org/content/repositories/releases/</url>
+      <url>https://repo.jenkins-ci.org/releases/</url>
     </repository>
+    <snapshotRepository>
+      <id>maven.jenkins-ci.org</id>
+      <url>https://repo.jenkins-ci.org/snapshots/</url>
+    </snapshotRepository>
   </distributionManagement>
 
   <repositories>
@@ -49,10 +67,38 @@
       <version>4.10</version>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>net.i2p.crypto</groupId>
+      <artifactId>eddsa</artifactId>
+      <version>0.2.0</version>
+    </dependency>
+    <dependency>
+      <groupId>org.connectbot.jbcrypt</groupId>
+      <artifactId>jbcrypt</artifactId>
+      <version>1.0.0</version>
+    </dependency>
+    <dependency>
+      <groupId>org.testcontainers</groupId>
+      <artifactId>testcontainers</artifactId>
+      <version>1.8.3</version>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
   <build>
     <sourceDirectory>src</sourceDirectory>
+    <testSourceDirectory>test</testSourceDirectory>
+    <testResources>
+      <testResource>
+        <directory>test</directory>
+        <includes>
+          <include>**</include>
+        </includes>
+        <excludes>
+          <exclude>**/*.java</exclude>
+        </excludes>
+      </testResource>
+    </testResources>
     <plugins>
       <plugin>
         <artifactId>maven-release-plugin</artifactId>
@@ -60,5 +106,10 @@
       </plugin>
     </plugins>
   </build>
+
+  <properties>
+    <maven.compiler.source>1.8</maven.compiler.source>
+    <maven.compiler.target>1.8</maven.compiler.target>
+  </properties>
 
 </project>

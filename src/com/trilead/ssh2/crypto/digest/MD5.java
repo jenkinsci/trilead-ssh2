@@ -30,9 +30,9 @@ package com.trilead.ssh2.crypto.digest;
  * 
  * These notices must be retained in any copies of any part of this
  * documentation and/or software.
- * 
+ * @deprecated Use java.security.MessageDigest.getInstance("MD5");
  */
-
+@Deprecated
 public final class MD5 implements Digest
 {
 	private int state0, state1, state2, state3;

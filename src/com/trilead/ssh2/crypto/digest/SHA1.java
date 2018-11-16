@@ -9,7 +9,9 @@ package com.trilead.ssh2.crypto.digest;
  * 
  * @author Christian Plattner, plattner@trilead.com
  * @version $Id: SHA1.java,v 1.1 2007/10/15 12:49:57 cplattne Exp $
+ * @deprecated Use java.security.MessageDigest.getInstance("SHA1");
  */
+@Deprecated
 public final class SHA1 implements Digest
 {
 	private int H0, H1, H2, H3, H4;
@@ -606,59 +608,4 @@ public final class SHA1 implements Digest
 		return sb.toString();
 	}
 
-	public static void main(String[] args)
-	{
-		SHA1 sha = new SHA1();
-
-		byte[] dig1 = new byte[20];
-		byte[] dig2 = new byte[20];
-		byte[] dig3 = new byte[20];
-
-		/*
-		 * We do not specify a charset name for getBytes(), since we assume that
-		 * the JVM's default encoder maps the _used_ ASCII characters exactly as
-		 * getBytes("US-ASCII") would do. (Ah, yes, too lazy to catch the
-		 * exception that can be thrown by getBytes("US-ASCII")). Note: This has
-		 * no effect on the SHA-1 implementation, this is just for the following
-		 * test code.
-		 */
-
-		sha.update("abc".getBytes());
-		sha.digest(dig1);
-
-		sha.update("abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq".getBytes());
-		sha.digest(dig2);
-
-		for (int i = 0; i < 1000000; i++)
-			sha.update((byte) 'a');
-		sha.digest(dig3);
-
-		String dig1_res = toHexString(dig1);
-		String dig2_res = toHexString(dig2);
-		String dig3_res = toHexString(dig3);
-
-		String dig1_ref = "A9993E364706816ABA3E25717850C26C9CD0D89D";
-		String dig2_ref = "84983E441C3BD26EBAAE4AA1F95129E5E54670F1";
-		String dig3_ref = "34AA973CD4C4DAA4F61EEB2BDBAD27316534016F";
-
-		if (dig1_res.equals(dig1_ref))
-			System.out.println("SHA-1 Test 1 OK.");
-		else
-			System.out.println("SHA-1 Test 1 FAILED.");
-
-		if (dig2_res.equals(dig2_ref))
-			System.out.println("SHA-1 Test 2 OK.");
-		else
-			System.out.println("SHA-1 Test 2 FAILED.");
-
-		if (dig3_res.equals(dig3_ref))
-			System.out.println("SHA-1 Test 3 OK.");
-		else
-			System.out.println("SHA-1 Test 3 FAILED.");
-
-		if (dig3_res.equals(dig3_ref))
-			System.out.println("SHA-1 Test 3 OK.");
-		else
-			System.out.println("SHA-1 Test 3 FAILED.");
-	}
 }
