@@ -685,7 +685,7 @@ public class Connection
 								if (state.isCancelled)
 									return;
 								state.timeoutSocketClosed = true;
-								tm.close(new SocketTimeoutException("The connect timeout expired"), false);
+								close(new SocketTimeoutException("The connect timeout expired"), false);
 							}
 						}
 					};
