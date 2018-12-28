@@ -672,65 +672,67 @@ public class Connection
 		{
 			TimeoutToken token = null;
 
-			if (kexTimeout > 0)
-			{
-				final Runnable timeoutHandler = new Runnable()
-				{
-					public void run()
-					{
-						synchronized (state)
-						{
-							if (state.isCancelled)
-								return;
-							state.timeoutSocketClosed = true;
-							tm.close(new SocketTimeoutException("The connect timeout expired"), false);
-						}
-					}
-				};
-
-				long timeoutHorizont = System.currentTimeMillis() + kexTimeout;
-
-				token = TimeoutService.addTimeoutHandler(timeoutHorizont, timeoutHandler);
-			}
-
 			try
 			{
-				tm.initialize(cryptoWishList, verifier, dhgexpara, connectTimeout, readTimeout, getOrCreateSecureRND(), proxyData);
-			}
-			catch (SocketTimeoutException se)
-			{
-				throw (SocketTimeoutException) new SocketTimeoutException(
-						"The connect() operation on the socket timed out.").initCause(se);
-			}
-
-			tm.setTcpNoDelay(tcpNoDelay);
-
-			/* Wait until first KEX has finished */
-
-			ConnectionInfo ci = tm.getConnectionInfo(1);
-
-			/* Now try to cancel the timeout, if needed */
-
-			if (token != null)
-			{
-				TimeoutService.cancelTimeoutHandler(token);
-
-				/* Were we too late? */
-
-				synchronized (state)
+				if (kexTimeout > 0)
 				{
-					if (state.timeoutSocketClosed)
-						throw new IOException("This exception will be replaced by the one below =)");
-					/*
-					 * Just in case the "cancelTimeoutHandler" invocation came
-					 * just a little bit too late but the handler did not enter
-					 * the semaphore yet - we can still stop it.
-					 */
-					state.isCancelled = true;
+					final Runnable timeoutHandler = new Runnable()
+					{
+						public void run()
+						{
+							synchronized (state)
+							{
+								if (state.isCancelled)
+									return;
+								state.timeoutSocketClosed = true;
+								close(new SocketTimeoutException("The connect timeout expired"), false);
+							}
+						}
+					};
+
+					long timeoutHorizont = System.currentTimeMillis() + kexTimeout;
+
+					token = TimeoutService.addTimeoutHandler(timeoutHorizont, timeoutHandler);
+				}
+
+				try
+				{
+					tm.initialize(cryptoWishList, verifier, dhgexpara, connectTimeout, readTimeout, getOrCreateSecureRND(), proxyData);
+				}
+				catch (SocketTimeoutException se)
+				{
+					throw (SocketTimeoutException) new SocketTimeoutException(
+							"The connect() operation on the socket timed out.").initCause(se);
+				}
+
+				tm.setTcpNoDelay(tcpNoDelay);
+
+				/* Wait until first KEX has finished */
+				return tm.getConnectionInfo(1);
+			}
+			finally
+			{
+				/* Now try to cancel the timeout, if needed */
+
+				if (token != null)
+				{
+					TimeoutService.cancelTimeoutHandler(token);
+
+					/* Were we too late? */
+
+					synchronized (state)
+					{
+						if (state.timeoutSocketClosed)
+							throw new IOException("This exception will be replaced by the one below =)");
+						/*
+						 * Just in case the "cancelTimeoutHandler" invocation came
+						 * just a little bit too late but the handler did not enter
+						 * the semaphore yet - we can still stop it.
+						 */
+						state.isCancelled = true;
+					}
 				}
 			}
-
-			return ci;
 		}
 		catch (SocketTimeoutException ste)
 		{
