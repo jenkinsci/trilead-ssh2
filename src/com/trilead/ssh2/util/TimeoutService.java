@@ -10,7 +10,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * TimeoutService (beta). Here you can register a timeout.
- * <p/>
+ * <p>
  * Implemented having large scale programs in mind: if you open many concurrent SSH connections
  * that rely on timeouts, then there will be only one timeout thread. Once all timeouts
  * have expired/are cancelled, the thread will (sooner or later) exit.
@@ -68,7 +68,7 @@ public class TimeoutService {
     /**
      * Cancel the timeout callback for the specified token.
      *
-     * @param token
+     * @param token token to be canceled.
      */
     public static final void cancelTimeoutHandler(TimeoutToken token) {
         token.cancelled = true;
