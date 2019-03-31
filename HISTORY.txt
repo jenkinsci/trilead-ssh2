@@ -2,6 +2,22 @@
 Release Notes:
 ==============
 
+trilead-ssh2-build-217-jenkins-16, 2019-03-31:
+
+- [JENKINS-55352] update net.i2p.crypto:eddsa to 0.3.0 
+- Connection timeout handler not cancelled when an exception occurs during a connection attempt. If the Connection instance is reused for further attempts, this can lead to the disconnection of an active connection.
+- [JENKINS-56821] Eliminating hot lock from `TimeoutService`
+
+trilead-ssh2-build-217-jenkins-14, 2018-10-18:
+
+- fix warnings and errors in javadoc 
+- [JENKINS-53651] wait for a timeout time if the packets have 0 size 
+- Support OpenSSH keys with AES256-CTR encryption 
+- [JENKINS-53645] move a class from ssh-slaves, fix tests
+- update java to 8, a new test, and some javadoc
+- [JENKINS-47458] - Check for null in Connection#getReasonClosedCause()
+- [JENKINS-47603] Just print the SCP response code under failure
+
 build217, 2013-06-03:
 
 - Support for SSH agent based authentication.
@@ -348,7 +364,7 @@ build207, 2005-07-21:
 
 build206, 2005-07-04:
 
-- Fixed small resource issue with SCP (thanks to Michaël Giraud).
+- Fixed small resource issue with SCP (thanks to Michaï¿½l Giraud).
 
 - Added LocalStreamForwarder.
 
