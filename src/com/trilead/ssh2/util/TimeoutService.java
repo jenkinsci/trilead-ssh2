@@ -1,147 +1,76 @@
 
 package com.trilead.ssh2.util;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.util.Collections;
-import java.util.LinkedList;
-
-import com.trilead.ssh2.log.Logger;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 
 /**
  * TimeoutService (beta). Here you can register a timeout.
- * <p>
+ * <p/>
  * Implemented having large scale programs in mind: if you open many concurrent SSH connections
  * that rely on timeouts, then there will be only one timeout thread. Once all timeouts
  * have expired/are cancelled, the thread will (sooner or later) exit.
  * Only after new timeouts arrive a new thread (singleton) will be instantiated.
- * 
+ *
  * @author Christian Plattner, plattner@trilead.com
  * @version $Id: TimeoutService.java,v 1.1 2007/10/15 12:49:57 cplattne Exp $
  */
-public class TimeoutService
-{
-	private static final Logger log = Logger.getLogger(TimeoutService.class);
+public class TimeoutService {
 
-	public static class TimeoutToken implements Comparable
-	{
-		private long runTime;
-		private Runnable handler;
+    private final static ThreadFactory threadFactory = new ThreadFactory() {
 
-		private TimeoutToken(long runTime, Runnable handler)
-		{
-			this.runTime = runTime;
-			this.handler = handler;
-		}
+        private AtomicInteger count = new AtomicInteger();
 
-		public int compareTo(Object o)
-		{
-			TimeoutToken t = (TimeoutToken) o;
-			if (runTime > t.runTime)
-				return 1;
-			if (runTime == t.runTime)
-				return 0;
-			return -1;
-		}
-	}
+        public Thread newThread(Runnable r) {
+            int threadNumber = count.incrementAndGet();
+            String threadName = "TimeoutService-" + threadNumber;
+            Thread thread = new Thread(r, threadName);
+            thread.setDaemon(true);
+            return thread;
+        }
+    };
 
-	private static class TimeoutThread extends Thread
-	{
-		public void run()
-		{
-			synchronized (todolist)
-			{
-				while (true)
-				{
-					if (todolist.size() == 0)
-					{
-						timeoutThread = null;
-						return;
-					}
+    private final static ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(20, threadFactory);
 
-					long now = System.currentTimeMillis();
+    public static class TimeoutToken implements Runnable {
+        private Runnable handler;
+        private boolean cancelled = false;
 
-					TimeoutToken tt = (TimeoutToken) todolist.getFirst();
+        public void run() {
+            if (!cancelled) {
+                handler.run();
+            }
+        }
+    }
 
-					if (tt.runTime > now)
-					{
-						/* Not ready yet, sleep a little bit */
+    /**
+     * It is assumed that the passed handler will not execute for a long time.
+     *
+     * @param runTime runTime
+     * @param handler handler
+     * @return a TimeoutToken that can be used to cancel the timeout.
+     */
+    public static final TimeoutToken addTimeoutHandler(long runTime, Runnable handler) {
+        TimeoutToken token = new TimeoutToken();
+        token.handler = handler;
+        long delay = runTime - System.currentTimeMillis();
+        if (delay < 0) {
+            delay = 0;
+        }
+        scheduler.schedule(token, delay, TimeUnit.MILLISECONDS);
+        return token;
+    }
 
-						try
-						{
-							todolist.wait(tt.runTime - now);
-						}
-						catch (InterruptedException e)
-						{
-						}
-
-						/* We cannot simply go on, since it could be that the token
-						 * was removed (cancelled) or another one has been inserted in
-						 * the meantime.
-						 */
-
-						continue;
-					}
-
-					todolist.removeFirst();
-
-					try
-					{
-						tt.handler.run();
-					}
-					catch (Exception e)
-					{
-						log.log(20, "Exception in Timeout handler",e);
-					}
-				}
-			}
-		}
-	}
-
-	/* The list object is also used for locking purposes */
-	private static final LinkedList todolist = new LinkedList();
-
-	private static Thread timeoutThread = null;
-
-	/**
-	 * It is assumed that the passed handler will not execute for a long time.
-	 * 
-	 * @param runTime runTime
-	 * @param handler handler
-	 * @return a TimeoutToken that can be used to cancel the timeout.
-	 */
-	public static final TimeoutToken addTimeoutHandler(long runTime, Runnable handler)
-	{
-		TimeoutToken token = new TimeoutToken(runTime, handler);
-
-		synchronized (todolist)
-		{
-			todolist.add(token);
-			Collections.sort(todolist);
-
-			if (timeoutThread != null)
-				timeoutThread.interrupt();
-			else
-			{
-				timeoutThread = new TimeoutThread();
-				timeoutThread.setDaemon(true);
-				timeoutThread.start();
-			}
-		}
-
-		return token;
-	}
-
-	public static final void cancelTimeoutHandler(TimeoutToken token)
-	{
-		synchronized (todolist)
-		{
-			todolist.remove(token);
-
-			if (timeoutThread != null)
-				timeoutThread.interrupt();
-		}
-	}
-
+    /**
+     * Cancel the timeout callback for the specified token.
+     *
+     * @param token
+     */
+    public static final void cancelTimeoutHandler(TimeoutToken token) {
+        token.cancelled = true;
+    }
 }
