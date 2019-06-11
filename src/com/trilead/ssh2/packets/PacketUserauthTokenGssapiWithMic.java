@@ -51,7 +51,7 @@ public class PacketUserauthTokenGssapiWithMic {
 					token=context.init(token, 0, token.length);
 					if (token.length > 1) //take the first generated token and send it to the server
 						break;
-				} catch (SSException | SecurityException e) 
+				} catch (GSSException | SecurityException e) 
 				{
 					if (LOGGER.isEnabled()) {
                         			LOGGER.log(50, "Could not get token", e);
