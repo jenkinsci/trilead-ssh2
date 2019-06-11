@@ -85,16 +85,9 @@ public class GSSContextKrb5 {
 	    	return context.getMIC(message, s, l, prop);
 	  }
 
-	  public void dispose() throws Exception
+	  public void dispose() throws GSSException
 	  {
-	    try
-	    {
 	      context.dispose();
-	    }
-	    catch(GSSException ex)
-	    {
-	    	throw new Exception(ex.toString());
-	    }
 	  }
 
 }
