@@ -15,7 +15,7 @@ public class PacketUserauthTokenGssapiWithMic {
 	private String user;
 	private String host;
 	private byte[] payload;
-	GSSContextKrb5 context = null;
+	private GSSContextKrb5 context = null;
 
 	public PacketUserauthTokenGssapiWithMic(String user, String host) {
 		
@@ -59,14 +59,10 @@ public class PacketUserauthTokenGssapiWithMic {
 				}
 			}
 			
-			if(token!=null)
-			{
-				TypesWriter tw = new TypesWriter();
-				tw.writeByte(Packets.SSH_MSG_USERAUTH_INFO_RESPONSE);
-				tw.writeString(token,0,token.length);
-				payload = tw.getBytes();
-			}
-		
+			TypesWriter tw = new TypesWriter();
+			tw.writeByte(Packets.SSH_MSG_USERAUTH_INFO_RESPONSE);
+			tw.writeString(token,0,token.length);
+			payload = tw.getBytes();
 		}
 		return payload;
 	}
