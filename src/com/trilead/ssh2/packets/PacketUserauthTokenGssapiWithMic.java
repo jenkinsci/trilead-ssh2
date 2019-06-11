@@ -1,6 +1,11 @@
 package com.trilead.ssh2.packets;
 
+import java.net.UnknownHostException;
+
+import org.ietf.jgss.GSSException;
+
 import com.trilead.ssh2.auth.GSSContextKrb5;
+import com.trilead.ssh2.log.Logger;
 
 public class PacketUserauthTokenGssapiWithMic {
 	
