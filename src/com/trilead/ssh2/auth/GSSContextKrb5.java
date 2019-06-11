@@ -63,19 +63,11 @@ public class GSSContextKrb5 {
 	    return context.isEstablished();
 	  }
 
-	  public byte[] init(byte[] token, int s, int l) throws Exception 
+	  public byte[] init(byte[] token, int s, int l) throws GSSException, SecurityException 
 	  {
 	    try
 	    { 
 	    	return context.initSecContext(token, 0, l);
-	    }
-	    catch(GSSException ex)
-	    {
-	    	throw new Exception(ex.toString());
-	    }
-	    catch(java.lang.SecurityException ex)
-	    {
-	    	throw new Exception(ex.toString());
 	    }
 	    finally
 	    {
@@ -87,17 +79,10 @@ public class GSSContextKrb5 {
 	    }
 	  }
 
-	  public byte[] getMIC(byte[] message, int s, int l) throws Exception
+	  public byte[] getMIC(byte[] message, int s, int l) throws GSSException
 	  {
-	    try
-	    {
 	    	MessageProp prop =  new MessageProp(0, true);
 	    	return context.getMIC(message, s, l, prop);
-	    }
-	    catch(GSSException ex)
-	    {
-	      throw new Exception(ex.toString());
-	    }
 	  }
 
 	  public void dispose() throws Exception
