@@ -16,7 +16,7 @@ public class GSSContextKrb5 {
 	
 	  private static final String PRINCIPAL_NAME_OID = "1.2.840.113554.1.2.2.1";
 	  private static final String KRB5_OID = "1.2.840.113554.1.2.2";
-	  private static String USE_SUBJECTS_CREDS_ONLY = "javax.security.auth.useSubjectCredsOnly";
+	  private static final String USE_SUBJECTS_CREDS_ONLY = "javax.security.auth.useSubjectCredsOnly";
 	  private GSSContext context=null;
 	  
 	  public void create(String host) throws UnknownHostException, GSSException {
@@ -31,9 +31,9 @@ public class GSSContextKrb5 {
 
 	      String cname=InetAddress.getByName(host).getCanonicalHostName();
 	      
-	      GSSName _host=mgr.createName("host/"+cname, principalName);
+	      GSSName gssHost=mgr.createName("host/"+cname, principalName);
 
-	      context=mgr.createContext(_host, krb5, null, GSSContext.DEFAULT_LIFETIME);
+	      context=mgr.createContext(gssHost, krb5, null, GSSContext.DEFAULT_LIFETIME);
 
 	      // RFC4462  3.4.  GSS-API Session
 	      //
