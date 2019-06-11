@@ -54,8 +54,6 @@ public class GSSContextKrb5 {
 	      context.requestInteg(true);             // for MIC
 	      context.requestCredDeleg(true);
 	      context.requestAnonymity(false);
-
-	      return;
 	  }
 
 	  public boolean isEstablished()
