@@ -19,9 +19,7 @@ public class GSSContextKrb5 {
 	  private static String USE_SUBJECTS_CREDS_ONLY = "javax.security.auth.useSubjectCredsOnly";
 	  private GSSContext context=null;
 	  
-	  public void create(String host) throws Exception{
-	    try
-	    {
+	  public void create(String host) throws UnknownHostException, GSSException {
 	      // RFC 1964
 	      Oid krb5=new Oid(KRB5_OID);
 
@@ -31,14 +29,7 @@ public class GSSContextKrb5 {
 
 	      GSSManager mgr=GSSManager.getInstance();
 
-	      String cname=host;
-	      try
-	      {
-	    	  cname=InetAddress.getByName(cname).getCanonicalHostName();
-	      }
-	      catch(UnknownHostException e){
-	    	  throw new Exception(e.toString());
-	      }
+	      String cname=InetAddress.getByName(host).getCanonicalHostName();
 	      
 	      GSSName _host=mgr.createName("host/"+cname, principalName);
 
@@ -65,11 +56,6 @@ public class GSSContextKrb5 {
 	      context.requestAnonymity(false);
 
 	      return;
-	    }
-	    catch(GSSException ex) 
-	    {
-	      throw new Exception(ex.toString());
-	    }
 	  }
 
 	  public boolean isEstablished()
