@@ -15,7 +15,7 @@ public class PacketUserauthRequestGssapiWithMic {
 	
 	byte[] payload;
 
-	String user;
+	private String user;
 
 	public PacketUserauthRequestGssapiWithMic(String user)
 	{
