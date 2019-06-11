@@ -4,6 +4,7 @@ import com.trilead.ssh2.auth.GSSContextKrb5;
 
 public class PacketUserauthTokenGssapiWithMic {
 	
+	private static final Logger LOGGER = Logger.getLogger(PacketUserauthTokenGssapiWithMic.class);
 	private static final String GSSAPI_WITH_MIC = "gssapi-with-mic";
 	private static final String SSH_CONNECTION = "ssh-connection";
 	private String user;
@@ -21,9 +22,9 @@ public class PacketUserauthTokenGssapiWithMic {
 		try 
 		{
 			context.create(this.host);
-		} catch (Exception e) 
+		} catch (UnknownHostException | GSSException e) 
 		{
-			e.printStackTrace();
+			throw new IllegalStateException("Could not create context with host " + this.host, e);
 		}
 		
 		
@@ -45,10 +46,11 @@ public class PacketUserauthTokenGssapiWithMic {
 					token=context.init(token, 0, token.length);
 					if (token.length > 1) //take the first generated token and send it to the server
 						break;
-				} catch (Exception e) 
+				} catch (SSException | SecurityException e) 
 				{
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+					if (LOGGER.isEnabled()) {
+                        			LOGGER.log(50, "Could not get token", e);
+                   			 }
 				}
 			}
 			
@@ -81,9 +83,11 @@ public class PacketUserauthTokenGssapiWithMic {
 		try 
 		{
 			mic = context.getMIC(message, 0, message.length);
-		} catch (Exception e) 
+		} catch (GSSException e) 
 		{
-			e.printStackTrace();
+			if (LOGGER.isEnabled()) {
+               			LOGGER.log(50, "Could not get MIC", e);
+           		}
 			mic = null;
 		}
 		
