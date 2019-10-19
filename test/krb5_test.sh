@@ -1,4 +1,9 @@
 #!/usr/bin/env bash
+#
+# The script is used to provision a Kerberos environment an run some authentication tests againts it.
+# it use the enviroment defined in https://github.com/criteo/kerberos-docker.git
+# Author: Kuisathaverat
+#
 
 git clone https://github.com/criteo/kerberos-docker.git
 cd kerberos-docker
