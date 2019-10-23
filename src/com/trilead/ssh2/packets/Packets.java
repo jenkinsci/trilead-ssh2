@@ -34,6 +34,7 @@ public class Packets
 	public static final int SSH_MSG_USERAUTH_BANNER = 53;
 	public static final int SSH_MSG_USERAUTH_INFO_REQUEST = 60;
 	public static final int SSH_MSG_USERAUTH_INFO_RESPONSE = 61;
+	public static final int SSH_MSG_USERAUTH_GSSAPI_MIC = 66;
 
 	public static final int SSH_MSG_GLOBAL_REQUEST = 80;
 	public static final int SSH_MSG_REQUEST_SUCCESS = 81;

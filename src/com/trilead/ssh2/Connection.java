@@ -341,6 +341,27 @@ public class Connection
 
 		return authenticated;
 	}
+	
+	public synchronized boolean authenticateWithGssapiWithMic(String user) throws IOException {
+		if (tm == null)
+			throw new IllegalStateException("Connection is not established!");
+
+		if (authenticated)
+			throw new IllegalStateException("Connection is already authenticated!");
+
+		if (am == null)
+			am = new AuthenticationManager(tm);
+
+		if (cm == null)
+			cm = new ChannelManager(tm);
+
+		if (user == null)
+			throw new IllegalArgumentException("user argument is null");
+		
+		authenticated = am.authenticateGssapiWithMic(user, this.hostname);
+
+		return authenticated;
+	}
 
 	/**
 	 * After a successful connect, one has to authenticate oneself. This method

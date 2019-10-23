@@ -18,6 +18,8 @@ import java.util.Collection;
 import java.util.Vector;
 import java.util.concurrent.TimeUnit;
 
+import org.ietf.jgss.GSSContext;
+
 
 /**
  * AuthenticationManager.
@@ -158,6 +160,60 @@ public class AuthenticationManager implements MessageHandler
 		return authenticated;
 	}
 
+	public boolean authenticateGssapiWithMic(String user, String host) throws IOException
+	{
+		
+		//packet exchange based on: http://www.openssh.com/txt/rfc4462.txt
+		initialize(user);
+		
+		PacketUserauthRequestGssapiWithMic ua = new PacketUserauthRequestGssapiWithMic(user);	
+		tm.sendMessage(ua.getPayload());
+		
+		byte[] message = getNextMessage();
+		
+		if(message[0]==Packets.SSH_MSG_USERAUTH_FAILURE )
+		{
+			return false;
+		}
+		
+		if(message[0] == Packets.SSH_MSG_USERAUTH_INFO_REQUEST)
+		{
+			//	The server responds to the SSH_MSG_USERAUTH_REQUEST with either an
+			//	SSH_MSG_USERAUTH_FAILURE if none of the mechanisms(OIDs) are supported or
+			//	with an SSH_MSG_USERAUTH_GSSAPI_RESPONSE with the select OID
+			//	Since we are sending only one OID, there is no need to check which OID the 
+			//	server selected
+			
+			PacketUserauthTokenGssapiWithMic uat = new PacketUserauthTokenGssapiWithMic(user,host);			
+			tm.sendMessage(uat.getTokenPayload());			
+			message = getNextMessage();
+			
+			if(message[0]==Packets.SSH_MSG_USERAUTH_INFO_RESPONSE)
+			{
+				
+				tm.sendMessage(uat.getMicPayload(tm.getSessionIdentifier()));			
+				message = getNextMessage();
+				
+				if(message[0]==Packets.SSH_MSG_USERAUTH_SUCCESS)
+				{
+					authenticated = true;
+					tm.removeMessageHandler(this, 0, 255);
+					return true;
+			    }
+				else if(message[0]==Packets.SSH_MSG_USERAUTH_FAILURE)
+				{
+					PacketUserauthFailure puf = new PacketUserauthFailure(message,0,message.length);
+					remainingMethods = puf.getAuthThatCanContinue();
+					isPartialSuccess = puf.isPartialSuccess();
+					return false;					
+				}
+			}
+			
+		}
+		
+		throw new IOException("Unexpected SSH message (type " + message[0] + ")");
+	}
+	
 	public boolean authenticatePublicKey(String user, AgentProxy proxy) throws IOException {
 		initialize(user);
 
