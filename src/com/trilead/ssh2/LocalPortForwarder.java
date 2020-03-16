@@ -60,4 +60,10 @@ public class LocalPortForwarder
 	{
 		lat.stopWorking();
 	}
+	
+    public int getLocalPort() 
+    {
+        return lat.getLocalPort();
+    }
+	
 }
