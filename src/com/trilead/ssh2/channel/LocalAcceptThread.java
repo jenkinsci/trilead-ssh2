@@ -132,4 +132,9 @@ public class LocalAcceptThread extends Thread implements IChannelWorkerThread
 		{
 		}
 	}
+	
+	public int getLocalPort() 
+	{
+		return ss.getLocalPort();
+	}
 }
