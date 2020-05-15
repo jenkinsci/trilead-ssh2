@@ -27,8 +27,17 @@ import java.util.List;
  */
 public class RSAKeyAlgorithm extends KeyAlgorithm<RSAPublicKey, RSAPrivateKey> {
 
+    public static final RSAKeyAlgorithm RSA_SHA_256 = new RSAKeyAlgorithm("SHA256withRSA", "rsa-sha2-256");
+    public static final RSAKeyAlgorithm RSA_SHA_512 = new RSAKeyAlgorithm("SHA512withRSA", "rsa-sha2-512");
+    public static final RSAKeyAlgorithm RSA_SHA_1 = new RSAKeyAlgorithm("SHA1WithRSA", "ssh-rsa");
+
+    private RSAKeyAlgorithm(String signatureAlgorithm, String keyFormat) {
+        super(signatureAlgorithm, keyFormat, RSAPrivateKey.class);
+    }
+
+    @Deprecated
     public RSAKeyAlgorithm() {
-        super("SHA1WithRSA", "ssh-rsa", RSAPrivateKey.class);
+        this("SHA1WithRSA", "ssh-rsa");
     }
 
     @Override
@@ -119,7 +128,7 @@ public class RSAKeyAlgorithm extends KeyAlgorithm<RSAPublicKey, RSAPrivateKey> {
 
     @Override
     public List<CertificateDecoder> getCertificateDecoders() {
-        return Arrays.asList(new RSACertificateDecoder(), new OpenSshCertificateDecoder("ssh-rsa") {
+        return Arrays.asList(new RSACertificateDecoder(), new OpenSshCertificateDecoder(getKeyFormat()) {
             @Override
             KeyPair generateKeyPair(TypesReader typesReader) throws GeneralSecurityException, IOException {
                 BigInteger n = typesReader.readMPINT();
