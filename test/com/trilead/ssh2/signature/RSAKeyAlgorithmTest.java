@@ -3,6 +3,8 @@ package com.trilead.ssh2.signature;
 import com.trilead.ssh2.crypto.PEMDecoder;
 import org.apache.commons.io.IOUtils;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -12,6 +14,8 @@ import java.security.KeyPairGenerator;
 import java.security.SecureRandom;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
+import java.util.Arrays;
+import java.util.Collection;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
@@ -21,11 +25,25 @@ import static org.junit.Assert.assertTrue;
 /**
  * @author Michael Clarke
  */
+@RunWith(Parameterized.class)
 public class RSAKeyAlgorithmTest {
+    @Parameterized.Parameters
+    public static Collection<Object[]> data() {
+        return Arrays.asList(
+                new Object[]{RSAKeyAlgorithm.RSA_SHA_1},
+                new Object[]{RSAKeyAlgorithm.RSA_SHA_256},
+                new Object[]{RSAKeyAlgorithm.RSA_SHA_512}
+        );
+    }
+
+    private final RSAKeyAlgorithm testCase;
+
+    public RSAKeyAlgorithmTest(RSAKeyAlgorithm testCase) {
+        this.testCase = testCase;
+    }
 
     @Test
     public void testEncodeDecodePublicKey() throws GeneralSecurityException, IOException {
-        RSAKeyAlgorithm testCase = RSAKeyAlgorithm.RSA_SHA_1;
         KeyPairGenerator factory = KeyPairGenerator.getInstance("RSA");
         RSAPublicKey publicKey = (RSAPublicKey) factory.generateKeyPair().getPublic();
         byte[] encoded = testCase.encodePublicKey(publicKey);
@@ -35,7 +53,6 @@ public class RSAKeyAlgorithmTest {
 
     @Test
     public void testEncodeDecodeSignature() throws GeneralSecurityException, IOException {
-        RSAKeyAlgorithm testCase = RSAKeyAlgorithm.RSA_SHA_1;
         KeyPairGenerator factory = KeyPairGenerator.getInstance("RSA");
         RSAPrivateKey privateKey = (RSAPrivateKey) factory.generateKeyPair().getPrivate();
         byte[] signature = testCase.generateSignature("Sign Me".getBytes(StandardCharsets.UTF_8), privateKey, new SecureRandom());
@@ -46,7 +63,6 @@ public class RSAKeyAlgorithmTest {
 
     @Test
     public void testSignAndVerify() throws GeneralSecurityException, IOException {
-        RSAKeyAlgorithm testCase = RSAKeyAlgorithm.RSA_SHA_1;
         byte[] message = "Signature Test".getBytes(StandardCharsets.UTF_8);
         KeyPairGenerator factory = KeyPairGenerator.getInstance("RSA");
         KeyPair keyPair = factory.generateKeyPair();
@@ -59,7 +75,6 @@ public class RSAKeyAlgorithmTest {
 
     @Test
     public void testSignAndVerifyFailure() throws GeneralSecurityException, IOException {
-        RSAKeyAlgorithm testCase = RSAKeyAlgorithm.RSA_SHA_1;
         byte[] message = "Signature Test 2".getBytes(StandardCharsets.UTF_8);
         KeyPairGenerator factory = KeyPairGenerator.getInstance("RSA");
         KeyPair keyPair = factory.generateKeyPair();
