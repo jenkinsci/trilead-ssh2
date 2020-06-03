@@ -37,6 +37,7 @@ import com.trilead.ssh2.transport.TransportManager;
 public class ChannelManager implements MessageHandler
 {
 	private static final Logger log = Logger.getLogger(ChannelManager.class);
+	private int DEFAULT_WAIT_TIMEOUT = 1000*60*2; //2min
 
 	private HashMap x11_magic_cookies = new HashMap();
 
@@ -107,7 +108,7 @@ public class ChannelManager implements MessageHandler
 			{
 				try
 				{
-					c.wait();
+					c.wait(DEFAULT_WAIT_TIMEOUT);
 				}
 				catch (InterruptedException ignore)
 				{
@@ -137,7 +138,7 @@ public class ChannelManager implements MessageHandler
 
 				try
 				{
-					channels.wait();
+					channels.wait(DEFAULT_WAIT_TIMEOUT);
 				}
 				catch (InterruptedException ignore)
 				{
@@ -169,7 +170,7 @@ public class ChannelManager implements MessageHandler
 
 				try
 				{
-					c.wait();
+					c.wait(DEFAULT_WAIT_TIMEOUT);
 				}
 				catch (InterruptedException ignore)
 				{
@@ -1517,7 +1518,7 @@ public class ChannelManager implements MessageHandler
                 Channel c = (Channel) channels.elementAt(i);
                 synchronized (c)
                 {
-                      c.eof();
+                    c.eof();
                     c.state = Channel.STATE_CLOSED;
                     c.setReasonClosed(new IOException("The connection is being shutdown").initCause(cause));
                     c.closeMessageRecv = true; /*
