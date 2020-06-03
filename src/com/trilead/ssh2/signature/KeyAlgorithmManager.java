@@ -39,7 +39,10 @@ public final class KeyAlgorithmManager {
         }
 
 
-        algorithms.add(new RSAKeyAlgorithm());
+        algorithms.add(RSAKeyAlgorithm.RSA_SHA_256);
+        algorithms.add(RSAKeyAlgorithm.RSA_SHA_512);
+        algorithms.add(RSAKeyAlgorithm.RSA_SHA_1);
+
         algorithms.add(new DSAKeyAlgorithm());
 
         return (Collection) Collections.unmodifiableCollection(algorithms);
