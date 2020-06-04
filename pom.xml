@@ -4,7 +4,7 @@
 
   <groupId>org.jenkins-ci</groupId>
   <artifactId>trilead-ssh2</artifactId>
-  <version>build-217-jenkins-21-SNAPSHOT</version>
+  <version>build-217-jenkins-21</version>
 
   <name>Ganymed SSH2 for Java</name>
   <description>Ganymed SSH2 for Java is a library which implements the SSH-2 protocol in pure Java</description>
@@ -33,7 +33,7 @@
     <connection>scm:git:git://github.com/jenkinsci/trilead-ssh2.git</connection>
     <developerConnection>scm:git:ssh://git@github.com/jenkinsci/trilead-ssh2.git</developerConnection>
     <url>https://github.com/jenkinsci/trilead-ssh2</url>
-    <tag>HEAD</tag>
+    <tag>trilead-ssh2-build-217-jenkins-21</tag>
   </scm>
   <distributionManagement>
     <repository>
