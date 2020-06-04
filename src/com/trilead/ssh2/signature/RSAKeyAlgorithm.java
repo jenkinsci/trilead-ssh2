@@ -27,8 +27,15 @@ import java.util.List;
  */
 public class RSAKeyAlgorithm extends KeyAlgorithm<RSAPublicKey, RSAPrivateKey> {
 
+    private static final String SSH_RSA = "ssh-rsa";
+
     public RSAKeyAlgorithm() {
-        super("SHA1WithRSA", "ssh-rsa", RSAPrivateKey.class);
+        this("SHA1WithRSA", SSH_RSA);
+    }
+
+    // https://tools.ietf.org/html/rfc8332
+    public RSAKeyAlgorithm(String signatureAlgorithm, String keyFormat) {
+        super(signatureAlgorithm, keyFormat, RSAPrivateKey.class);
     }
 
     @Override
@@ -86,7 +93,7 @@ public class RSAKeyAlgorithm extends KeyAlgorithm<RSAPublicKey, RSAPrivateKey> {
     public byte[] encodePublicKey(RSAPublicKey publicKey) throws IOException {
         final TypesWriter tw = new TypesWriter();
 
-        tw.writeString(getKeyFormat());
+        tw.writeString(SSH_RSA);
         tw.writeMPInt(publicKey.getPublicExponent());
         tw.writeMPInt(publicKey.getModulus());
 
@@ -98,7 +105,7 @@ public class RSAKeyAlgorithm extends KeyAlgorithm<RSAPublicKey, RSAPrivateKey> {
         final TypesReader tr = new TypesReader(encodedPublicKey);
 
         final String key_format = tr.readString();
-        if (!key_format.equals(getKeyFormat())) {
+        if (!key_format.equals(SSH_RSA)) {
             throw new IOWarningException("Unsupported key format found '" + key_format + "' while expecting " + getKeyFormat());
         }
 
@@ -119,7 +126,7 @@ public class RSAKeyAlgorithm extends KeyAlgorithm<RSAPublicKey, RSAPrivateKey> {
 
     @Override
     public List<CertificateDecoder> getCertificateDecoders() {
-        return Arrays.asList(new RSACertificateDecoder(), new OpenSshCertificateDecoder("ssh-rsa") {
+        return Arrays.asList(new RSACertificateDecoder(), new OpenSshCertificateDecoder(SSH_RSA) {
             @Override
             KeyPair generateKeyPair(TypesReader typesReader) throws GeneralSecurityException, IOException {
                 BigInteger n = typesReader.readMPINT();
