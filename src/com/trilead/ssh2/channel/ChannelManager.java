@@ -37,7 +37,8 @@ import com.trilead.ssh2.transport.TransportManager;
 public class ChannelManager implements MessageHandler
 {
 	private static final Logger log = Logger.getLogger(ChannelManager.class);
-	private static int DEFAULT_WAIT_TIMEOUT = 1000*60*2; //2min
+	private static final String PROPERTY_TIMEOUT = ChannelManager.class.getName() + ".timeout";
+	private static long DEFAULT_WAIT_TIMEOUT = Long.valueOf(System.getProperty(PROPERTY_TIMEOUT,"120000"));
 
 	private HashMap x11_magic_cookies = new HashMap();
 
