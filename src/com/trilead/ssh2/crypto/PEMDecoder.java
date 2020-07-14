@@ -1,24 +1,24 @@
 
 package com.trilead.ssh2.crypto;
 
-import java.io.BufferedReader;
-import java.io.CharArrayReader;
-import java.io.IOException;
-import java.math.BigInteger;
-import java.security.KeyPair;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
-import com.trilead.ssh2.crypto.cipher.AES;
-import com.trilead.ssh2.crypto.cipher.BlockCipher;
-import com.trilead.ssh2.crypto.cipher.CBCMode;
-import com.trilead.ssh2.crypto.cipher.DES;
-import com.trilead.ssh2.crypto.cipher.DESede;
-import com.trilead.ssh2.crypto.digest.MD5;
+import com.trilead.ssh2.crypto.cipher.JreCipherWrapper;
 import com.trilead.ssh2.signature.DSAPrivateKey;
 import com.trilead.ssh2.signature.KeyAlgorithm;
 import com.trilead.ssh2.signature.KeyAlgorithmManager;
 import com.trilead.ssh2.signature.RSAPrivateKey;
+
+import javax.crypto.spec.PBEKeySpec;
+import javax.crypto.spec.PBEParameterSpec;
+import java.io.BufferedReader;
+import java.io.CharArrayReader;
+import java.io.IOException;
+import java.math.BigInteger;
+import java.security.DigestException;
+import java.security.KeyPair;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * PEM Support.
@@ -73,13 +73,21 @@ public class PEMDecoder
 		return decoded;
 	}
 
+	/**
+	 * @deprecated Use PBE ciphers
+	 */
 	public static byte[] generateKeyFromPasswordSaltWithMD5(byte[] password, byte[] salt, int keyLen)
 			throws IOException
 	{
 		if (salt.length < 8)
 			throw new IllegalArgumentException("Salt needs to be at least 8 bytes for key generation.");
 
-		MD5 md5 = new MD5();
+		MessageDigest md5;
+		try {
+			md5 = MessageDigest.getInstance("MD5");
+		} catch (NoSuchAlgorithmException e) {
+			throw new IllegalArgumentException(e);
+		}
 
 		byte[] key = new byte[keyLen];
 		byte[] tmp = new byte[md5.getDigestLength()];
@@ -93,7 +101,11 @@ public class PEMDecoder
 
 			int copy = (keyLen < tmp.length) ? keyLen : tmp.length;
 
-			md5.digest(tmp, 0);
+			try {
+				md5.digest(tmp, 0, tmp.length);
+			} catch (DigestException e) {
+				throw new IllegalArgumentException(e);
+			}
 
 			System.arraycopy(tmp, 0, key, key.length - keyLen, copy);
 
@@ -323,7 +335,7 @@ public class PEMDecoder
 		return ps;
 	}
 
-	private static void decryptPEM(PEMStructure ps, byte[] pw) throws IOException
+	private static void decryptPEM(PEMStructure ps, char[] pw) throws IOException
 	{
 		if (ps.dekInfo == null)
 			throw new IOException("Broken PEM, no mode and salt given, but encryption enabled");
@@ -334,41 +346,31 @@ public class PEMDecoder
 		String algo = ps.dekInfo[0];
 		byte[] salt = hexToByteArray(ps.dekInfo[1]);
 
-		BlockCipher bc;
+		JreCipherWrapper bc;
 
-		if (algo.equals("DES-EDE3-CBC"))
-		{
-			DESede des3 = new DESede();
-			des3.init(false, generateKeyFromPasswordSaltWithMD5(pw, salt, 24));
-			bc = new CBCMode(des3, salt, false);
-		}
-		else if (algo.equals("DES-CBC"))
-		{
-			DES des = new DES();
-			des.init(false, generateKeyFromPasswordSaltWithMD5(pw, salt, 8));
-			bc = new CBCMode(des, salt, false);
-		}
-		else if (algo.equals("AES-128-CBC"))
-		{
-			AES aes = new AES();
-			aes.init(false, generateKeyFromPasswordSaltWithMD5(pw, salt, 16));
-			bc = new CBCMode(aes, salt, false);
-		}
-		else if (algo.equals("AES-192-CBC"))
-		{
-			AES aes = new AES();
-			aes.init(false, generateKeyFromPasswordSaltWithMD5(pw, salt, 24));
-			bc = new CBCMode(aes, salt, false);
-		}
-		else if (algo.equals("AES-256-CBC"))
-		{
-			AES aes = new AES();
-			aes.init(false, generateKeyFromPasswordSaltWithMD5(pw, salt, 32));
-			bc = new CBCMode(aes, salt, false);
-		}
-		else
-		{
-			throw new IOException("Cannot decrypt PEM structure, unknown cipher " + algo);
+		switch (algo) {
+			case "DES-EDE3-CBC":
+				bc = JreCipherWrapper.getInstance("PBEWithMD5AndDESede", new PBEParameterSpec(salt, 1));
+				bc.init(false, new PBEKeySpec(pw, salt, 1, 24));
+				break;
+			case "DES-CBC":
+				bc = JreCipherWrapper.getInstance("PBEWithMD5AndDES", new PBEParameterSpec(salt, 1));
+				bc.init(false, new PBEKeySpec(pw, salt, 1, 8));
+				break;
+			case "AES-128-CBC":
+				bc = JreCipherWrapper.getInstance("PBEWithMD5AndAES_128", new PBEParameterSpec(salt, 1));
+				bc.init(false, new PBEKeySpec(pw, salt, 1,16));
+				break;
+			case "AES-192-CBC":
+				bc = JreCipherWrapper.getInstance("PBEWithMD5AndAES_192", new PBEParameterSpec(salt, 1));
+				bc.init(false, new PBEKeySpec(pw, salt, 1, 24));
+				break;
+			case "AES-256-CBC":
+				bc = JreCipherWrapper.getInstance("PBEWithMD5AndAES_256", new PBEParameterSpec(salt, 1));
+				bc.init(false, new PBEKeySpec(pw, salt, 1, 32));
+				break;
+			default:
+				throw new IOException("Cannot decrypt PEM structure, unknown cipher " + algo);
 		}
 
 		if ((ps.data.length % bc.getBlockSize()) != 0)
@@ -417,7 +419,7 @@ public class PEMDecoder
 			if (password == null)
 				throw new IOException("PEM is encrypted, but no password was specified");
 
-			decryptPEM(ps, password.getBytes("ISO-8859-1"));
+			decryptPEM(ps, password.toCharArray());
 		}
 
 		if (ps.pemType == PEM_DSA_PRIVATE_KEY)
@@ -487,7 +489,7 @@ public class PEMDecoder
 						if (password == null)
 							throw new IOException("PEM is encrypted, but no password was specified");
 
-						decryptPEM(ps, password.getBytes("ISO-8859-1"));
+						decryptPEM(ps, password.toCharArray());
 					}
 
 					return decoder.createKeyPair(ps, password);

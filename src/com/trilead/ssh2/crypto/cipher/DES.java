@@ -32,7 +32,8 @@ package com.trilead.ssh2.crypto.cipher;
  * 
  * @author See comments in the source file
  * @version $Id: DES.java,v 1.1 2007/10/15 12:49:55 cplattne Exp $
- * 
+ * @deprecated Nobody should still be using DES for encryption. Use {@link javax.crypto.Cipher} instead for decryption.
+ * See <a href="https://issues.jenkins-ci.org/browse/JENKINS-62552">JENKINS-62552</a>.
  */
 public class DES implements BlockCipher
 {

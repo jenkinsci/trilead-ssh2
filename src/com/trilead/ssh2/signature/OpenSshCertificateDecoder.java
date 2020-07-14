@@ -4,14 +4,17 @@ import com.trilead.ssh2.crypto.CertificateDecoder;
 import com.trilead.ssh2.crypto.PEMStructure;
 import com.trilead.ssh2.crypto.cipher.BlockCipher;
 import com.trilead.ssh2.crypto.cipher.BlockCipherFactory;
-import com.trilead.ssh2.crypto.cipher.CBCMode;
-import com.trilead.ssh2.crypto.cipher.DES;
+import com.trilead.ssh2.crypto.cipher.JreCipherWrapper;
 import com.trilead.ssh2.packets.TypesReader;
 import org.mindrot.jbcrypt.BCrypt;
 
+import javax.crypto.spec.DESKeySpec;
+import javax.crypto.spec.DESedeKeySpec;
+import javax.crypto.spec.IvParameterSpec;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
+import java.security.InvalidKeyException;
 import java.security.KeyPair;
 
 /**
@@ -141,15 +144,25 @@ abstract class OpenSshCertificateDecoder extends CertificateDecoder {
         DESEDE_CBC(24, 8, "des-ede3-cbc") {
             @Override
             BlockCipher createBlockCipher(byte[] key, byte[] iv, boolean encrypt) {
-                return BlockCipherFactory.createCipher("3des-cbc", encrypt, key, iv);
+                JreCipherWrapper bc = JreCipherWrapper.getInstance("DESede/CBC/NoPadding", new IvParameterSpec(iv));
+                try {
+                    bc.init(encrypt, new DESedeKeySpec(key));
+                } catch (InvalidKeyException e) {
+                    throw new IllegalArgumentException(e);
+                }
+                return bc;
             }
         },
         DES_CBC(8, 8, "des-cbc") {
             @Override
             BlockCipher createBlockCipher(byte[] key, byte[] iv, boolean encrypt) {
-                DES des = new DES();
-                des.init(encrypt, key);
-                return new CBCMode(des, iv, encrypt);
+                JreCipherWrapper bc = JreCipherWrapper.getInstance("DES/CBC/NoPadding", new IvParameterSpec(iv));
+                try {
+                    bc.init(encrypt, new DESKeySpec(key));
+                } catch (InvalidKeyException e) {
+                    throw new IllegalArgumentException(e);
+                }
+                return bc;
             }
         },
         AES128_CBC(16, 16, "aes-128-cbc", "aes128-cbc") {
