@@ -15,11 +15,9 @@ import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.SecureRandom;
 import java.util.Collection;
+import java.util.List;
 import java.util.Vector;
-import java.util.concurrent.TimeUnit;
-
-import org.ietf.jgss.GSSContext;
-
+import java.util.stream.Collectors;
 
 /**
  * AuthenticationManager.
@@ -292,64 +290,57 @@ public class AuthenticationManager implements MessageHandler
 			KeyPair keyPair = PEMDecoder.decodeKeyPair(PEMPrivateKey, password);
 			PrivateKey key = keyPair.getPrivate();
 
-			boolean supportedKey = false;
+			List<KeyAlgorithm<PublicKey, PrivateKey>> candidateAlgorithms = KeyAlgorithmManager.getSupportedAlgorithms().stream()
+					.filter(alg -> alg.supportsKey(key))
+					.collect(Collectors.toList());
+			if (candidateAlgorithms.isEmpty()) {
+				throw new IOException("Unknown private key type returned by the PEM decoder.");
+			}
+			for (KeyAlgorithm<PublicKey, PrivateKey> algorithm : candidateAlgorithms) {
+				byte[] encodedKey = algorithm.encodePublicKey(keyPair.getPublic());
+				TypesWriter tw = new TypesWriter();
 
-			for (KeyAlgorithm<PublicKey, PrivateKey> algorithm : KeyAlgorithmManager.getSupportedAlgorithms()) {
-				if (algorithm.supportsKey(key)) {
+				byte[] H = tm.getSessionIdentifier();
 
-					byte[] encodedKey = algorithm.encodePublicKey(keyPair.getPublic());
-					TypesWriter tw = new TypesWriter();
+				tw.writeString(H, 0, H.length);
+				tw.writeByte(Packets.SSH_MSG_USERAUTH_REQUEST);
+				tw.writeString(user);
+				tw.writeString("ssh-connection");
+				tw.writeString("publickey");
+				tw.writeBoolean(true);
+				tw.writeString(algorithm.getKeyFormat());
+				tw.writeString(encodedKey, 0, encodedKey.length);
 
-					byte[] H = tm.getSessionIdentifier();
+				byte[] msg = tw.getBytes();
 
-					tw.writeString(H, 0, H.length);
-					tw.writeByte(Packets.SSH_MSG_USERAUTH_REQUEST);
-					tw.writeString(user);
-					tw.writeString("ssh-connection");
-					tw.writeString("publickey");
-					tw.writeBoolean(true);
-					tw.writeString(algorithm.getKeyFormat());
-					tw.writeString(encodedKey, 0, encodedKey.length);
+				byte[] ds = algorithm.generateSignature(msg, keyPair.getPrivate(), rnd);
 
-					byte[] msg = tw.getBytes();
+				byte[] ds_enc = algorithm.encodeSignature(ds);
 
-					byte[] ds = algorithm.generateSignature(msg, keyPair.getPrivate(), rnd);
+				PacketUserauthRequestPublicKey ua = new PacketUserauthRequestPublicKey("ssh-connection", user,
+						algorithm.getKeyFormat(), encodedKey, ds_enc);
+				tm.sendMessage(ua.getPayload());
 
-					byte[] ds_enc = algorithm.encodeSignature(ds);
+				byte[] ar = getNextMessage();
+				switch (ar[0]) {
+					case Packets.SSH_MSG_USERAUTH_SUCCESS:
+						authenticated = true;
+						tm.removeMessageHandler(this, 0, 255);
+						return true;
 
-					PacketUserauthRequestPublicKey ua = new PacketUserauthRequestPublicKey("ssh-connection", user,
-							algorithm.getKeyFormat(), encodedKey, ds_enc);
-					tm.sendMessage(ua.getPayload());
+					case Packets.SSH_MSG_USERAUTH_FAILURE:
+						PacketUserauthFailure puf = new PacketUserauthFailure(ar, 0, ar.length);
 
-					supportedKey = true;
-					break;
+						remainingMethods = puf.getAuthThatCanContinue();
+						isPartialSuccess = puf.isPartialSuccess();
+						break;
+
+					default:
+						throw new IOException("Unexpected SSH message (type " + Packets.getMessageName(ar[0]) + ")");
 				}
 			}
 
-			if (!supportedKey) {
-				throw new IOException("Unknown private key type returned by the PEM decoder.");
-			}
-
-			byte[] ar = getNextMessage();
-
-			if (ar[0] == Packets.SSH_MSG_USERAUTH_SUCCESS)
-			{
-				authenticated = true;
-				tm.removeMessageHandler(this, 0, 255);
-				return true;
-			}
-
-			if (ar[0] == Packets.SSH_MSG_USERAUTH_FAILURE)
-			{
-				PacketUserauthFailure puf = new PacketUserauthFailure(ar, 0, ar.length);
-
-				remainingMethods = puf.getAuthThatCanContinue();
-				isPartialSuccess = puf.isPartialSuccess();
-
-				return false;
-			}
-
-			throw new IOException("Unexpected SSH message (type " + ar[0] + ")");
+			return false;
 
 		}
 		catch (IOException e)
