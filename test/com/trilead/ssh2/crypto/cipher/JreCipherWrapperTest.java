@@ -49,4 +49,15 @@ public class JreCipherWrapperTest {
         }
         assertArrayEquals(plaintext, decrypted);
     }
+
+    @Test
+    public void testPBEWithMD5AndDESede() throws Exception {
+      SecureRandom rng = SecureRandom.getInstanceStrong();
+      byte[] iv = new byte[16];
+      rng.nextBytes(iv);
+      byte[] key = new byte[16];
+      rng.nextBytes(key);
+      JreCipherWrapper cipher = JreCipherWrapper.getInstance("PBEWithMD5AndTripleDES", new IvParameterSpec(iv));
+      JreCipherWrapper cipher1 = JreCipherWrapper.getInstance("DESede/CBC/PKCS5Padding", new IvParameterSpec(iv));
+    }
 }

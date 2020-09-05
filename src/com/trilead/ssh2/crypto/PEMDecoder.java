@@ -22,7 +22,7 @@ import java.util.logging.Logger;
 
 /**
  * PEM Support.
- * 
+ *
  * @author Christian Plattner, plattner@trilead.com
  * @version $Id: PEMDecoder.java,v 1.2 2008/04/01 12:38:09 cplattne Exp $
  */
@@ -350,7 +350,7 @@ public class PEMDecoder
 
 		switch (algo) {
 			case "DES-EDE3-CBC":
-				bc = JreCipherWrapper.getInstance("PBEWithMD5AndDESede", new PBEParameterSpec(salt, 1));
+				bc = JreCipherWrapper.getInstance("PBEWithMD5AndTripleDES", new PBEParameterSpec(salt, 1));
 				bc.init(false, new PBEKeySpec(pw, salt, 1, 24));
 				break;
 			case "DES-CBC":
