@@ -14,7 +14,7 @@ import java.util.Objects;
 public class PEMStructure
 {
 	int pemType;
-	public String[] dekInfo;
+	String[] dekInfo;
 	String procType[];
 	byte[] data;
 

@@ -55,50 +55,6 @@ public class JreCipherWrapperTest {
     }
 
     @Test
-    public void testSupportedCiphersAvailable() throws Exception {
-        char[] des_cbc = IOUtils.toCharArray(getClass().getResourceAsStream("des_cbc.pem"));
-        char[] des_ede3_cbc = IOUtils.toCharArray(getClass().getResourceAsStream("des_ede3_cbc.pem"));
-        char[] aes128_cbc = IOUtils.toCharArray(getClass().getResourceAsStream("aes128_cbc.pem"));
-        char[] aes192_cbc = IOUtils.toCharArray(getClass().getResourceAsStream("aes192_cbc.pem"));
-        char[] aes256_cbc = IOUtils.toCharArray(getClass().getResourceAsStream("aes256_cbc.pem"));
-        char[] unencrypted = IOUtils.toCharArray(getClass().getResourceAsStream("key.pem"));
-        String password = "password";
-
-        PEMStructure psOrg = PEMDecoder.parsePEM(unencrypted);
-        LOGGER.info(psOrg.toString());
-
-        PEMStructure ps = PEMDecoder.parsePEM(des_cbc);
-        LOGGER.info(ps.toString());
-        PEMDecoder.decryptPEM(ps, password);
-        PEMDecoder.decodeKeyPair(des_cbc, password);
-        assertEquals(psOrg, ps);
-
-        ps = PEMDecoder.parsePEM(des_ede3_cbc);
-        LOGGER.info(ps.toString());
-        PEMDecoder.decryptPEM(ps, password);
-        PEMDecoder.decodeKeyPair(des_ede3_cbc, password);
-        assertEquals(psOrg, ps);
-
-        ps = PEMDecoder.parsePEM(aes128_cbc);
-        LOGGER.info(ps.toString());
-        PEMDecoder.decryptPEM(ps, password);
-        PEMDecoder.decodeKeyPair(aes128_cbc, password);
-        assertEquals(psOrg, ps);
-
-        ps = PEMDecoder.parsePEM(aes192_cbc);
-        LOGGER.info(ps.toString());
-        PEMDecoder.decryptPEM(ps, password);
-        PEMDecoder.decodeKeyPair(aes192_cbc, password);
-        assertEquals(psOrg, ps);
-
-        ps = PEMDecoder.parsePEM(aes256_cbc);
-        LOGGER.info(ps.toString());
-        PEMDecoder.decryptPEM(ps, password);
-        PEMDecoder.decodeKeyPair(aes256_cbc, password);
-        assertEquals(psOrg, ps);
-    }
-
-    @Test
     public void testEncryptedKeyDES() throws Exception {
         char[] des_cbc = IOUtils.toCharArray(getClass().getResourceAsStream("des_cbc.pem"));
         char[] unencrypted = IOUtils.toCharArray(getClass().getResourceAsStream("key.pem"));
