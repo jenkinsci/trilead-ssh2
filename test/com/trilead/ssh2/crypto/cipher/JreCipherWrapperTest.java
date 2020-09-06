@@ -1,17 +1,21 @@
 package com.trilead.ssh2.crypto.cipher;
 
-import org.junit.Test;
-
+import java.security.SecureRandom;
+import java.util.Arrays;
+import java.util.logging.Logger;
 import javax.crypto.Cipher;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
-import java.security.SecureRandom;
-import java.util.Arrays;
-
+import com.trilead.ssh2.crypto.PEMDecoder;
+import com.trilead.ssh2.crypto.PEMStructure;
+import org.apache.commons.io.IOUtils;
+import org.junit.Test;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 
 public class JreCipherWrapperTest {
+    Logger LOGGER = Logger.getLogger(JreCipherWrapperTest.class.getName());
+
     @Test
     public void shouldMatchJreBehavior() throws Exception {
         SecureRandom rng = SecureRandom.getInstanceStrong();
@@ -51,13 +55,126 @@ public class JreCipherWrapperTest {
     }
 
     @Test
-    public void testPBEWithMD5AndDESede() throws Exception {
-      SecureRandom rng = SecureRandom.getInstanceStrong();
-      byte[] iv = new byte[16];
-      rng.nextBytes(iv);
-      byte[] key = new byte[16];
-      rng.nextBytes(key);
-      JreCipherWrapper cipher = JreCipherWrapper.getInstance("PBEWithMD5AndTripleDES", new IvParameterSpec(iv));
-      JreCipherWrapper cipher1 = JreCipherWrapper.getInstance("DESede/CBC/PKCS5Padding", new IvParameterSpec(iv));
+    public void testSupportedCiphersAvailable() throws Exception {
+        char[] des_cbc = IOUtils.toCharArray(getClass().getResourceAsStream("des_cbc.pem"));
+        char[] des_ede3_cbc = IOUtils.toCharArray(getClass().getResourceAsStream("des_ede3_cbc.pem"));
+        char[] aes128_cbc = IOUtils.toCharArray(getClass().getResourceAsStream("aes128_cbc.pem"));
+        char[] aes192_cbc = IOUtils.toCharArray(getClass().getResourceAsStream("aes192_cbc.pem"));
+        char[] aes256_cbc = IOUtils.toCharArray(getClass().getResourceAsStream("aes256_cbc.pem"));
+        char[] unencrypted = IOUtils.toCharArray(getClass().getResourceAsStream("key.pem"));
+        String password = "password";
+
+        PEMStructure psOrg = PEMDecoder.parsePEM(unencrypted);
+        LOGGER.info(psOrg.toString());
+
+        PEMStructure ps = PEMDecoder.parsePEM(des_cbc);
+        LOGGER.info(ps.toString());
+        PEMDecoder.decryptPEM(ps, password);
+        PEMDecoder.decodeKeyPair(des_cbc, password);
+        assertEquals(psOrg, ps);
+
+        ps = PEMDecoder.parsePEM(des_ede3_cbc);
+        LOGGER.info(ps.toString());
+        PEMDecoder.decryptPEM(ps, password);
+        PEMDecoder.decodeKeyPair(des_ede3_cbc, password);
+        assertEquals(psOrg, ps);
+
+        ps = PEMDecoder.parsePEM(aes128_cbc);
+        LOGGER.info(ps.toString());
+        PEMDecoder.decryptPEM(ps, password);
+        PEMDecoder.decodeKeyPair(aes128_cbc, password);
+        assertEquals(psOrg, ps);
+
+        ps = PEMDecoder.parsePEM(aes192_cbc);
+        LOGGER.info(ps.toString());
+        PEMDecoder.decryptPEM(ps, password);
+        PEMDecoder.decodeKeyPair(aes192_cbc, password);
+        assertEquals(psOrg, ps);
+
+        ps = PEMDecoder.parsePEM(aes256_cbc);
+        LOGGER.info(ps.toString());
+        PEMDecoder.decryptPEM(ps, password);
+        PEMDecoder.decodeKeyPair(aes256_cbc, password);
+        assertEquals(psOrg, ps);
+    }
+
+    @Test
+    public void testEncryptedKeyDES() throws Exception {
+        char[] des_cbc = IOUtils.toCharArray(getClass().getResourceAsStream("des_cbc.pem"));
+        char[] unencrypted = IOUtils.toCharArray(getClass().getResourceAsStream("key.pem"));
+        String password = "password";
+
+        PEMStructure psOrg = PEMDecoder.parsePEM(unencrypted);
+        LOGGER.info(psOrg.toString());
+
+        PEMStructure ps = PEMDecoder.parsePEM(des_cbc);
+        LOGGER.info(ps.toString());
+        PEMDecoder.decryptPEM(ps, password);
+        PEMDecoder.decodeKeyPair(des_cbc, password);
+        assertEquals(psOrg, ps);
+    }
+
+    @Test
+    public void testEncryptedKeyTripleDES() throws Exception {
+        char[] des_ede3_cbc = IOUtils.toCharArray(getClass().getResourceAsStream("des_ede3_cbc.pem"));
+        char[] unencrypted = IOUtils.toCharArray(getClass().getResourceAsStream("key.pem"));
+        String password = "password";
+
+        PEMStructure psOrg = PEMDecoder.parsePEM(unencrypted);
+        LOGGER.info(psOrg.toString());
+
+        PEMStructure ps = PEMDecoder.parsePEM(des_ede3_cbc);
+        LOGGER.info(ps.toString());
+        PEMDecoder.decryptPEM(ps, password);
+        PEMDecoder.decodeKeyPair(des_ede3_cbc, password);
+        assertEquals(psOrg, ps);
+    }
+
+    @Test
+    public void testEncryptedKeyAES128() throws Exception {
+        char[] aes128_cbc = IOUtils.toCharArray(getClass().getResourceAsStream("aes128_cbc.pem"));
+        char[] unencrypted = IOUtils.toCharArray(getClass().getResourceAsStream("key.pem"));
+        String password = "password";
+
+        PEMStructure psOrg = PEMDecoder.parsePEM(unencrypted);
+        LOGGER.info(psOrg.toString());
+
+        PEMStructure ps = PEMDecoder.parsePEM(aes128_cbc);
+        LOGGER.info(ps.toString());
+        PEMDecoder.decryptPEM(ps, password);
+        PEMDecoder.decodeKeyPair(aes128_cbc, password);
+        assertEquals(psOrg, ps);
+    }
+
+    @Test
+    public void testEncryptedKeyAES192() throws Exception {
+        char[] aes192_cbc = IOUtils.toCharArray(getClass().getResourceAsStream("aes192_cbc.pem"));
+        char[] unencrypted = IOUtils.toCharArray(getClass().getResourceAsStream("key.pem"));
+        String password = "password";
+
+        PEMStructure psOrg = PEMDecoder.parsePEM(unencrypted);
+        LOGGER.info(psOrg.toString());
+
+        PEMStructure ps = PEMDecoder.parsePEM(aes192_cbc);
+        LOGGER.info(ps.toString());
+        PEMDecoder.decryptPEM(ps, password);
+        PEMDecoder.decodeKeyPair(aes192_cbc, password);
+        assertEquals(psOrg, ps);
+    }
+
+    @Test
+    public void testEncryptedKeyAES256() throws Exception {
+        char[] aes256_cbc = IOUtils.toCharArray(getClass().getResourceAsStream("aes256_cbc.pem"));
+        char[] unencrypted = IOUtils.toCharArray(getClass().getResourceAsStream("key.pem"));
+        String password = "password";
+
+        PEMStructure psOrg = PEMDecoder.parsePEM(unencrypted);
+        LOGGER.info(psOrg.toString());
+
+        PEMStructure ps = PEMDecoder.parsePEM(aes256_cbc);
+        LOGGER.info(ps.toString());
+        PEMDecoder.decryptPEM(ps, password);
+        PEMDecoder.decodeKeyPair(aes256_cbc, password);
+        assertEquals(psOrg, ps);
     }
 }
