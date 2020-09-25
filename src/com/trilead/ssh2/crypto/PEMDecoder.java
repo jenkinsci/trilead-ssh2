@@ -1,28 +1,35 @@
 
 package com.trilead.ssh2.crypto;
 
-import com.trilead.ssh2.crypto.cipher.JreCipherWrapper;
 import com.trilead.ssh2.signature.DSAPrivateKey;
 import com.trilead.ssh2.signature.KeyAlgorithm;
 import com.trilead.ssh2.signature.KeyAlgorithmManager;
 import com.trilead.ssh2.signature.RSAPrivateKey;
 
-import javax.crypto.spec.PBEKeySpec;
-import javax.crypto.spec.PBEParameterSpec;
+import javax.crypto.BadPaddingException;
+import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
+import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
 import java.io.BufferedReader;
 import java.io.CharArrayReader;
 import java.io.IOException;
 import java.math.BigInteger;
-import java.security.DigestException;
+import java.nio.charset.StandardCharsets;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
 import java.security.KeyPair;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Base64;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 /**
  * PEM Support.
- * 
+ *
  * @author Christian Plattner, plattner@trilead.com
  * @version $Id: PEMDecoder.java,v 1.2 2008/04/01 12:38:09 cplattne Exp $
  */
@@ -32,6 +39,11 @@ public class PEMDecoder
 	private static final int PEM_RSA_PRIVATE_KEY = 1;
 	private static final int PEM_DSA_PRIVATE_KEY = 2;
 
+	/**
+	 * convert an hexadecimal digit in a char (0-9A-F) to a int.
+	 * @param c hexadecimal digit.
+	 * @return int value of the hexadecimal digit.
+	 */
 	private static int hexToInt(char c)
 	{
 		if ((c >= 'a') && (c <= 'f'))
@@ -52,7 +64,12 @@ public class PEMDecoder
 		throw new IllegalArgumentException("Need hex char");
 	}
 
-	private static byte[] hexToByteArray(String hex)
+	/**
+	 * convert an hexadecimal number in a string to its bytes.
+	 * @param hex hexadecimal number in a string.
+	 * @return Array of bytes.
+	 */
+	public static byte[] hexToByteArray(String hex)
 	{
 		if (hex == null)
 			throw new IllegalArgumentException("null argument");
@@ -74,71 +91,12 @@ public class PEMDecoder
 	}
 
 	/**
-	 * @deprecated Use PBE ciphers
+	 * Process a PEM file and construct a PEMStructure. It works with RSA and DSA keys.
+	 * @param pem PEM file content.
+	 * @return PEMStructure with the PEM file data parsed.
+	 * @throws IOException
 	 */
-	public static byte[] generateKeyFromPasswordSaltWithMD5(byte[] password, byte[] salt, int keyLen)
-			throws IOException
-	{
-		if (salt.length < 8)
-			throw new IllegalArgumentException("Salt needs to be at least 8 bytes for key generation.");
-
-		MessageDigest md5;
-		try {
-			md5 = MessageDigest.getInstance("MD5");
-		} catch (NoSuchAlgorithmException e) {
-			throw new IllegalArgumentException(e);
-		}
-
-		byte[] key = new byte[keyLen];
-		byte[] tmp = new byte[md5.getDigestLength()];
-
-		while (true)
-		{
-			md5.update(password, 0, password.length);
-			md5.update(salt, 0, 8); // ARGH we only use the first 8 bytes of the
-			// salt in this step.
-			// This took me two hours until I got AES-xxx running.
-
-			int copy = (keyLen < tmp.length) ? keyLen : tmp.length;
-
-			try {
-				md5.digest(tmp, 0, tmp.length);
-			} catch (DigestException e) {
-				throw new IllegalArgumentException(e);
-			}
-
-			System.arraycopy(tmp, 0, key, key.length - keyLen, copy);
-
-			keyLen -= copy;
-
-			if (keyLen == 0)
-				return key;
-
-			md5.update(tmp, 0, tmp.length);
-		}
-	}
-
-	private static byte[] removePadding(byte[] buff, int blockSize) throws IOException
-	{
-		/* Removes RFC 1423/PKCS #7 padding */
-
-		int rfc_1423_padding = buff[buff.length - 1] & 0xff;
-
-		if ((rfc_1423_padding < 1) || (rfc_1423_padding > blockSize))
-			throw new IOException("Decrypted PEM has wrong padding, did you specify the correct password?");
-
-		for (int i = 2; i <= rfc_1423_padding; i++)
-		{
-			if (buff[buff.length - i] != rfc_1423_padding)
-				throw new IOException("Decrypted PEM has wrong padding, did you specify the correct password?");
-		}
-
-		byte[] tmp = new byte[buff.length - rfc_1423_padding];
-		System.arraycopy(buff, 0, tmp, 0, buff.length - rfc_1423_padding);
-		return tmp;
-	}
-
-	private static PEMStructure parsePEM(char[] pem) throws IOException
+	public static PEMStructure parsePEM(char[] pem) throws IOException
 	{
 		PEMStructure ps = new PEMStructure();
 
@@ -172,66 +130,7 @@ public class PEMDecoder
 			}
 		}
 
-		while (true)
-		{
-			line = br.readLine();
-
-			if (line == null)
-				throw new IOException("Invalid PEM structure, " + endLine + " missing");
-
-			line = line.trim();
-
-			int sem_idx = line.indexOf(':');
-
-			if (sem_idx == -1)
-				break;
-
-			String name = line.substring(0, sem_idx + 1);
-			String value = line.substring(sem_idx + 1);
-
-			String values[] = value.split(",");
-
-			for (int i = 0; i < values.length; i++)
-				values[i] = values[i].trim();
-
-			// Proc-Type: 4,ENCRYPTED
-			// DEK-Info: DES-EDE3-CBC,579B6BE3E5C60483
-
-			if ("Proc-Type:".equals(name))
-			{
-				ps.procType = values;
-				continue;
-			}
-
-			if ("DEK-Info:".equals(name))
-			{
-				ps.dekInfo = values;
-				continue;
-			}
-			/* Ignore line */
-		}
-
-		StringBuilder keyData = new StringBuilder();
-
-		while (true)
-		{
-			if (line == null)
-				throw new IOException("Invalid PEM structure, " + endLine + " missing");
-
-			line = line.trim();
-
-			if (line.startsWith(endLine))
-				break;
-
-			keyData.append(line);
-
-			line = br.readLine();
-		}
-
-		char[] pem_chars = new char[keyData.length()];
-		keyData.getChars(0, pem_chars.length, pem_chars, 0);
-
-		ps.data = Base64.decode(pem_chars);
+		parsePEMContent(ps, br, endLine);
 
 		if (ps.data.length == 0)
 			throw new IOException("Invalid PEM structure, no data available");
@@ -239,8 +138,14 @@ public class PEMDecoder
 		return ps;
 	}
 
-
-
+	/**
+	 * Process a PEM file and construct a PEMStructure. It works for all Key format that has a CertificateDecoder
+	 * implemented.
+	 * @param pem PEM file content.
+	 * @param certificateDecoder Decoder class for the Key format.
+	 * @return PEMStructure with the PEM file data parsed.
+	 * @throws IOException
+	 */
 	private static PEMStructure parsePEM(char[] pem, CertificateDecoder certificateDecoder) throws IOException
 	{
 		PEMStructure ps = new PEMStructure();
@@ -250,7 +155,6 @@ public class PEMDecoder
 		BufferedReader br = new BufferedReader(new CharArrayReader(pem));
 
 		String endLine;
-
 		while (true)
 		{
 			line = br.readLine();
@@ -265,11 +169,26 @@ public class PEMDecoder
 				endLine = certificateDecoder.getEndLine();
 				break;
 			}
-
 		}
 
-		while (true)
-		{
+		parsePEMContent(ps, br, endLine);
+
+		if (ps.data.length == 0)
+			throw new IOException("Invalid PEM structure, no data available");
+
+		return ps;
+	}
+
+	/**
+	 *
+	 * @param ps PEMStructure structure to load the PEM data.
+	 * @param br BufferedReader from the PEM file.
+	 * @param endLine Endline string that mark the end of the key in the PEM file ("-----END.*")
+	 * @throws IOException
+	 */
+	private static void parsePEMContent(PEMStructure ps, BufferedReader br, String endLine) throws IOException {
+		String line;
+		while (true) {
 			line = br.readLine();
 
 			if (line == null)
@@ -293,14 +212,12 @@ public class PEMDecoder
 			// Proc-Type: 4,ENCRYPTED
 			// DEK-Info: DES-EDE3-CBC,579B6BE3E5C60483
 
-			if ("Proc-Type:".equals(name))
-			{
+			if ("Proc-Type:".equals(name)) {
 				ps.procType = values;
 				continue;
 			}
 
-			if ("DEK-Info:".equals(name))
-			{
+			if ("DEK-Info:".equals(name)) {
 				ps.dekInfo = values;
 				continue;
 			}
@@ -309,8 +226,7 @@ public class PEMDecoder
 
 		StringBuilder keyData = new StringBuilder();
 
-		while (true)
-		{
+		while (true) {
 			if (line == null)
 				throw new IOException("Invalid PEM structure, " + endLine + " missing");
 
@@ -324,18 +240,16 @@ public class PEMDecoder
 			line = br.readLine();
 		}
 
-		char[] pem_chars = new char[keyData.length()];
-		keyData.getChars(0, pem_chars.length, pem_chars, 0);
-
-		ps.data = Base64.decode(pem_chars);
-
-		if (ps.data.length == 0)
-			throw new IOException("Invalid PEM structure, no data available");
-
-		return ps;
+		ps.data = Base64.getDecoder().decode(keyData.toString().replaceAll("\\s", ""));
 	}
 
-	private static void decryptPEM(PEMStructure ps, char[] pw) throws IOException
+	/**
+	 * Decrypt a key in a PEMStructure and store the unencrypted key decrypted in the PEMStructure.
+	 * @param ps PEMStructure structure to load the PEM data.
+	 * @param password password to decrypt the Key.
+	 * @throws IOException
+	 */
+	public static void decryptPEM(PEMStructure ps, String password) throws IOException
 	{
 		if (ps.dekInfo == null)
 			throw new IOException("Broken PEM, no mode and salt given, but encryption enabled");
@@ -343,58 +257,96 @@ public class PEMDecoder
 		if (ps.dekInfo.length != 2)
 			throw new IOException("Broken PEM, DEK-Info is incomplete!");
 
-		String algo = ps.dekInfo[0];
-		byte[] salt = hexToByteArray(ps.dekInfo[1]);
+		Cipher cipher;
+		String transformation;
+		byte[] key;
+		SecretKeySpec secretKey;
+		byte[] pw = password.getBytes(StandardCharsets.UTF_8);
+		String encryptionAlgorithm = ps.dekInfo[0];
+		byte[] iv = hexToByteArray(ps.dekInfo[1]);
 
-		JreCipherWrapper bc;
+		MessageDigest digest = null;
+		try {
+			digest = MessageDigest.getInstance("MD5");
+		} catch (NoSuchAlgorithmException e) {
+			throw new IOException(e);
+		}
 
-		switch (algo) {
+		// we need to come up with the encryption key
+
+		// first round digest based on password and first 8-bytes of IV ..
+		digest.update(pw);
+		digest.update(iv, 0, 8);
+
+		byte[] round1Digest = digest.digest(); // The digest is reset after this call is made.
+
+		// second round digest based on first round digest, password, and first 8-bytes of IV ...
+		digest.update(round1Digest);
+		digest.update(pw);
+		digest.update(iv, 0, 8);
+
+		byte[] round2Digest = digest.digest();
+
+		switch (encryptionAlgorithm) {
 			case "DES-EDE3-CBC":
-				bc = JreCipherWrapper.getInstance("PBEWithMD5AndDESede", new PBEParameterSpec(salt, 1));
-				bc.init(false, new PBEKeySpec(pw, salt, 1, 24));
+				transformation = "DESede/CBC/PKCS5Padding";
+				key = new byte[24]; // key size of 24 bytes
+				System.arraycopy(round1Digest, 0, key, 0, 16);
+				System.arraycopy(round2Digest, 0, key, 16, 8);
+				secretKey = new SecretKeySpec(key, "DESede");
 				break;
 			case "DES-CBC":
-				bc = JreCipherWrapper.getInstance("PBEWithMD5AndDES", new PBEParameterSpec(salt, 1));
-				bc.init(false, new PBEKeySpec(pw, salt, 1, 8));
+				transformation = "DES/CBC/PKCS5Padding";
+				key = new byte[8]; // key size of 8 bytes
+				System.arraycopy(round1Digest, 0, key, 0, 8);
+				secretKey = new SecretKeySpec(key, "DES");
 				break;
 			case "AES-128-CBC":
-				bc = JreCipherWrapper.getInstance("PBEWithMD5AndAES_128", new PBEParameterSpec(salt, 1));
-				bc.init(false, new PBEKeySpec(pw, salt, 1,16));
+				transformation = "AES/CBC/PKCS5Padding";
+				key = new byte[16]; // 128 bit key
+				System.arraycopy(round1Digest, 0, key, 0, 16);
+				secretKey = new SecretKeySpec(key, "AES");
 				break;
 			case "AES-192-CBC":
-				bc = JreCipherWrapper.getInstance("PBEWithMD5AndAES_192", new PBEParameterSpec(salt, 1));
-				bc.init(false, new PBEKeySpec(pw, salt, 1, 24));
+				transformation = "AES/CBC/PKCS5Padding";
+				key = new byte[24]; // key size of 24 bytes
+				System.arraycopy(round1Digest, 0, key, 0, 16);
+				System.arraycopy(round2Digest, 0, key, 16, 8);
+				secretKey = new SecretKeySpec(key, "AES");
 				break;
 			case "AES-256-CBC":
-				bc = JreCipherWrapper.getInstance("PBEWithMD5AndAES_256", new PBEParameterSpec(salt, 1));
-				bc.init(false, new PBEKeySpec(pw, salt, 1, 32));
+				transformation = "AES/CBC/PKCS5Padding";
+				key = new byte[32]; // 256 bit key  (block size still 128-bit)
+				System.arraycopy(round1Digest, 0, key, 0, 16);
+				System.arraycopy(round2Digest, 0, key, 16, 16);
+				secretKey = new SecretKeySpec(key, "AES");
 				break;
 			default:
-				throw new IOException("Cannot decrypt PEM structure, unknown cipher " + algo);
+				throw new IOException("Cannot decrypt PEM structure, unknown cipher " + encryptionAlgorithm);
+		}
+		try {
+			cipher = Cipher.getInstance(transformation);
+			cipher.init(Cipher.DECRYPT_MODE, secretKey, new IvParameterSpec(iv));
+			ps.data = cipher.doFinal(ps.data);
+		} catch (IllegalBlockSizeException
+				| BadPaddingException
+				| InvalidKeyException
+				| InvalidAlgorithmParameterException
+				| NoSuchAlgorithmException
+				| NoSuchPaddingException e) {
+			new IOException(e);
 		}
 
-		if ((ps.data.length % bc.getBlockSize()) != 0)
-			throw new IOException("Invalid PEM structure, size of encrypted block is not a multiple of "
-					+ bc.getBlockSize());
-
-		/* Now decrypt the content */
-
-		byte[] dz = new byte[ps.data.length];
-
-		for (int i = 0; i < ps.data.length / bc.getBlockSize(); i++)
-		{
-			bc.transformBlock(ps.data, i * bc.getBlockSize(), dz, i * bc.getBlockSize());
-		}
-
-		/* Now check and remove RFC 1423/PKCS #7 padding */
-
-		dz = removePadding(dz, bc.getBlockSize());
-
-		ps.data = dz;
 		ps.dekInfo = null;
 		ps.procType = null;
 	}
 
+	/**
+	 * Check if a Key is encrypted.
+	 * @param ps PEMStructure structure to load the PEM data.
+	 * @return true if it is encrypted.
+	 * @throws IOException
+	 */
 	public static boolean isPEMEncrypted(PEMStructure ps) throws IOException
 	{
 		if (ps.procType == null)
@@ -409,9 +361,16 @@ public class PEMDecoder
 		return ("ENCRYPTED".equals(ps.procType[1]));
 	}
 
+	/**
+	 * return a RSA or a DSA Key from a PEM data.
+	 * @deprecated use PEMDecoder.decodeKeyPair
+	 */
 	@Deprecated
 	public static Object decode(char[] pem, String password) throws IOException
 	{
+		LOGGER.warning("com.trilead.ssh2.cryptoPEMDecoder.decode method is deprecated, "
+		               + "use com.trilead.ssh2"
+		               + ".cryptoPEMDecoder.decodeKeyPair instead.");
 		PEMStructure ps = parsePEM(pem);
 
 		if (isPEMEncrypted(ps))
@@ -419,7 +378,7 @@ public class PEMDecoder
 			if (password == null)
 				throw new IOException("PEM is encrypted, but no password was specified");
 
-			decryptPEM(ps, password.toCharArray());
+			decryptPEM(ps, password);
 		}
 
 		if (ps.pemType == PEM_DSA_PRIVATE_KEY)
@@ -476,7 +435,13 @@ public class PEMDecoder
 		throw new IOException("PEM problem: it is of unknown type");
 	}
 
-
+	/**
+	 * Extract a key pair from a PEM file.
+	 * @param pem PEMStructure structure to load the PEM data.
+	 * @param password password to decrypt the Key.
+	 * @return keypair from the PEM file.
+	 * @throws IOException
+	 */
 	public static KeyPair decodeKeyPair(char[] pem, String password) throws IOException
 	{
 
@@ -489,17 +454,21 @@ public class PEMDecoder
 						if (password == null)
 							throw new IOException("PEM is encrypted, but no password was specified");
 
-						decryptPEM(ps, password.toCharArray());
+						decryptPEM(ps, password);
 					}
 
 					return decoder.createKeyPair(ps, password);
 				} catch (IOException ex) {
-					LOGGER.log(Level.FINE, "Could not decode PEM Key using current decoder: " + decoder.getClass().getName(), ex);
+					LOGGER.log(Level.FINE,
+					           "Could not decode PEM Key using current decoder: " + decoder.getClass().getName(), ex);
 					// we couldn't decode the input, try another decoder
 				}
 			}
 		}
-		throw new IOException("PEM problem: it is of unknown type");
+		throw new IOException("PEM problem: it is of unknown type. Supported algorithms are :"
+		                      + KeyAlgorithmManager.getSupportedAlgorithms().stream()
+	                               .map(c -> c.getKeyFormat())
+	                               .collect(Collectors.toList()).toString());
 	}
 
 }
