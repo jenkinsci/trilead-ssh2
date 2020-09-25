@@ -362,7 +362,7 @@ public class PEMDecoder
 	}
 
 	/**
-	 * return a RSD or a DSA Key from a PEM data.
+	 * return a RSA or a DSA Key from a PEM data.
 	 * @deprecated use PEMDecoder.decodeKeyPair
 	 */
 	@Deprecated
