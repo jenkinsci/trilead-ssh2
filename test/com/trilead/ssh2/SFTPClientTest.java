@@ -10,6 +10,7 @@ import org.testcontainers.containers.GenericContainer;
 import java.io.InputStream;
 import java.io.OutputStream;
 
+import org.junit.Ignore;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
