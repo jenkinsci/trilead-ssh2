@@ -37,9 +37,9 @@
   </developers>
 
   <scm>
-    <connection>scm:git:git://github.com/jenkinsci/trilead-ssh2.git</connection>
-    <developerConnection>scm:git:ssh://git@github.com/jenkinsci/trilead-ssh2.git</developerConnection>
-    <url>https://github.com/jenkinsci/trilead-ssh2</url>
+    <connection>scm:git:git://github.com/${githubRepo}.git</connection>
+    <developerConnection>scm:git:ssh://git@github.com/${githubRepo}.git</developerConnection>
+    <url>https://github.com/${githubRepo}</url>
     <tag>${scmTag}</tag>
   </scm>
 
@@ -112,6 +112,7 @@
   <properties>
     <revision>build-217-jenkins-25</revision>
     <changelist>-SNAPSHOT</changelist>
+    <gitHubRepo>jenkinsci/trilead-ssh2</gitHubRepo>
     <java.level>8</java.level>
   </properties>
 
