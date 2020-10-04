@@ -13,7 +13,7 @@ public class JreCipherWrapperTest {
 
     @Test
     public void shouldMatchJreBehavior() throws Exception {
-        SecureRandom rng = SecureRandom.getInstanceStrong();
+        SecureRandom rng = new SecureRandom();
         byte[] iv = new byte[16];
         rng.nextBytes(iv);
         byte[] key = new byte[16];

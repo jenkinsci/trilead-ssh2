@@ -55,7 +55,7 @@
       <url>https://repo.jenkins-ci.org/public/</url>
     </pluginRepository>
   </pluginRepositories>
-  
+
   <dependencies>
     <dependency>
       <groupId>commons-io</groupId>
