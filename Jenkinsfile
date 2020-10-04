@@ -25,7 +25,6 @@ pipeline {
                     ]
 
                     infra.runMaven(mavenOptions, jdk)
-                    infra.prepareToPublishIncrementals()
                 }
              }
              post {
