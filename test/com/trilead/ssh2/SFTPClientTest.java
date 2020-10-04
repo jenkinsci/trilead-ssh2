@@ -5,7 +5,6 @@ import com.trilead.ssh2.jenkins.SFTPClient;
 import org.apache.commons.io.IOUtils;
 import org.junit.Rule;
 import org.junit.Test;
-import org.testcontainers.containers.GenericContainer;
 
 import java.io.InputStream;
 import java.io.OutputStream;
