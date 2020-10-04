@@ -12,7 +12,6 @@ import java.io.OutputStream;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-@org.junit.Ignore
 public class SFTPClientTest {
     public static final String TMP_TEST = "/tmp/test";
     public static final String PATH_FILE = TMP_TEST + "/file";

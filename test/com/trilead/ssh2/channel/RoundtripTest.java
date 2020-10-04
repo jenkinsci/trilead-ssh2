@@ -16,7 +16,6 @@ import java.util.concurrent.Future;
 /**
  * @author Kohsuke Kawaguchi
  */
-@org.junit.Ignore
 public class RoundtripTest {
     @Rule
     public ConnectionRule con = new ConnectionRule();
