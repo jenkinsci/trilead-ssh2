@@ -35,7 +35,9 @@ pipeline {
                      junit(allowEmptyResults: true,
                          keepLongStdio: true,
                          testResults: "**/target/surefire-reports/**/*.xml")
-                     infra.maybePublishIncrementals()
+                     script {
+                        infra.maybePublishIncrementals()
+                     }
                  }
              }
         }
