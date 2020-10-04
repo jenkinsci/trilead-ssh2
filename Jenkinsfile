@@ -26,17 +26,17 @@ pipeline {
 
                     infra.runMaven(mavenOptions, jdk)
                     infra.prepareToPublishIncrementals()
-                    infra.maybePublishIncrementals()
                 }
              }
              post {
                  always {
                      archiveArtifacts(allowEmptyArchive: true,
-                         artifacts: "**/target/*.jar",
+                         artifacts: "**/target/trilead*.jar",
                          onlyIfSuccessful: false)
                      junit(allowEmptyResults: true,
                          keepLongStdio: true,
                          testResults: "**/target/surefire-reports/**/*.xml")
+                     infra.maybePublishIncrementals()
                  }
              }
         }
