@@ -19,6 +19,7 @@ pipeline {
                             '-Dmaven.test.failure.ignore',
                             "-Dfindbugs.failOnError=false",
                             "-Dset.changelist",
+                            "-Djava.security.egd=file:/dev/./urandom",
                             "clean install",
                             "findbugs:findbugs"
                     ]
