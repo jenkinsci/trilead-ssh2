@@ -10,6 +10,7 @@ import java.util.concurrent.TimeUnit;
  *
  * @author Kohsuke Kawaguchi
  */
+@org.junit.Ignore
 public class Sender {
     public static void main(String[] args) throws Exception {
         Connection connection = new ConnectionRule().getConnection();

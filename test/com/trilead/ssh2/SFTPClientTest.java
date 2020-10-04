@@ -9,10 +9,10 @@ import org.junit.Test;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-import org.junit.Ignore;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+@org.junit.Ignore
 public class SFTPClientTest {
     public static final String TMP_TEST = "/tmp/test";
     public static final String PATH_FILE = TMP_TEST + "/file";

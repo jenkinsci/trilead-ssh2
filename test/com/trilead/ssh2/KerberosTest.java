@@ -17,6 +17,7 @@ import static org.junit.Assert.assertTrue;
 
     @author Kuisathaverat
  */
+@org.junit.Ignore
 public class KerberosTest {
 
     @Before

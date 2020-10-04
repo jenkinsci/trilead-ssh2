@@ -21,6 +21,7 @@ import static org.junit.Assert.assertTrue;
 /**
  * @author Michael Clarke
  */
+@org.junit.Ignore
 public class DSAKeyAlgorithmTest {
 
     @Test

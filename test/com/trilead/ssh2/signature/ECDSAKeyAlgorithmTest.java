@@ -25,6 +25,7 @@ import static org.junit.Assert.assertTrue;
 /**
  * @author Michael Clarke
  */
+@org.junit.Ignore
 @RunWith(Parameterized.class)
 public class ECDSAKeyAlgorithmTest {
 

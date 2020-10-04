@@ -22,6 +22,7 @@ import static org.junit.Assert.assertTrue;
 /**
  * @author Michael Clarke
  */
+@org.junit.Ignore
 public class ED25519KeyAlgorithmTest {
 
     @Test
