@@ -18,11 +18,14 @@ pipeline {
                             "-Dmaven.repo.local=$m2repo",
                             '-Dmaven.test.failure.ignore',
                             "-Dfindbugs.failOnError=false",
+                            "-Dset.changelist",
                             "clean install",
                             "findbugs:findbugs"
                     ]
 
                     infra.runMaven(mavenOptions, jdk)
+                    infra.prepareToPublishIncrementals()
+                    infra.maybePublishIncrementals()
                 }
              }
              post {

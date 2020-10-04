@@ -2,9 +2,16 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
+  <parent>
+      <groupId>org.jenkins-ci</groupId>
+      <artifactId>jenkins</artifactId>
+      <version>1.57</version>
+      <relativePath />
+  </parent>
+
   <groupId>org.jenkins-ci</groupId>
   <artifactId>trilead-ssh2</artifactId>
-  <version>build-217-jenkins-25-SNAPSHOT</version>
+  <version>${revision}${changelist}</version>
 
   <name>Ganymed SSH2 for Java</name>
   <description>Ganymed SSH2 for Java is a library which implements the SSH-2 protocol in pure Java</description>
@@ -12,7 +19,7 @@
   <licenses>
     <license>
       <name>BSD style license</name>
-      <url>http://www.ganymed.ethz.ch/ssh2/LICENSE.txt</url>        
+      <url>http://www.ganymed.ethz.ch/ssh2/LICENSE.txt</url>
     </license>
   </licenses>
 
@@ -30,31 +37,13 @@
   </developers>
 
   <scm>
-    <connection>scm:git:git://github.com/jenkinsci/trilead-ssh2.git</connection>
-    <developerConnection>scm:git:ssh://git@github.com/jenkinsci/trilead-ssh2.git</developerConnection>
-    <url>https://github.com/jenkinsci/trilead-ssh2</url>
-    <tag>HEAD</tag>
+    <connection>scm:git:git://github.com/${githubRepo}.git</connection>
+    <developerConnection>scm:git:ssh://git@github.com/${githubRepo}.git</developerConnection>
+    <url>https://github.com/${githubRepo}</url>
+    <tag>${scmTag}</tag>
   </scm>
-  <distributionManagement>
-    <repository>
-      <id>maven.jenkins-ci.org</id>
-      <url>https://repo.jenkins-ci.org/releases/</url>
-    </repository>
-    <snapshotRepository>
-      <id>maven.jenkins-ci.org</id>
-      <url>https://repo.jenkins-ci.org/snapshots/</url>
-    </snapshotRepository>
-  </distributionManagement>
-
-  <repositories>
-    <repository>
-      <id>repo.jenkins-ci.org</id>
-      <url>https://repo.jenkins-ci.org/public/</url>
-    </repository>
-  </repositories>
 
   <dependencies>
-
     <dependency>
       <groupId>commons-io</groupId>
       <artifactId>commons-io</artifactId>
@@ -101,15 +90,30 @@
     </testResources>
     <plugins>
       <plugin>
-        <artifactId>maven-release-plugin</artifactId>
-        <version>2.5</version>
+          <artifactId>maven-enforcer-plugin</artifactId>
+          <executions>
+              <execution>
+                  <id>display-info</id>
+                  <configuration>
+                      <rules>
+                          <enforceBytecodeVersion>
+                              <excludes combine.children="append">
+                                  <exclude>org.connectbot.jbcrypt</exclude>
+                              </excludes>
+                          </enforceBytecodeVersion>
+                      </rules>
+                  </configuration>
+              </execution>
+          </executions>
       </plugin>
     </plugins>
   </build>
 
   <properties>
-    <maven.compiler.source>1.8</maven.compiler.source>
-    <maven.compiler.target>1.8</maven.compiler.target>
+    <revision>build-217-jenkins-25</revision>
+    <changelist>-SNAPSHOT</changelist>
+    <gitHubRepo>jenkinsci/trilead-ssh2</gitHubRepo>
+    <java.level>8</java.level>
   </properties>
 
 </project>
