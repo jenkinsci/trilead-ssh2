@@ -105,13 +105,161 @@
         <version>2.5</version>
       </plugin>
     </plugins>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>io.jenkins.tools.incrementals</groupId>
+          <artifactId>incrementals-maven-plugin</artifactId>
+          <version>${incrementals-plugin.version}</version>
+          <configuration>
+            <includes>
+              <include>org.jenkins-ci.*</include>
+              <include>io.jenkins.*</include>
+            </includes>
+            <generateBackupPoms>false</generateBackupPoms>
+            <updateNonincremental>false</updateNonincremental>
+          </configuration>
+        </plugin>
+      </plugins>
+    </pluginManagement>
   </build>
 
   <properties>
     <revision>build-217-jenkins-25</revision>
     <changelist>-SNAPSHOT</changelist>
+    <scmTag>HEAD</scmTag>
+    <incrementals-enforce-minimum.version>1.1</incrementals-enforce-minimum.version>
+    <incrementals-plugin.version>1.1</incrementals-plugin.version>
+    <incrementals.url>https://repo.jenkins-ci.org/incrementals/</incrementals.url>
     <maven.compiler.source>1.8</maven.compiler.source>
     <maven.compiler.target>1.8</maven.compiler.target>
   </properties>
 
+  <profiles>
+     <profile> <!-- see JEP-305 -->
+       <id>consume-incrementals</id>
+       <repositories>
+         <repository>
+           <id>incrementals</id>
+           <url>${incrementals.url}</url>
+           <snapshots>
+             <enabled>false</enabled>
+           </snapshots>
+         </repository>
+       </repositories>
+       <pluginRepositories>
+         <pluginRepository>
+           <id>incrementals</id>
+           <url>${incrementals.url}</url>
+           <snapshots>
+             <enabled>false</enabled>
+           </snapshots>
+         </pluginRepository>
+       </pluginRepositories>
+     </profile>
+     <profile>
+       <id>might-produce-incrementals</id>
+       <build>
+         <plugins>
+           <plugin>
+             <groupId>org.codehaus.mojo</groupId>
+             <artifactId>flatten-maven-plugin</artifactId>
+             <version>1.0.1</version>
+             <configuration>
+               <updatePomFile>true</updatePomFile>
+               <outputDirectory>${project.build.directory}</outputDirectory>
+               <flattenedPomFilename>${project.artifactId}-${project.version}.pom</flattenedPomFilename>
+             </configuration>
+             <executions>
+               <execution>
+                 <id>flatten</id>
+                 <phase>process-resources</phase>
+                 <goals>
+                   <goal>flatten</goal>
+                 </goals>
+                 <configuration>
+                     <flattenMode>oss</flattenMode>
+                 </configuration>
+               </execution>
+             </executions>
+           </plugin>
+           <plugin>
+             <artifactId>maven-enforcer-plugin</artifactId>
+             <version>3.0.0-M2</version>
+             <executions>
+               <execution>
+                 <id>display-info</id>
+                 <configuration>
+                   <rules>
+                     <requireMavenVersion>
+                       <version>[3.5.4,)</version>
+                       <message>3.5.4+ required to use Incrementals.</message>
+                     </requireMavenVersion>
+                     <rule implementation="io.jenkins.tools.incrementals.enforcer.RequireExtensionVersion">
+                       <version>[${incrementals-enforce-minimum.version},)</version>
+                     </rule>
+                   </rules>
+                 </configuration>
+               </execution>
+             </executions>
+             <dependencies>
+               <dependency>
+                 <groupId>io.jenkins.tools.incrementals</groupId>
+                 <artifactId>incrementals-enforcer-rules</artifactId>
+                 <version>${incrementals-plugin.version}</version>
+               </dependency>
+             </dependencies>
+           </plugin>
+           <plugin>
+             <artifactId>maven-release-plugin</artifactId>
+             <configuration>
+               <completionGoals>incrementals:reincrementalify</completionGoals>
+             </configuration>
+           </plugin>
+         </plugins>
+       </build>
+     </profile>
+     <profile>
+       <id>produce-incrementals</id>
+       <activation>
+         <property>
+           <name>set.changelist</name>
+           <value>true</value>
+         </property>
+       </activation>
+       <distributionManagement>
+         <repository>
+           <id>incrementals</id>
+           <url>${incrementals.url}</url>
+         </repository>
+       </distributionManagement>
+       <build>
+         <plugins>
+           <plugin>
+             <artifactId>maven-source-plugin</artifactId>
+             <version>3.0.1</version>
+             <executions>
+               <execution>
+                 <id>attach-sources</id>
+                 <goals>
+                   <goal>jar-no-fork</goal>
+                 </goals>
+               </execution>
+             </executions>
+           </plugin>
+           <plugin>
+             <artifactId>maven-javadoc-plugin</artifactId>
+             <executions>
+               <execution>
+                 <id>attach-javadocs</id>
+                 <goals>
+                   <goal>jar</goal>
+                 </goals>
+               </execution>
+             </executions>
+           </plugin>
+         </plugins>
+       </build>
+     </profile>
+   </profiles>
 </project>
