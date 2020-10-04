@@ -3,7 +3,6 @@ package com.trilead.ssh2.channel;
 import com.trilead.ssh2.Session;
 import org.apache.commons.io.IOUtils;
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -17,7 +16,6 @@ import java.util.concurrent.Future;
 /**
  * @author Kohsuke Kawaguchi
  */
-
 public class RoundtripTest {
     @Rule
     public ConnectionRule con = new ConnectionRule();

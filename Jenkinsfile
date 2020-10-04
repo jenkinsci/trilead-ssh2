@@ -19,23 +19,25 @@ pipeline {
                             '-Dmaven.test.failure.ignore',
                             "-Dfindbugs.failOnError=false",
                             "-Dset.changelist",
+                            "-Djava.security.egd=file:/dev/./urandom",
                             "clean install",
                             "findbugs:findbugs"
                     ]
 
                     infra.runMaven(mavenOptions, jdk)
-                    infra.prepareToPublishIncrementals()
-                    infra.maybePublishIncrementals()
                 }
              }
              post {
                  always {
                      archiveArtifacts(allowEmptyArchive: true,
-                         artifacts: "**/target/*.jar",
+                         artifacts: "**/target/trilead*.jar",
                          onlyIfSuccessful: false)
                      junit(allowEmptyResults: true,
                          keepLongStdio: true,
                          testResults: "**/target/surefire-reports/**/*.xml")
+                     script {
+                        infra.maybePublishIncrementals()
+                     }
                  }
              }
         }

@@ -6,7 +6,6 @@
       <groupId>org.jenkins-ci</groupId>
       <artifactId>jenkins</artifactId>
       <version>1.57</version>
-      <relativePath />
   </parent>
 
   <groupId>org.jenkins-ci</groupId>
@@ -42,6 +41,20 @@
     <url>https://github.com/${githubRepo}</url>
     <tag>${scmTag}</tag>
   </scm>
+
+  <repositories>
+    <repository>
+      <id>repo.jenkins-ci.org</id>
+      <url>https://repo.jenkins-ci.org/public/</url>
+    </repository>
+  </repositories>
+
+  <pluginRepositories>
+    <pluginRepository>
+      <id>repo.jenkins-ci.org</id>
+      <url>https://repo.jenkins-ci.org/public/</url>
+    </pluginRepository>
+  </pluginRepositories>
 
   <dependencies>
     <dependency>
