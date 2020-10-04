@@ -31,7 +31,7 @@ pipeline {
                  always {
                     /*
                      archiveArtifacts(allowEmptyArchive: true,
-                         artifacts: "**/target/trilead*.jar",
+                         artifacts: "** /target/trilead*.jar",
                          onlyIfSuccessful: false)
                      */
                      junit(allowEmptyResults: true,
