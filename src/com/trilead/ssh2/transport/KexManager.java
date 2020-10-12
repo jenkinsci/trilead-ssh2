@@ -293,9 +293,9 @@ public class KexManager implements MessageHandler
 			mac = new MessageMac(kxs.np.mac_algo_client_to_server, km.integrity_key_client_to_server);
 
 		}
-		catch (IllegalArgumentException e1)
+		catch (IllegalArgumentException e)
 		{
-			throw new IOException("Fatal error during MAC startup!");
+			throw new IOException("Fatal error during MAC startup!", e);
 		}
 
 		tm.changeSendCipher(cbc, mac);
