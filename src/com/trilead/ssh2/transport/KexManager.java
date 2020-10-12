@@ -295,7 +295,7 @@ public class KexManager implements MessageHandler
 		}
 		catch (IllegalArgumentException e1)
 		{
-			throw new IOException("Fatal error during MAC startup!");
+			throw new IOException("Fatal error during MAC startup!", e1);
 		}
 
 		tm.changeSendCipher(cbc, mac);
