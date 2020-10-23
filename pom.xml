@@ -123,7 +123,7 @@
   </build>
 
   <properties>
-    <revision>build-217-jenkins-25</revision>
+    <revision>build-217-jenkins-26</revision>
     <changelist>-SNAPSHOT</changelist>
     <gitHubRepo>jenkinsci/trilead-ssh2</gitHubRepo>
     <java.level>8</java.level>
