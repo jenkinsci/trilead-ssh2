@@ -32,8 +32,7 @@ package com.trilead.ssh2.crypto.cipher;
  * 
  * @author See comments in the source file
  * @version $Id: DESede.java,v 1.1 2007/10/15 12:49:55 cplattne Exp $
- * @deprecated Use {@link javax.crypto.Cipher} instead.
- * See <a href="https://issues.jenkins-ci.org/browse/JENKINS-62552">JENKINS-62552</a>.
+ * 
  */
 public class DESede extends DES
 {

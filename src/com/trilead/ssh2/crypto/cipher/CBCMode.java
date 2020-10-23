@@ -5,8 +5,6 @@ package com.trilead.ssh2.crypto.cipher;
  * 
  * @author Christian Plattner, plattner@trilead.com
  * @version $Id: CBCMode.java,v 1.1 2007/10/15 12:49:55 cplattne Exp $
- * @deprecated Use {@link javax.crypto.Cipher} with the {@code CBC} transformation mode instead.
- * See <a href="https://issues.jenkins-ci.org/browse/JENKINS-62552">JENKINS-62552</a>.
  */
 public class CBCMode implements BlockCipher
 {
