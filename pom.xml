@@ -37,7 +37,7 @@
 
   <scm>
     <connection>scm:git:git://github.com/${githubRepo}.git</connection>
-    <developerConnection>scm:git:ssh://git@github.com/${githubRepo}.git</developerConnection>
+    <developerConnection>scm:git:git@github.com:${githubRepo}.git</developerConnection>
     <url>https://github.com/${githubRepo}</url>
     <tag>${scmTag}</tag>
   </scm>
