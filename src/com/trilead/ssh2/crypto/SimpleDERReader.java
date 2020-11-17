@@ -66,7 +66,7 @@ public class SimpleDERReader
 		return count;
 	}
 
-	private int readLength() throws IOException
+	int readLength() throws IOException
 	{
 		int len = readByte() & 0xff;
 

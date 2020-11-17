@@ -10,7 +10,7 @@ import com.trilead.ssh2.crypto.digest.HashForSSH2Types;
 
 /**
  * DhGroupExchange.
- * 
+ *
  * @author Christian Plattner, plattner@trilead.com
  * @version $Id: DhGroupExchange.java,v 1.1 2007/10/15 12:49:57 cplattne Exp $
  */
@@ -34,19 +34,10 @@ public class DhGroupExchange
 
 	private BigInteger k;
 
-	private final String hashAlgorithm;
-
-	@Deprecated
-	public DhGroupExchange(BigInteger p, BigInteger g) {
-		this("SHA1", p, g);
-	}
-
-
-	public DhGroupExchange(String algorithm, BigInteger p, BigInteger g)
+	public DhGroupExchange(BigInteger p, BigInteger g)
 	{
 		this.p = p;
 		this.g = g;
-		this.hashAlgorithm = algorithm;
 	}
 
 	public void init(SecureRandom rnd)
@@ -81,7 +72,6 @@ public class DhGroupExchange
 
 	/**
 	 * Sets f and calculates the shared secret.
-	 * @param f f.
 	 */
 	public void setF(BigInteger f)
 	{
@@ -97,10 +87,10 @@ public class DhGroupExchange
 		this.k = f.modPow(x, p);
 	}
 
-	public byte[] calculateH(byte[] clientversion, byte[] serverversion, byte[] clientKexPayload,
-			byte[] serverKexPayload, byte[] hostKey, DHGexParameters para)
+	public byte[] calculateH(String hashAlgo, byte[] clientversion, byte[] serverversion,
+			byte[] clientKexPayload, byte[] serverKexPayload, byte[] hostKey, DHGexParameters para)
 	{
-		HashForSSH2Types hash = new HashForSSH2Types(getHashAlgorithm());
+		HashForSSH2Types hash = new HashForSSH2Types(hashAlgo);
 
 		hash.updateByteString(clientversion);
 		hash.updateByteString(serverversion);
@@ -119,9 +109,5 @@ public class DhGroupExchange
 		hash.updateBigInt(k);
 
 		return hash.getDigest();
-	}
-
-	public String getHashAlgorithm() {
-		return hashAlgorithm;
 	}
 }
