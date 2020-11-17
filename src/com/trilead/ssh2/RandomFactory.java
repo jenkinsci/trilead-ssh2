@@ -8,8 +8,8 @@ import java.security.SecureRandom;
  *
  * @author Kohsuke Kawaguchi
  */
-class RandomFactory {
-    static SecureRandom create() {
+public class RandomFactory {
+    public static SecureRandom create() {
         try {
             // JENKINS-20108
             // on Unix, "new SecureRandom()" uses NativePRNG that uses a VM-wide lock, which results in
