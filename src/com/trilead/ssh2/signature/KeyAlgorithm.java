@@ -65,12 +65,14 @@ public abstract class KeyAlgorithm<U extends PublicKey, R extends PrivateKey> {
 
     public abstract byte[] encodePublicKey(U publicKey) throws IOException;
 
-    public abstract U decodePublicKey(byte[] encodedPublicKey) throws IOException;
+    public abstract PublicKey decodePublicKey(byte[] encodedPublicKey) throws IOException;
 
     public abstract List<CertificateDecoder> getCertificateDecoders();
 
     public boolean supportsKey(PrivateKey key) {
         return keyType.isAssignableFrom(key.getClass());
     }
+
+ 
 
 }

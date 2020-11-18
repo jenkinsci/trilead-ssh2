@@ -36,22 +36,25 @@ public class EcDhExchange extends GenericDhExchange {
 	@Override
 	public void init(String name) throws IOException {
 		final ECParameterSpec spec;
-
-		if ("ecdh-sha2-nistp256".equals(name)) {
-		    ecdsKeyAlgorithm = new ECDSAKeyAlgorithm.ECDSASha2Nistp256();
-		    spec = ecdsKeyAlgorithm.getEcParameterSpec();
-			
-		} else if ("ecdh-sha2-nistp384".equals(name)) {
-		    ecdsKeyAlgorithm = new ECDSAKeyAlgorithm.ECDSASha2Nistp384();
-			spec = ecdsKeyAlgorithm.getEcParameterSpec();
-			
-		} else if ("ecdh-sha2-nistp521".equals(name)) {
-		     ecdsKeyAlgorithm = new ECDSAKeyAlgorithm.ECDSASha2Nistp521();
-		    spec = ecdsKeyAlgorithm.getEcParameterSpec();
-		} else {
-			throw new IllegalArgumentException("Unknown EC curve " + name);
+		
+		switch (name) {
+      case "ecdh-sha2-nistp256":
+          ecdsKeyAlgorithm = new ECDSAKeyAlgorithm.ECDSASha2Nistp256();
+          spec = ecdsKeyAlgorithm.getEcParameterSpec();
+        break;
+      case "ecdh-sha2-nistp384":
+          ecdsKeyAlgorithm = new ECDSAKeyAlgorithm.ECDSASha2Nistp384();
+          spec = ecdsKeyAlgorithm.getEcParameterSpec();
+          break;
+      case "ecdh-sha2-nistp521":
+          ecdsKeyAlgorithm = new ECDSAKeyAlgorithm.ECDSASha2Nistp521();
+          spec = ecdsKeyAlgorithm.getEcParameterSpec();
+          break;    
+      default:
+          throw new IllegalArgumentException("Unknown EC curve " + name);
 		}
-
+		
+		
 		KeyPairGenerator kpg;
 		try {
 			kpg = KeyPairGenerator.getInstance("EC");

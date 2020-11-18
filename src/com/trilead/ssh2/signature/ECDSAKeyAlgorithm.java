@@ -275,6 +275,8 @@ public abstract class ECDSAKeyAlgorithm extends KeyAlgorithm<ECPublicKey, ECPriv
 
 
     public static class ECDSASha2Nistp256 extends ECDSAKeyAlgorithm {
+        private static final String NISTP256 = "nistp256";
+        private static final String KEY_FORMAT = ECDSA_SHA2_PREFIX + NISTP256;
 
         public ECDSASha2Nistp256() {
             super("SHA256withECDSA", "nistp256",
@@ -299,6 +301,10 @@ public abstract class ECDSAKeyAlgorithm extends KeyAlgorithm<ECPublicKey, ECPriv
                     new OpenSshEcdsaCertificateDecoder(getKeyFormat(), getCurveName(), getEcParameterSpec()));
         }
 
+        @Override
+        public String getKeyFormat() {
+            return KEY_FORMAT;
+        }    
     @Override
     public String getDigestAlgorithm() {
         return "SHA-256";
@@ -306,6 +312,8 @@ public abstract class ECDSAKeyAlgorithm extends KeyAlgorithm<ECPublicKey, ECPriv
     }
 
     public static class ECDSASha2Nistp384 extends ECDSAKeyAlgorithm {
+        private static final String NISTP384 = "nistp384";
+        private static final String KEY_FORMAT = ECDSA_SHA2_PREFIX + NISTP384;
 
         public ECDSASha2Nistp384() {
             super("SHA384withECDSA", "nistp384",
@@ -331,12 +339,19 @@ public abstract class ECDSAKeyAlgorithm extends KeyAlgorithm<ECPublicKey, ECPriv
         }
         
         @Override
+        public String getKeyFormat() {
+            return KEY_FORMAT;
+        }   
+        
+        @Override
         public String getDigestAlgorithm() {
             return "SHA-384";
         }
     }
 
     public static class ECDSASha2Nistp521 extends ECDSAKeyAlgorithm {
+        private static final String NISTP521 = "nistp521";
+        private static final String KEY_FORMAT = ECDSA_SHA2_PREFIX + NISTP521;
 
         public ECDSASha2Nistp521() {
             super("SHA512withECDSA", "nistp521",
@@ -359,6 +374,11 @@ public abstract class ECDSAKeyAlgorithm extends KeyAlgorithm<ECPublicKey, ECPriv
         public List<CertificateDecoder> getCertificateDecoders() {
             return Arrays.asList(new EcdsaCertificateDecoder("1.3.132.0.35", getEcParameterSpec()),
                     new OpenSshEcdsaCertificateDecoder(getKeyFormat(), getCurveName(), getEcParameterSpec()));
+        }
+        
+        @Override
+        public String getKeyFormat() {
+            return KEY_FORMAT;
         }
         
         @Override

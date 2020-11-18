@@ -368,12 +368,7 @@ public class KexManager implements MessageHandler
         }
     }
     
-  
-   
-    
-    //TODO: if (supportsEc)   KEX_ALGS.add(Curve25519Exchange.NAME);
-    //KEX_ALGS.add(Curve25519Exchange.ALT_NAME);
-  
+
 	public static String[] getDefaultKexAlgorithmList()
 	{
 		return new String[] { "diffie-hellman-group-exchange-sha256", "diffie-hellman-group-exchange-sha1",
@@ -467,7 +462,7 @@ public class KexManager implements MessageHandler
 			}
 
 			if (kxs.np.kex_algo.equals("diffie-hellman-group-exchange-sha1")
-					|| kxs.np.kex_algo.equals("diffie-hellman-group-exchange-sha256"))
+			        || kxs.np.kex_algo.equals("diffie-hellman-group-exchange-sha256"))
 			{
 				if (kxs.dhgexParameters.getMin_group_len() == 0)
 				{
@@ -503,10 +498,11 @@ public class KexManager implements MessageHandler
 			    
 			    kxs.dhx = GenericDhExchange.getInstance(kxs.np.kex_algo);
 			    kxs.dhx.init(kxs.np.kex_algo);
+			    kxs.setHashAlgorithm(kxs.dhx.getHashAlgo());
 			    PacketKexDHInit kp = new PacketKexDHInit(kxs.dhx.getE());
 			    tm.sendKexMessage(kp.getPayload());
 				kxs.state = 1;
-				kxs.setHashAlgorithm(kxs.dhx.getHashAlgo());
+				
 				return;
 			}
 

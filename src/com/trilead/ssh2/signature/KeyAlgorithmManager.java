@@ -38,10 +38,7 @@ public final class KeyAlgorithmManager {
             // we don't use ECDSA algorithms in this case
         }
 
-        // https://tools.ietf.org/html/rfc8332
-        algorithms.add(new RSAKeyAlgorithm("SHA256withRSA", "rsa-sha2-256"));
-        algorithms.add(new RSAKeyAlgorithm("SHA512withRSA", "rsa-sha2-512"));
-        // TODO: remove SHA-1 support soon
+       // TODO: remove SHA-1 support soon
         algorithms.add(new RSAKeyAlgorithm());
         algorithms.add(new DSAKeyAlgorithm());
 

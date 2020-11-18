@@ -1,6 +1,3 @@
-/**
- *
- */
 package com.trilead.ssh2.crypto.dh;
 
 import javax.crypto.KeyAgreement;
@@ -18,10 +15,12 @@ import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
 
-/**
- * @author kenny
- *
- */
+/** 
+* DhExchange.
+*
+* @author Christian Plattner, plattner@trilead.com, kenny
+* @version $Id: DhExchange.java,v 1.2 2008/04/01 12:38:09 cplattne Exp $
+*/
 public class DhExchange extends GenericDhExchange {
 
 	/* Given by the standard */
@@ -130,40 +129,46 @@ public class DhExchange extends GenericDhExchange {
 
 	private DHPublicKey serverPublic;
 
-	@Override
-	public void init(String name) throws IOException {
-		final DHParameterSpec spec;
-		if ("diffie-hellman-group18-sha512".equals(name)) {
-			spec = new DHParameterSpec(P18, G);
-			hashAlgo = "SHA-512";
-		} else if ("diffie-hellman-group16-sha512".equals(name)) {
-			spec = new DHParameterSpec(P16, G);
-			hashAlgo = "SHA-512";
-		} else if ("diffie-hellman-group14-sha256".equals(name)) {
-			spec = new DHParameterSpec(P14, G);
-			hashAlgo = "SHA-256";
-		} else if ("diffie-hellman-group14-sha1".equals(name)) {
-			spec = new DHParameterSpec(P14, G);
-			hashAlgo = "SHA-1";
-		} else if ("diffie-hellman-group1-sha1".equals(name)) {
-			spec = new DHParameterSpec(P1, G);
-			hashAlgo = "SHA-1";
-		} else {
-			throw new IllegalArgumentException("Unknown DH group " + name);
-		}
+  @Override
+  public void init(String name) throws IOException {
+    final DHParameterSpec spec;
+    switch (name) {
+      case "diffie-hellman-group18-sha512":
+        spec = new DHParameterSpec(P18, G);
+        hashAlgo = "SHA-512";
+        break;
+      case "diffie-hellman-group16-sha512":
+        spec = new DHParameterSpec(P16, G);
+        hashAlgo = "SHA-512";
+        break;
+      case "diffie-hellman-group14-sha256":
+        spec = new DHParameterSpec(P14, G);
+        hashAlgo = "SHA-256";
+        break;
+      case "diffie-hellman-group14-sha1":
+        spec = new DHParameterSpec(P14, G);
+        hashAlgo = "SHA-1";
+        break;
+      case "diffie-hellman-group1-sha1":
+        spec = new DHParameterSpec(P1, G);
+        hashAlgo = "SHA-1";
+        break;
+      default:
+        throw new IllegalArgumentException("Unknown DH group " + name);
+    }
 
-		try {
-			KeyPairGenerator kpg = KeyPairGenerator.getInstance("DH");
-			kpg.initialize(spec);
-			KeyPair pair = kpg.generateKeyPair();
-			clientPrivate = (DHPrivateKey) pair.getPrivate();
-			clientPublic = (DHPublicKey) pair.getPublic();
-		} catch (NoSuchAlgorithmException e) {
-			throw new IOException("No DH keypair generator", e);
-		} catch (InvalidAlgorithmParameterException e) {
-			throw new IOException("Invalid DH parameters", e);
-		}
-	}
+    try {
+      KeyPairGenerator kpg = KeyPairGenerator.getInstance("DH");
+      kpg.initialize(spec);
+      KeyPair pair = kpg.generateKeyPair();
+      clientPrivate = (DHPrivateKey) pair.getPrivate();
+      clientPublic = (DHPublicKey) pair.getPublic();
+    } catch (NoSuchAlgorithmException e) {
+      throw new IOException("No DH keypair generator", e);
+    } catch (InvalidAlgorithmParameterException e) {
+      throw new IOException("Invalid DH parameters", e);
+    }
+  }
 
 	@Override
 	public byte[] getE() {
