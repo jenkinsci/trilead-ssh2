@@ -372,7 +372,7 @@ public class KexManager implements MessageHandler
 	public static String[] getDefaultKexAlgorithmList()
 	{
 		return new String[] { "diffie-hellman-group-exchange-sha256", "diffie-hellman-group-exchange-sha1",
-				"diffie-hellman-group14-sha1", "diffie-hellman-group1-sha1","ecdh-sha2-nistp256","ecdh-sha2-nistp384","ecdh-sha2-nistp521" };
+				"diffie-hellman-group14-sha1", "diffie-hellman-group1-sha1","ecdh-sha2-nistp256","ecdh-sha2-nistp384","ecdh-sha2-nistp521","curve25519-sha256","curve25519-sha256@libssh.org" };
 	}
 
 	public static void checkKexAlgorithmList(String[] algos)
@@ -396,6 +396,8 @@ public class KexManager implements MessageHandler
                 continue;
 
             if ("ecdh-sha2-nistp521".equals(algo))
+                continue;
+            if (Curve25519Exchange.NAME.equals(algo)||Curve25519Exchange.ALT_NAME.equals(algo))
                 continue;
 			throw new IllegalArgumentException("Unknown kex algorithm '" + algo + "'");
 		}
