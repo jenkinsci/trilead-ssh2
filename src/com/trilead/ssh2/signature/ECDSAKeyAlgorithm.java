@@ -15,6 +15,7 @@ import java.security.KeyFactory;
 import java.security.KeyPair;
 import java.security.PrivateKey;
 import java.security.PublicKey;
+import java.security.interfaces.ECKey;
 import java.security.interfaces.ECPrivateKey;
 import java.security.interfaces.ECPublicKey;
 import java.security.spec.ECFieldFp;
@@ -50,7 +51,7 @@ public abstract class ECDSAKeyAlgorithm extends KeyAlgorithm<ECPublicKey, ECPriv
         return curveName;
     }
 
-    /*package*/ ECParameterSpec getEcParameterSpec() {
+    public ECParameterSpec getEcParameterSpec() {
         return  ecParameterSpec;
     }
 
@@ -103,7 +104,7 @@ public abstract class ECDSAKeyAlgorithm extends KeyAlgorithm<ECPublicKey, ECPriv
 
         return tw.getBytes();
     }
-
+    
 
     @Override
     public byte[] decodeSignature(byte[] encodedSignature) throws IOException {
@@ -207,7 +208,7 @@ public abstract class ECDSAKeyAlgorithm extends KeyAlgorithm<ECPublicKey, ECPriv
         return super.supportsKey(key) && key.getParams().getCurve().getField().getFieldSize() == getEcParameterSpec().getCurve().getField().getFieldSize();
     }
 
-    private static ECPoint decodePoint(byte[] encodedPoint, EllipticCurve curve) {
+    public static ECPoint decodePoint(byte[] encodedPoint, EllipticCurve curve) {
         int elementSize = (curve.getField().getFieldSize() + 7) / 8;
         if (encodedPoint.length != 2 * elementSize + 1 || encodedPoint[0] != 0x04 || encodedPoint.length == 0) {
             return null;
@@ -221,7 +222,7 @@ public abstract class ECDSAKeyAlgorithm extends KeyAlgorithm<ECPublicKey, ECPriv
         return new ECPoint(new BigInteger(1, xPoint), new BigInteger(1, yPoint));
     }
 
-    private static byte[] encodePoint(ECPoint group, EllipticCurve curve) {
+    public static byte[] encodePoint(ECPoint group, EllipticCurve curve) {
         int elementSize = (curve.getField().getFieldSize() + 7) / 8;
         byte[] encodedPoint = new byte[2 * elementSize + 1];
 
@@ -249,9 +250,33 @@ public abstract class ECDSAKeyAlgorithm extends KeyAlgorithm<ECPublicKey, ECPriv
         System.arraycopy(input, pos, output, 0, output.length);
         return output;
     }
+    
+    public static String getDigestAlgorithmForParams(ECKey key) {
+        ECDSAKeyAlgorithm verifier = getVerifierForKey(key);
+        if (verifier == null)
+            return null;
+        return verifier.getDigestAlgorithm();
+    }
+    
+    public static ECDSAKeyAlgorithm getVerifierForKey(ECKey key) {
+        switch (key.getParams().getCurve().getField().getFieldSize()) {
+            case 256:
+                return new ECDSAKeyAlgorithm.ECDSASha2Nistp256();
+            case 384:
+                return new ECDSAKeyAlgorithm.ECDSASha2Nistp384();
+            case 521:
+                return new ECDSAKeyAlgorithm.ECDSASha2Nistp521();
+            default:
+                return null;
+        }
+    }
+
+    public abstract String getDigestAlgorithm();
 
 
     public static class ECDSASha2Nistp256 extends ECDSAKeyAlgorithm {
+        private static final String NISTP256 = "nistp256";
+        private static final String KEY_FORMAT = ECDSA_SHA2_PREFIX + NISTP256;
 
         public ECDSASha2Nistp256() {
             super("SHA256withECDSA", "nistp256",
@@ -275,9 +300,20 @@ public abstract class ECDSAKeyAlgorithm extends KeyAlgorithm<ECPublicKey, ECPriv
             return Arrays.asList(new EcdsaCertificateDecoder("1.2.840.10045.3.1.7", getEcParameterSpec()),
                     new OpenSshEcdsaCertificateDecoder(getKeyFormat(), getCurveName(), getEcParameterSpec()));
         }
+
+        @Override
+        public String getKeyFormat() {
+            return KEY_FORMAT;
+        }    
+    @Override
+    public String getDigestAlgorithm() {
+        return "SHA-256";
+    }
     }
 
     public static class ECDSASha2Nistp384 extends ECDSAKeyAlgorithm {
+        private static final String NISTP384 = "nistp384";
+        private static final String KEY_FORMAT = ECDSA_SHA2_PREFIX + NISTP384;
 
         public ECDSASha2Nistp384() {
             super("SHA384withECDSA", "nistp384",
@@ -301,9 +337,21 @@ public abstract class ECDSAKeyAlgorithm extends KeyAlgorithm<ECPublicKey, ECPriv
             return Arrays.asList(new EcdsaCertificateDecoder("1.3.132.0.34", getEcParameterSpec()),
                     new OpenSshEcdsaCertificateDecoder(getKeyFormat(), getCurveName(), getEcParameterSpec()));
         }
+        
+        @Override
+        public String getKeyFormat() {
+            return KEY_FORMAT;
+        }   
+        
+        @Override
+        public String getDigestAlgorithm() {
+            return "SHA-384";
+        }
     }
 
     public static class ECDSASha2Nistp521 extends ECDSAKeyAlgorithm {
+        private static final String NISTP521 = "nistp521";
+        private static final String KEY_FORMAT = ECDSA_SHA2_PREFIX + NISTP521;
 
         public ECDSASha2Nistp521() {
             super("SHA512withECDSA", "nistp521",
@@ -326,6 +374,16 @@ public abstract class ECDSAKeyAlgorithm extends KeyAlgorithm<ECPublicKey, ECPriv
         public List<CertificateDecoder> getCertificateDecoders() {
             return Arrays.asList(new EcdsaCertificateDecoder("1.3.132.0.35", getEcParameterSpec()),
                     new OpenSshEcdsaCertificateDecoder(getKeyFormat(), getCurveName(), getEcParameterSpec()));
+        }
+        
+        @Override
+        public String getKeyFormat() {
+            return KEY_FORMAT;
+        }
+        
+        @Override
+        public String getDigestAlgorithm() {
+            return "SHA-512";
         }
 
     }
