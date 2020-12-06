@@ -102,7 +102,7 @@ public class KexManager implements MessageHandler
 				}
 				catch (InterruptedException e)
 				{
-                    throw new InterruptedIOException();
+					throw new InterruptedIOException();
 				}
 			}
 		}
@@ -333,41 +333,41 @@ public class KexManager implements MessageHandler
 			}
 		}
 	}
-	
+
 	/**
-     * If the verifier can indicate which algorithms it knows about for this host, then
-     * filter out our crypto wish list to only include those algorithms. Otherwise we'll
-     * negotiate a host key we have not previously confirmed.
-     *
-     * @param cwl crypto wish list to filter
-     */
-    private void filterHostKeyTypes(CryptoWishList cwl) {
-        if (verifier instanceof ExtendedServerHostKeyVerifier) {
-            ExtendedServerHostKeyVerifier extendedVerifier = (ExtendedServerHostKeyVerifier) verifier;
+	 * If the verifier can indicate which algorithms it knows about for this host, then
+	 * filter out our crypto wish list to only include those algorithms. Otherwise we'll
+	 * negotiate a host key we have not previously confirmed.
+	 *
+	 * @param cwl crypto wish list to filter
+	 */
+	private void filterHostKeyTypes(CryptoWishList cwl) {
+		if (verifier instanceof ExtendedServerHostKeyVerifier) {
+			ExtendedServerHostKeyVerifier extendedVerifier = (ExtendedServerHostKeyVerifier) verifier;
 
-            List<String> knownAlgorithms = extendedVerifier.getKnownKeyAlgorithmsForHost(hostname, port);
-            if (knownAlgorithms != null && knownAlgorithms.size() > 0) {
-                ArrayList<String> filteredAlgorithms = new ArrayList<>(knownAlgorithms.size());
+			List<String> knownAlgorithms = extendedVerifier.getKnownKeyAlgorithmsForHost(hostname, port);
+			if (knownAlgorithms != null && knownAlgorithms.size() > 0) {
+				ArrayList<String> filteredAlgorithms = new ArrayList<>(knownAlgorithms.size());
 
-                /*
-                 * Look at our current wish list and adjust it based on what the client already knows, but
-                 * be careful to keep it in the order desired by the wish list.
-                 */
-                for (String capableAlgo : cwl.serverHostKeyAlgorithms) {
-                    for (String knownAlgo : knownAlgorithms) {
-                        if (capableAlgo.equals(knownAlgo)) {
-                            filteredAlgorithms.add(knownAlgo);
-                        }
-                    }
-                }
+				/*
+				 * Look at our current wish list and adjust it based on what the client already knows, but
+				 * be careful to keep it in the order desired by the wish list.
+				 */
+				for (String capableAlgo : cwl.serverHostKeyAlgorithms) {
+					for (String knownAlgo : knownAlgorithms) {
+						if (capableAlgo.equals(knownAlgo)) {
+							filteredAlgorithms.add(knownAlgo);
+						}
+					}
+				}
 
-                if (filteredAlgorithms.size() > 0) {
-                    cwl.serverHostKeyAlgorithms = filteredAlgorithms.toArray(new String[0]);
-                }
-            }
-        }
-    }
-    
+				if (filteredAlgorithms.size() > 0) {
+					cwl.serverHostKeyAlgorithms = filteredAlgorithms.toArray(new String[0]);
+				}
+			}
+		}
+	}
+
 
 	public static String[] getDefaultKexAlgorithmList()
 	{
@@ -390,15 +390,15 @@ public class KexManager implements MessageHandler
 			if ("diffie-hellman-group-exchange-sha256".equals(algo))
 				continue;
 			if ("ecdh-sha2-nistp256".equals(algo))
-                continue;
+				continue;
 
-            if ("ecdh-sha2-nistp384".equals(algo))
-                continue;
+			if ("ecdh-sha2-nistp384".equals(algo))
+				continue;
 
-            if ("ecdh-sha2-nistp521".equals(algo))
-                continue;
-            if (Curve25519Exchange.NAME.equals(algo)||Curve25519Exchange.ALT_NAME.equals(algo))
-                continue;
+			if ("ecdh-sha2-nistp521".equals(algo))
+				continue;
+			if (Curve25519Exchange.NAME.equals(algo)||Curve25519Exchange.ALT_NAME.equals(algo))
+				continue;
 			throw new IllegalArgumentException("Unknown kex algorithm '" + algo + "'");
 		}
 	}
@@ -464,7 +464,7 @@ public class KexManager implements MessageHandler
 			}
 
 			if (kxs.np.kex_algo.equals("diffie-hellman-group-exchange-sha1")
-			        || kxs.np.kex_algo.equals("diffie-hellman-group-exchange-sha256"))
+					|| kxs.np.kex_algo.equals("diffie-hellman-group-exchange-sha256"))
 			{
 				if (kxs.dhgexParameters.getMin_group_len() == 0)
 				{
@@ -490,21 +490,21 @@ public class KexManager implements MessageHandler
 
 			if (kxs.np.kex_algo.equals("diffie-hellman-group1-sha1")
 					|| kxs.np.kex_algo.equals(Curve25519Exchange.NAME)
-                    || kxs.np.kex_algo.equals(Curve25519Exchange.ALT_NAME)
-                    || kxs.np.kex_algo.equals("diffie-hellman-group14-sha1")
+					|| kxs.np.kex_algo.equals(Curve25519Exchange.ALT_NAME)
+					|| kxs.np.kex_algo.equals("diffie-hellman-group14-sha1")
 					|| kxs.np.kex_algo.equals("ecdh-sha2-nistp521")
-                    || kxs.np.kex_algo.equals("ecdh-sha2-nistp384")
-                    || kxs.np.kex_algo.equals("ecdh-sha2-nistp256"))
+					|| kxs.np.kex_algo.equals("ecdh-sha2-nistp384")
+					|| kxs.np.kex_algo.equals("ecdh-sha2-nistp256"))
 			{
-			    
-			    
-			    kxs.dhx = GenericDhExchange.getInstance(kxs.np.kex_algo);
-			    kxs.dhx.init(kxs.np.kex_algo);
-			    kxs.setHashAlgorithm(kxs.dhx.getHashAlgo());
-			    PacketKexDHInit kp = new PacketKexDHInit(kxs.dhx.getE());
-			    tm.sendKexMessage(kp.getPayload());
+
+
+				kxs.dhx = GenericDhExchange.getInstance(kxs.np.kex_algo);
+				kxs.dhx.init(kxs.np.kex_algo);
+				kxs.setHashAlgorithm(kxs.dhx.getHashAlgo());
+				PacketKexDHInit kp = new PacketKexDHInit(kxs.dhx.getE());
+				tm.sendKexMessage(kp.getPayload());
 				kxs.state = 1;
-				
+
 				return;
 			}
 
@@ -629,10 +629,10 @@ public class KexManager implements MessageHandler
 		if (kxs.np.kex_algo.equals("diffie-hellman-group1-sha1")
 				|| kxs.np.kex_algo.equals("diffie-hellman-group14-sha1")
 				|| kxs.np.kex_algo.equals("ecdh-sha2-nistp256")
-                || kxs.np.kex_algo.equals("ecdh-sha2-nistp384")
-                || kxs.np.kex_algo.equals("ecdh-sha2-nistp521")
-                || kxs.np.kex_algo.equals(Curve25519Exchange.NAME)
-                || kxs.np.kex_algo.equals(Curve25519Exchange.ALT_NAME))
+				|| kxs.np.kex_algo.equals("ecdh-sha2-nistp384")
+				|| kxs.np.kex_algo.equals("ecdh-sha2-nistp521")
+				|| kxs.np.kex_algo.equals(Curve25519Exchange.NAME)
+				|| kxs.np.kex_algo.equals(Curve25519Exchange.ALT_NAME))
 		{
 			if (kxs.state == 1)
 			{
@@ -686,10 +686,10 @@ public class KexManager implements MessageHandler
 		throw new IllegalStateException("Unkown KEX method! (" + kxs.np.kex_algo + ")");
 	}
 
-    public void handleEndMessage(Throwable cause) throws IOException {
-        synchronized (accessLock) {
-            connectionClosed = true;
-            accessLock.notifyAll();
-        }
-    }
+	public void handleEndMessage(Throwable cause) throws IOException {
+		synchronized (accessLock) {
+			connectionClosed = true;
+			accessLock.notifyAll();
+		}
+	}
 }
