@@ -49,4 +49,16 @@ public class ConnectionInfo
 	 * Number of kex exchanges performed on this connection so far.
 	 */
 	public int keyExchangeCounter = 0;
+
+	/**
+	 * The currently used compression algorithm for packets from the client to
+	 * the server.
+	 */
+	public String clientToServerCompressionAlgorithm;
+
+	/**
+	 * The currently used compression algorithm for packets from the server to
+	 * the client.
+	 */
+	public String serverToClientCompressionAlgorithm;
 }

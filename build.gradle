@@ -13,4 +13,5 @@ dependencies {
     implementation('com.google.crypto.tink:tink:1.5.0')
 
     implementation("org.connectbot:simplesocks:1.0.1")
+    implementation("com.jcraft:jzlib:1.1.3")
 }
