@@ -30,11 +30,10 @@ import java.util.stream.Collectors;
 public class AuthenticationManager implements MessageHandler
 {
 	public static final String PROPERTY_TIMEOUT = AuthenticationManager.class.getName() + ".timeout";
-	public static final long TIMEOUT = Long.valueOf(System.getProperty(PROPERTY_TIMEOUT,"120000"));
+	public static final long TIMEOUT = Long.valueOf(System.getProperty(PROPERTY_TIMEOUT, "10000"));//"120000"));
 	TransportManager tm;
 
 	private Vector<ConnectionMonitor> connectionMonitors;
-	private boolean monitorsWereInformed = false;
 
 	Vector packets = new Vector();
 	boolean connectionClosed = false;
