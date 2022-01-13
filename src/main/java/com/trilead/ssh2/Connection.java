@@ -561,7 +561,7 @@ public class Connection
 	 * you don't need a connection anymore - otherwise the receiver thread may
 	 * run forever.
 	 */
-	public synchronized void close()
+	public /*synchronized*/ void close()
 	{
 		Throwable t = new Throwable("Closed due to user request.");
 		close(t, false);

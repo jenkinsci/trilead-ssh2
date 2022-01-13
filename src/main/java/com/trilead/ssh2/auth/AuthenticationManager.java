@@ -117,10 +117,10 @@ public class AuthenticationManager implements MessageHandler
 
 			banner = sb.getBanner();
 
-			//Vector monitors = null;
+			/*Vector monitors = null;
 
-			//synchronized (this)
-			//{
+			synchronized (this)
+			{*/
 				/* Short term lock to protect "connectionMonitors"
 				 * and "monitorsWereInformed"
 				 * (they may be modified concurrently)
@@ -131,17 +131,17 @@ public class AuthenticationManager implements MessageHandler
 					monitorsWereInformed = true;
 					monitors = (Vector) connectionMonitors.clone();
 				}
-			}
+			}*/
 
-			if (!banner.trim().isEmpty() && monitors != null){
-				for (int i = 0; i < monitors.size(); i++) {
+			if (!banner.trim().isEmpty() && connectionMonitors != null){
+				for (int i = 0; i < connectionMonitors.size(); i++) {
 					try {
-						ConnectionMonitor cmon = (ConnectionMonitor) monitors.elementAt(i);
+						ConnectionMonitor cmon = (ConnectionMonitor) connectionMonitors.elementAt(i);
 						cmon.authBanner(banner);
 					} catch (Exception ignored) {
 					}
 				}
-			}*/
+			}
 		}
 	}
 
