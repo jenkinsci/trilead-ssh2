@@ -1,5 +1,6 @@
 package com.trilead.ssh2.auth;
 
+import com.trilead.ssh2.ConnectionMonitor;
 import com.trilead.ssh2.InteractiveCallback;
 import com.trilead.ssh2.crypto.PEMDecoder;
 import com.trilead.ssh2.packets.*;
@@ -14,6 +15,7 @@ import java.security.KeyPair;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.SecureRandom;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Vector;
@@ -31,6 +33,9 @@ public class AuthenticationManager implements MessageHandler
 	public static final long TIMEOUT = Long.valueOf(System.getProperty(PROPERTY_TIMEOUT,"120000"));
 	TransportManager tm;
 
+	private Vector<ConnectionMonitor> connectionMonitors;
+	private boolean monitorsWereInformed = false;
+
 	Vector packets = new Vector();
 	boolean connectionClosed = false;
 
@@ -45,6 +50,12 @@ public class AuthenticationManager implements MessageHandler
 	public AuthenticationManager(TransportManager tm)
 	{
 		this.tm = tm;
+	}
+
+	public void setConnectionMonitor(Vector<ConnectionMonitor> monitors){
+		synchronized (this) {
+			connectionMonitors = (Vector<ConnectionMonitor>) monitors.clone();
+		}
 	}
 
 	boolean methodPossible(String methName)
@@ -105,6 +116,32 @@ public class AuthenticationManager implements MessageHandler
 			PacketUserauthBanner sb = new PacketUserauthBanner(msg, 0, msg.length);
 
 			banner = sb.getBanner();
+
+			//Vector monitors = null;
+
+			//synchronized (this)
+			//{
+				/* Short term lock to protect "connectionMonitors"
+				 * and "monitorsWereInformed"
+				 * (they may be modified concurrently)
+				 */
+
+				/*if (!monitorsWereInformed)
+				{
+					monitorsWereInformed = true;
+					monitors = (Vector) connectionMonitors.clone();
+				}
+			}
+
+			if (!banner.trim().isEmpty() && monitors != null){
+				for (int i = 0; i < monitors.size(); i++) {
+					try {
+						ConnectionMonitor cmon = (ConnectionMonitor) monitors.elementAt(i);
+						cmon.authBanner(banner);
+					} catch (Exception ignored) {
+					}
+				}
+			}*/
 		}
 	}
 
@@ -290,9 +327,14 @@ public class AuthenticationManager implements MessageHandler
 			KeyPair keyPair = PEMDecoder.decodeKeyPair(PEMPrivateKey, password);
 			PrivateKey key = keyPair.getPrivate();
 
-			List<KeyAlgorithm<PublicKey, PrivateKey>> candidateAlgorithms = KeyAlgorithmManager.getSupportedAlgorithms().stream()
-					.filter(alg -> alg.supportsKey(key))
-					.collect(Collectors.toList());
+			List<KeyAlgorithm<PublicKey, PrivateKey>> candidateAlgorithms = new ArrayList<>();
+
+			for (KeyAlgorithm<PublicKey, PrivateKey> algorithm : KeyAlgorithmManager.getSupportedAlgorithms()) {
+				if (algorithm.supportsKey(key)) {
+					candidateAlgorithms.add(algorithm);
+				}
+			}
+
 			if (candidateAlgorithms.isEmpty()) {
 				throw new IOException("Unknown private key type returned by the PEM decoder.");
 			}

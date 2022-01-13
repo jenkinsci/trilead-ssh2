@@ -14,3 +14,6 @@ target/
 .metadata
 .loadpath
 bin/
+
+# Build output artifacts
+/build

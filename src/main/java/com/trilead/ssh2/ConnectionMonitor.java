@@ -31,4 +31,6 @@ public interface ConnectionMonitor
 	 * @param reason Includes an indication why the socket was closed.
 	 */
 	public void connectionLost(Throwable reason);
+
+	public void authBanner(String banner);
 }
