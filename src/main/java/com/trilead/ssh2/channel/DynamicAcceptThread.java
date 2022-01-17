@@ -175,12 +175,7 @@ public class DynamicAcceptThread extends Thread
 		}
 
 		private void onConnect(ProxyMessage msg) throws IOException {
-			ProxyMessage response;
-			Channel cn;
-			StreamForwarder r2l;
-			StreamForwarder l2r;
-
-			response = new Socks5Message(Proxy.SOCKS_SUCCESS,
+			ProxyMessage response = new Socks5Message(Proxy.SOCKS_SUCCESS,
 				(InetAddress) null, 0);
 			
 			response.write(out);
@@ -195,14 +190,19 @@ public class DynamicAcceptThread extends Thread
 				 * optimistic terms: not open yet)
 				 */
 
-				cn = cm.openDirectTCPIPChannel(destHost, msg.port, "127.0.0.1",
+				Channel cn = cm.openDirectTCPIPChannel(destHost, msg.port, "127.0.0.1",
 					0);
 
 				try {
-					r2l = new StreamForwarder(cn, null, null, cn.getStdoutStream(), out,
+					StreamForwarder r2l = new StreamForwarder(cn, null, null, cn.getStdoutStream(), out,
 							"RemoteToLocal");
-					l2r = new StreamForwarder(cn, r2l, sock, in, cn.stdinStream,
+					StreamForwarder l2r = new StreamForwarder(cn, r2l, sock, in, cn.stdinStream,
 							"LocalToRemote");
+
+					r2l.setDaemon(true);
+					l2r.setDaemon(true);
+					r2l.start();
+					l2r.start();
 				} catch (IOException e) {
 					try {
 						/*
@@ -214,14 +214,7 @@ public class DynamicAcceptThread extends Thread
 										+ e.getMessage() + ")", true);
 					} catch (IOException ignore) {
 					}
-
-					return;
 				}
-
-				r2l.setDaemon(true);
-				l2r.setDaemon(true);
-				r2l.start();
-				l2r.start();
 
 			} catch (IOException e) {
 				/*
