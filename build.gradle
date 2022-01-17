@@ -12,6 +12,6 @@ dependencies {
     implementation('net.i2p.crypto:eddsa:0.3.0')
     implementation('com.google.crypto.tink:tink:1.6.1')
 
-    implementation("org.connectbot:simplesocks:1.0.1")
+    //implementation("org.connectbot:simplesocks:1.0.1")
     implementation("com.jcraft:jzlib:1.1.3")
 }
