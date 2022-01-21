@@ -53,9 +53,9 @@ public class Channel
 	static final int STATE_OPEN = 2;
 	static final int STATE_CLOSED = 4;
 
-	private static final int CHANNEL_BUFFER_SIZE = Integer.getInteger(
+	private static final int CHANNEL_BUFFER_SIZE = 1024*1024 + 16*1024;/*Integer.getInteger(
 			Channel.class.getName()+".bufferSize",
-			1024*1024 + 16*1024).intValue();
+			1024*1024 + 16*1024).intValue();*/
 
     /**
      * This channel's session size.

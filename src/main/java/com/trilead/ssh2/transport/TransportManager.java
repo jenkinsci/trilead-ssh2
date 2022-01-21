@@ -369,7 +369,7 @@ public class TransportManager
 			sock.setSoTimeout(readTimeout);
 		}
 		else {
-			sock = proxyData.openConnection(sock, hostname, port, connectTimeout);
+			sock = proxyData.openConnection(sock, hostname, port, connectTimeout, readTimeout);
 		}
 	}
 

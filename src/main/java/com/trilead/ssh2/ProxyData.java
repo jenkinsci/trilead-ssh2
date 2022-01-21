@@ -15,6 +15,5 @@ import java.net.Socket;
 
 public interface ProxyData
 {
-    Socket openConnection(Socket sock, String hostname, int port, int connectTimeout) throws IOException;
-    //void close() throws IOException;
+    Socket openConnection(Socket sock, String hostname, int port, int connectTimeout, int readTimeout) throws IOException;
 }

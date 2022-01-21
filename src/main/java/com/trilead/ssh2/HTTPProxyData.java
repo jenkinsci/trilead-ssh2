@@ -94,10 +94,10 @@ public class HTTPProxyData implements ProxyData
 	}
 
 	@Override
-	public Socket openConnection(Socket sock, String hostname, int port, int connectTimeout) throws IOException {
+	public Socket openConnection(Socket sock, String hostname, int port, int connectTimeout, int readTimeout) throws IOException {
 		InetAddress addr = InetAddress.getByName(proxyHost);
 		sock.connect(new InetSocketAddress(addr, proxyPort), connectTimeout);
-		sock.setSoTimeout(0);
+		sock.setSoTimeout(readTimeout);
 
 			/* OK, now tell the proxy where we actually want to connect to */
 
