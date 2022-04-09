@@ -4,7 +4,7 @@ pipeline {
         stage('Checkout') {
             steps {
                 script {
-                    infra.checkout(branch: 'main')
+                    infra.checkoutSCM()
                 }
             }
         }
