@@ -17,11 +17,11 @@ pipeline {
                             '--update-snapshots',
                             "-Dmaven.repo.local=$m2repo",
                             '-Dmaven.test.failure.ignore',
-                            "-Dfindbugs.failOnError=false",
+                            "-Dspotbugs.failOnError=false",
                             "-Dset.changelist",
                             "-Djava.security.egd=file:/dev/./urandom",
                             "clean install",
-                            "findbugs:findbugs"
+                            "spotbugs:spotbugs"
                     ]
 
                     infra.runMaven(mavenOptions, jdk)
