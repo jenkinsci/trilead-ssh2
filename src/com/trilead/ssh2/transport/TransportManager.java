@@ -21,7 +21,7 @@ import com.trilead.ssh2.ServerHostKeyVerifier;
 import com.trilead.ssh2.crypto.Base64;
 import com.trilead.ssh2.crypto.CryptoWishList;
 import com.trilead.ssh2.crypto.cipher.BlockCipher;
-import com.trilead.ssh2.crypto.digest.MAC;
+import com.trilead.ssh2.crypto.digest.MessageMac;
 import com.trilead.ssh2.log.Logger;
 import com.trilead.ssh2.packets.PacketDisconnect;
 import com.trilead.ssh2.packets.Packets;
@@ -615,12 +615,12 @@ public class TransportManager
 		km.initiateKEX(cwl, dhgex);
 	}
 
-	public void changeRecvCipher(BlockCipher bc, MAC mac)
+	public void changeRecvCipher(BlockCipher bc, MessageMac mac)
 	{
 		tc.changeRecvCipher(bc, mac);
 	}
 
-	public void changeSendCipher(BlockCipher bc, MAC mac)
+	public void changeSendCipher(BlockCipher bc, MessageMac mac)
 	{
 		tc.changeSendCipher(bc, mac);
 	}
