@@ -326,7 +326,7 @@ public class TransportConnection
 						| ((packetHeader[1] & 0xff) << 16) | ((packetHeader[2] & 0xff) << 8)
 						| ((packetHeader[3] & 0xff));
 
-		if (packetLength > 35000 || packetLength < (isEtm ? 8 : 12))
+		if (packetLength > TransportManager.MAX_PACKET_SIZE || packetLength < (isEtm ? 8 : 12))
 			throw new IOException("Illegal packet size! (" + packetLength + ")");
 
 		return packetLength;
