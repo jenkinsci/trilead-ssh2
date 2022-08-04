@@ -8,3 +8,6 @@ updates:
     directory: /
     schedule:
       interval: "daily"
+    ignore:
+      # to keep java 8 compatability
+      -  dependency-name: "org.jenkins-ci:jenkins"
