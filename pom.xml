@@ -6,7 +6,7 @@
     <parent>
         <groupId>org.jenkins-ci</groupId>
         <artifactId>jenkins</artifactId>
-        <version>1.83</version>
+        <version>1.85-20220804.113638-2</version>
     </parent>
 
     <groupId>org.jenkins-ci</groupId>
@@ -166,7 +166,7 @@
         <revision>build-217-jenkins</revision>
         <changelist>999999-SNAPSHOT</changelist>
         <gitHubRepo>jenkinsci/trilead-ssh2</gitHubRepo>
-        <java.level>8</java.level>
+        <javaTarget>8</javaTarget>
     </properties>
 
 </project>
