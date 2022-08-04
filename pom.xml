@@ -6,7 +6,8 @@
     <parent>
         <groupId>org.jenkins-ci</groupId>
         <artifactId>jenkins</artifactId>
-        <version>1.83</version>
+        <!-- do not upgrade the parent until we want to force everyone to java11 -->
+        <version>1.76</version>
     </parent>
 
     <groupId>org.jenkins-ci</groupId>
@@ -167,6 +168,7 @@
         <changelist>999999-SNAPSHOT</changelist>
         <gitHubRepo>jenkinsci/trilead-ssh2</gitHubRepo>
         <java.level>8</java.level>
+        <spotbugs.skip>true</spotbugs.skip>
     </properties>
 
 </project>
