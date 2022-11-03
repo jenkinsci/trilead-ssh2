@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FindBugsFilter>
+  <!--
+    Here lies technical debt. Exclusions in this section have not yet been triaged. When working on
+    on this section, pick an exclusion to triage, then:
+    - If it is a false positive, add a @SuppressFBWarnings(value = "[…]", justification = "[…]")
+      annotation indicating the reason why it is a false positive, then remove the exclusion from
+      this section.
+    - If it is not a false positive, fix the bug, then remove the exclusion from this section.
+   -->
+  <Match>
+    <Confidence value="1"/>
+    <Or>
+      <And>
+        <Bug pattern="DM_BOXED_PRIMITIVE_FOR_PARSING"/>
+        <Or>
+          <Class name="com.trilead.ssh2.auth.AuthenticationManager"/>
+          <Class name="com.trilead.ssh2.channel.ChannelManager"/>
+        </Or>
+      </And>
+      <And>
+        <Bug pattern="DM_DEFAULT_ENCODING"/>
+        <Or>
+          <Class name="com.trilead.ssh2.Connection"/>
+          <Class name="com.trilead.ssh2.crypto.dh.GenericDhExchange"/>
+          <Class name="com.trilead.ssh2.KnownHosts"/>
+          <Class name="com.trilead.ssh2.packets.TypesReader"/>
+          <Class name="com.trilead.ssh2.packets.TypesWriter"/>
+          <Class name="com.trilead.ssh2.transport.ClientServerHello"/>
+        </Or>
+      </And>
+      <And>
+        <Bug pattern="RV_EXCEPTION_NOT_THROWN"/>
+        <Class name="com.trilead.ssh2.crypto.PEMDecoder"/>
+      </And>
+      <And>
+        <Bug pattern="WEAK_MESSAGE_DIGEST_MD5"/>
+        <Class name="com.trilead.ssh2.crypto.PEMDecoder"/>
+      </And>
+    </Or>
+  </Match>
+</FindBugsFilter>
