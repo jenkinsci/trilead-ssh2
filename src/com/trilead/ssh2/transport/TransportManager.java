@@ -64,7 +64,13 @@ public class TransportManager
 
 	private final Vector asynchronousQueue = new Vector();
 	private Thread asynchronousThread = null;
-
+	
+	/* For auto numbering threads. */
+	private static long threadInitNumber;
+	private synchronized String nextThreadName(String prefix) {
+		return "Trilead_TransportManager_" + prefix + "_" + hostname +":" + port + "_" + threadInitNumber++;
+	}
+	
 	class AsynchronousWorker extends Thread
 	{
 		public void run()
@@ -542,6 +548,7 @@ public class TransportManager
 		});
 
 		receiveThread.setDaemon(true);
+		receiveThread.setName(nextThreadName("receiveThread"));
 		receiveThread.start();
 	}
 
@@ -646,6 +653,7 @@ public class TransportManager
 			{
 				asynchronousThread = new AsynchronousWorker();
 				asynchronousThread.setDaemon(true);
+				asynchronousThread.setName(nextThreadName("sendThread"));
 				asynchronousThread.start();
 
 				/* The thread will stop after 2 seconds of inactivity (i.e., empty queue) */
