@@ -35,6 +35,7 @@ public class TimeoutService {
     };
 
     private final static ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(20, threadFactory);
+    private static ScheduledFuture<?> scheduledFuture;
 
     public static class TimeoutToken implements Runnable {
         private Runnable handler;
@@ -61,7 +62,7 @@ public class TimeoutService {
         if (delay < 0) {
             delay = 0;
         }
-        scheduler.schedule(token, delay, TimeUnit.MILLISECONDS);
+        scheduledFuture = scheduler.schedule(token, delay, TimeUnit.MILLISECONDS);
         return token;
     }
 
@@ -72,5 +73,6 @@ public class TimeoutService {
      */
     public static final void cancelTimeoutHandler(TimeoutToken token) {
         token.cancelled = true;
+        scheduledFuture.cancel(true);
     }
 }
