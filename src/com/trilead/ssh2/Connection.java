@@ -665,7 +665,8 @@ public class Connection
 		if (kexTimeout < 0)
 			throw new IllegalArgumentException("kexTimeout must be non-negative!");
 
-		final TimeoutState state = new TimeoutState();
+		final TimeoutState state = new TimeoutState();		    
+		final TimeoutService timeoutService = new TimeoutService(hostname);		    
 
 		tm = new TransportManager(hostname, port, sourceAddress);
 		
@@ -713,7 +714,7 @@ public class Connection
 
 					long timeoutHorizont = System.currentTimeMillis() + kexTimeout;
 
-					token = TimeoutService.addTimeoutHandler(timeoutHorizont, timeoutHandler);
+					token = timeoutService.addTimeoutHandler(timeoutHorizont, timeoutHandler);
 				}
 
 				try
@@ -737,7 +738,7 @@ public class Connection
 
 				if (token != null)
 				{
-					TimeoutService.cancelTimeoutHandler(token);
+					timeoutService.cancelTimeoutHandler(token);
 
 					/* Were we too late? */
 

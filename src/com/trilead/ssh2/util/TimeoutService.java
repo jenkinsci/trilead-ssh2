@@ -3,6 +3,7 @@ package com.trilead.ssh2.util;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -20,25 +21,33 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @version $Id: TimeoutService.java,v 1.1 2007/10/15 12:49:57 cplattne Exp $
  */
 public class TimeoutService {
+    
+    
+    private  ScheduledFuture<?> scheduledFuture;
+    private final String hostname;
+    private final ThreadFactory threadFactory = new ThreadFactory() {
 
-    private final static ThreadFactory threadFactory = new ThreadFactory() {
-
-        private AtomicInteger count = new AtomicInteger();
-
+        @Override
         public Thread newThread(Runnable r) {
-            int threadNumber = count.incrementAndGet();
-            String threadName = "TimeoutService-" + threadNumber;
+            
+            String threadName = "Trilead_TimeoutService_"+hostname;
             Thread thread = new Thread(r, threadName);
             thread.setDaemon(true);
             return thread;
         }
     };
+    private final  ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor(threadFactory);
+    
+    public TimeoutService(String hostname){
+        this.hostname = hostname;
+    }
+    
+    
 
-    private final static ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(20, threadFactory);
 
-    public static class TimeoutToken implements Runnable {
+    public class TimeoutToken implements Runnable {
         private Runnable handler;
-        private boolean cancelled = false;
+        private volatile boolean cancelled = false;
 
         public void run() {
             if (!cancelled) {
@@ -54,14 +63,14 @@ public class TimeoutService {
      * @param handler handler
      * @return a TimeoutToken that can be used to cancel the timeout.
      */
-    public static final TimeoutToken addTimeoutHandler(long runTime, Runnable handler) {
+    public TimeoutToken addTimeoutHandler(long runTime, Runnable handler) {
         TimeoutToken token = new TimeoutToken();
         token.handler = handler;
         long delay = runTime - System.currentTimeMillis();
         if (delay < 0) {
             delay = 0;
         }
-        scheduler.schedule(token, delay, TimeUnit.MILLISECONDS);
+        scheduledFuture = scheduler.schedule(token, delay, TimeUnit.MILLISECONDS);
         return token;
     }
 
@@ -70,7 +79,9 @@ public class TimeoutService {
      *
      * @param token token to be canceled.
      */
-    public static final void cancelTimeoutHandler(TimeoutToken token) {
+    public void cancelTimeoutHandler(TimeoutToken token) {
         token.cancelled = true;
+        scheduledFuture.cancel(true);
+        scheduler.shutdownNow();
     }
 }
