@@ -27,7 +27,7 @@ public class TimeoutService {
 
         public Thread newThread(Runnable r) {
             int threadNumber = count.incrementAndGet();
-            String threadName = "TimeoutService-" + threadNumber;
+            String threadName = "Trilead_TimeoutService_" + threadNumber;
             Thread thread = new Thread(r, threadName);
             thread.setDaemon(true);
             return thread;
