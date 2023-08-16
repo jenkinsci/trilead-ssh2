@@ -21,22 +21,28 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @version $Id: TimeoutService.java,v 1.1 2007/10/15 12:49:57 cplattne Exp $
  */
 public class TimeoutService {
-
+    
+    
+    private  ScheduledFuture<?> scheduledFuture;
+    private final String hostname;
     private final ThreadFactory threadFactory = new ThreadFactory() {
 
-        private AtomicInteger count = new AtomicInteger();
-
+        @Override
         public Thread newThread(Runnable r) {
-            int threadNumber = count.incrementAndGet();
-            String threadName = "Trilead_TimeoutService_" + threadNumber;
+            
+            String threadName = hostname+"_Trilead_TimeoutService";
             Thread thread = new Thread(r, threadName);
             thread.setDaemon(true);
             return thread;
         }
     };
-    
     private final  ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor(threadFactory);
-    private  ScheduledFuture<?> scheduledFuture;
+    
+    public TimeoutService(String hostname){
+        this.hostname = hostname;
+    }
+    
+    
 
 
     public class TimeoutToken implements Runnable {
