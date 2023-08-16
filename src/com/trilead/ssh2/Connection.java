@@ -665,8 +665,8 @@ public class Connection
 		if (kexTimeout < 0)
 			throw new IllegalArgumentException("kexTimeout must be non-negative!");
 
-		final TimeoutState state = new TimeoutState();
-		final TimeoutService timeoutService = new TimeoutService();		    
+		final TimeoutState state = new TimeoutState():		    
+		final TimeoutService timeoutService = new TimeoutService(hostname);		    
 
 		tm = new TransportManager(hostname, port, sourceAddress);
 		
