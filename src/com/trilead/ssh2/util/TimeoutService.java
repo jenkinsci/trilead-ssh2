@@ -29,8 +29,8 @@ public class TimeoutService {
 
         @Override
         public Thread newThread(Runnable r) {
-            
-            String threadName = "Trilead_TimeoutService_"+hostname;
+            int threadNumber = count.incrementAndGet();
+            String threadName = "Trilead_TimeoutService_" + hostname + "-" + threadNumber;
             Thread thread = new Thread(r, threadName);
             thread.setDaemon(true);
             return thread;
