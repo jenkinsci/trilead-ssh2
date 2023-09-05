@@ -26,7 +26,7 @@ public class TimeoutService {
     private  ScheduledFuture<?> scheduledFuture;
     private final String hostname;
     private final ThreadFactory threadFactory = new ThreadFactory() {
-
+    private AtomicInteger count = new AtomicInteger();
         @Override
         public Thread newThread(Runnable r) {
             int threadNumber = count.incrementAndGet();
