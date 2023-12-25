@@ -147,6 +147,11 @@
         <revision>build-217-jenkins</revision>
         <changelist>999999-SNAPSHOT</changelist>
         <gitHubRepo>jenkinsci/trilead-ssh2</gitHubRepo>
+        <!-- TODO: Remove when parent pom is using this version or newer -->
+        <!-- https://github.com/jenkinsci/pom/pull/510 -->
+        <spotbugs-maven-plugin.version>4.8.2.0</spotbugs-maven-plugin.version>
+        <spotbugs.effort>Max</spotbugs.effort>
+        <spotbugs.omitVisitors>FindReturnRef,ConstructorThrow</spotbugs.omitVisitors>
         <!-- TODO fix medium-threshold violations -->
         <spotbugs.threshold>High</spotbugs.threshold>
     </properties>
