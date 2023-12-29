@@ -85,9 +85,9 @@
             <version>0.3.0</version>
         </dependency>
         <dependency>
-            <groupId>org.connectbot.jbcrypt</groupId>
+            <groupId>org.connectbot</groupId>
             <artifactId>jbcrypt</artifactId>
-            <version>1.0.0</version>
+            <version>1.0.2</version>
         </dependency>
         <dependency>
             <groupId>com.google.crypto.tink</groupId>
