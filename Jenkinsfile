@@ -12,7 +12,7 @@ pipeline {
             steps {
                 script {
                     m2repo = "${pwd tmp: true}/m2repo"
-                    String jdk = "11"
+                    String jdk = "21"
                     List<String> mavenOptions = [
                             '--update-snapshots',
                             "-Dmaven.repo.local=$m2repo",
