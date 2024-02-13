@@ -658,7 +658,7 @@ public class KexManager implements MessageHandler
 						throw new IOException("The server hostkey was not accepted by the verifier callback");
 				}
 
-				kxs.dhx.setF(dhr.getF().toByteArray());
+				kxs.dhx.setF(dhr.getF());
 
 				try
 				{
