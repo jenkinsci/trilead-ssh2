@@ -26,11 +26,11 @@ public class TimeoutService {
     private  ScheduledFuture<?> scheduledFuture;
     private final String hostname;
     private final ThreadFactory threadFactory = new ThreadFactory() {
-
+    private AtomicInteger count = new AtomicInteger();
         @Override
         public Thread newThread(Runnable r) {
-            
-            String threadName = "Trilead_TimeoutService_"+hostname;
+            int threadNumber = count.incrementAndGet();
+            String threadName = "Trilead_TimeoutService_" + hostname + "-" + threadNumber;
             Thread thread = new Thread(r, threadName);
             thread.setDaemon(true);
             return thread;
