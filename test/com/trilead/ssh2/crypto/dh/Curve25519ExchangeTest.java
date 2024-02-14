@@ -7,6 +7,7 @@ import java.io.IOException;
 import org.junit.Test;
 
 import java.math.BigInteger;
+import java.security.InvalidKeyException;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
@@ -96,13 +97,14 @@ public class Curve25519ExchangeTest {
         
         
     @Test
-    public void testKeyWithLeadingZeros() {
+    public void testKeyWithLeadingZeros() throws InvalidKeyException{
         
-        //When the message contains leading 0. Then wthe BigInteger class
-        //will remove the leading zero since it has a function to do so.
-        Curve25519Exchange curve25519Exchange = new Curve25519Exchange();
+        //When the message contains leading 0 then the BigInteger class
+        //will remove the leading zero since it has a function to do so internally.
+        Curve25519Exchange curve25519Exchange = new Curve25519Exchange(ALICE_PRIVATE);
         
-        //public Diffie-Hellman key and other parameters in message.
+        //public Diffie-Hellman key and other parameters in message. This one has
+        //leading zero.0, 0, 0, 2, 2, 2, 2, 2
         byte[] msg = new byte[]{
             31,
 
