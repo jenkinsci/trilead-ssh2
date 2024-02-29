@@ -375,6 +375,7 @@ public class KexManager implements MessageHandler
 				"diffie-hellman-group14-sha1", "diffie-hellman-group1-sha1","ecdh-sha2-nistp256","ecdh-sha2-nistp384","ecdh-sha2-nistp521","curve25519-sha256","curve25519-sha256@libssh.org" };
 	}
 
+	// FIXME this code is not used, the check it makes does not match the implementation in other places.
 	public static void checkKexAlgorithmList(String[] algos)
 	{
 		for (String algo : algos) {
