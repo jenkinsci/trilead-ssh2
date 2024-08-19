@@ -98,7 +98,7 @@ public class KexManager implements MessageHandler
 
 				try
 				{
-					accessLock.wait();
+					accessLock.wait(30*60*1000);
 				}
 				catch (InterruptedException e)
 				{

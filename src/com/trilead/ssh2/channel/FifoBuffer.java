@@ -153,7 +153,7 @@ class FifoBuffer {
 
             synchronized (lock) {
                 while ((chunk = Math.min(len,writable()))==0)
-                    lock.wait();
+                    lock.wait(30*60*1000);
 
                 w.write(buf, start, chunk);
 
@@ -209,7 +209,7 @@ class FifoBuffer {
                         releaseRing();
                         return -1;  // no more data
                     }
-                    lock.wait(); // wait until the writer gives us something
+                    lock.wait(12*60*60*1000); // wait until the writer gives us something
                 }
 
                 r.read(buf,start,chunk);

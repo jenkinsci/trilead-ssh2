@@ -685,7 +685,7 @@ public class TransportManager
 
 				try
 				{
-					connectionSemaphore.wait();
+					connectionSemaphore.wait(30*60*1000);
 				}
 				catch (InterruptedException e)
 				{
