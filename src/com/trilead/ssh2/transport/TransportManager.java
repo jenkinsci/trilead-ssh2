@@ -54,6 +54,8 @@ import com.trilead.ssh2.util.Tokenizer;
 public class TransportManager
 {
     private static final Logger log = Logger.getLogger(TransportManager.class);
+    private static final String PROPERTY_TIMEOUT = TransportManager.class.getName() + ".timeout";
+    private static long DEFAULT_WAIT_TIMEOUT = Long.valueOf(System.getProperty(PROPERTY_TIMEOUT,"120000"));
 
     class HandlerEntry
 	{
@@ -87,7 +89,7 @@ public class TransportManager
 
 						try
 						{
-							asynchronousQueue.wait(2000);
+							asynchronousQueue.wait(DEFAULT_WAIT_TIMEOUT);
 						}
 						catch (InterruptedException e)
 						{
@@ -685,7 +687,7 @@ public class TransportManager
 
 				try
 				{
-					connectionSemaphore.wait(30*60*1000);
+					connectionSemaphore.wait(DEFAULT_WAIT_TIMEOUT);
 				}
 				catch (InterruptedException e)
 				{
