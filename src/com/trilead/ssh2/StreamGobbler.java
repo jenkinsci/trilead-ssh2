@@ -35,6 +35,10 @@ import java.io.InterruptedIOException;
 
 public class StreamGobbler extends InputStream
 {
+
+	private static final String PROPERTY_TIMEOUT = StreamGobbler.class.getName() + ".timeout";
+	private static long DEFAULT_WAIT_TIMEOUT = Long.valueOf(System.getProperty(PROPERTY_TIMEOUT,"120000"));
+
 	class GobblerThread extends Thread
 	{
 		public void run()
@@ -141,7 +145,7 @@ public class StreamGobbler extends InputStream
 
 				try
 				{
-					synchronizer.wait(30*60*1000);
+					synchronizer.wait(DEFAULT_WAIT_TIMEOUT);
 				}
 				catch (InterruptedException e)
 				{
@@ -210,7 +214,7 @@ public class StreamGobbler extends InputStream
 
 				try
 				{
-					synchronizer.wait(30*60*1000);
+					synchronizer.wait(DEFAULT_WAIT_TIMEOUT);
 				}
 				catch (InterruptedException e)
 				{
