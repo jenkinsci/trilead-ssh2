@@ -382,7 +382,7 @@ public class ChannelManager implements MessageHandler
 
 					try
 					{
-						c.wait(30*60*1000);
+						c.wait(DEFAULT_WAIT_TIMEOUT);
 					}
 					catch (InterruptedException ignore)
 					{
@@ -913,7 +913,7 @@ public class ChannelManager implements MessageHandler
                 if (timeout > 0)
                     c.wait(timeout);
                 else
-                    c.wait(30*60*1000);
+                    c.wait(DEFAULT_WAIT_TIMEOUT);
 			}
 		}
 	}
