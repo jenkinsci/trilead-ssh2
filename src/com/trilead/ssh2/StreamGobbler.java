@@ -37,7 +37,7 @@ public class StreamGobbler extends InputStream
 {
 
 	private static final String PROPERTY_TIMEOUT = StreamGobbler.class.getName() + ".timeout";
-	private static long DEFAULT_WAIT_TIMEOUT = Long.valueOf(System.getProperty(PROPERTY_TIMEOUT,"120000"));
+	private static long DEFAULT_WAIT_TIMEOUT = Long.valueOf(System.getProperty(PROPERTY_TIMEOUT,"1200000"));
 
 	class GobblerThread extends Thread
 	{

@@ -55,7 +55,7 @@ public class TransportManager
 {
     private static final Logger log = Logger.getLogger(TransportManager.class);
     private static final String PROPERTY_TIMEOUT = TransportManager.class.getName() + ".timeout";
-    private static long DEFAULT_WAIT_TIMEOUT = Long.valueOf(System.getProperty(PROPERTY_TIMEOUT,"120000"));
+    private static long DEFAULT_WAIT_TIMEOUT = Long.valueOf(System.getProperty(PROPERTY_TIMEOUT,"1200000"));
 
     class HandlerEntry
 	{
