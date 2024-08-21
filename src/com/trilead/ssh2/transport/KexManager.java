@@ -45,6 +45,8 @@ import com.trilead.ssh2.signature.KeyAlgorithmManager;
 public class KexManager implements MessageHandler
 {
 	private static final Logger log = Logger.getLogger(KexManager.class);
+	private static final String PROPERTY_TIMEOUT = KexManager.class.getName() + ".timeout";
+	private static long DEFAULT_WAIT_TIMEOUT = Long.valueOf(System.getProperty(PROPERTY_TIMEOUT,"120000"));
 
 	private static final List<String> DEFAULT_KEY_ALGORITHMS = buildDefaultKeyAlgorithms();
 
@@ -98,7 +100,7 @@ public class KexManager implements MessageHandler
 
 				try
 				{
-					accessLock.wait(30*60*1000);
+					accessLock.wait(DEFAULT_WAIT_TIMEOUT);
 				}
 				catch (InterruptedException e)
 				{
