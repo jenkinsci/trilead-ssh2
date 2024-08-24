@@ -38,7 +38,7 @@ public class ChannelManager implements MessageHandler
 {
 	private static final Logger log = Logger.getLogger(ChannelManager.class);
 	private static final String PROPERTY_TIMEOUT = ChannelManager.class.getName() + ".timeout";
-	private static long DEFAULT_WAIT_TIMEOUT = Long.valueOf(System.getProperty(PROPERTY_TIMEOUT,"1200000"));
+	private static long DEFAULT_WAIT_TIMEOUT = Long.parseLong(System.getProperty(PROPERTY_TIMEOUT,"1200000"));
 
 	private HashMap x11_magic_cookies = new HashMap();
 

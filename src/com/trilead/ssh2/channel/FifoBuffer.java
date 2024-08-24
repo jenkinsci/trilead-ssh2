@@ -20,7 +20,7 @@ import java.io.OutputStream;
 class FifoBuffer {
 
 	private static final String PROPERTY_TIMEOUT = FifoBuffer.class.getName() + ".timeout";
-	private static long DEFAULT_WAIT_TIMEOUT = Long.valueOf(System.getProperty(PROPERTY_TIMEOUT,"1200000"));
+	private static long DEFAULT_WAIT_TIMEOUT = Long.parseLong(System.getProperty(PROPERTY_TIMEOUT,"1200000"));
 
     /**
      * Unit of buffer, singly linked and lazy created as needed.
