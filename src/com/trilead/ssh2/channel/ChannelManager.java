@@ -38,7 +38,7 @@ public class ChannelManager implements MessageHandler
 {
 	private static final Logger log = Logger.getLogger(ChannelManager.class);
 	private static final String PROPERTY_TIMEOUT = ChannelManager.class.getName() + ".timeout";
-	private static long DEFAULT_WAIT_TIMEOUT = Long.valueOf(System.getProperty(PROPERTY_TIMEOUT,"120000"));
+	private static long DEFAULT_WAIT_TIMEOUT = Long.parseLong(System.getProperty(PROPERTY_TIMEOUT,"1200000"));
 
 	private HashMap x11_magic_cookies = new HashMap();
 
@@ -382,7 +382,7 @@ public class ChannelManager implements MessageHandler
 
 					try
 					{
-						c.wait();
+						c.wait(DEFAULT_WAIT_TIMEOUT);
 					}
 					catch (InterruptedException ignore)
 					{
@@ -913,7 +913,7 @@ public class ChannelManager implements MessageHandler
                 if (timeout > 0)
                     c.wait(timeout);
                 else
-                    c.wait();
+                    c.wait(DEFAULT_WAIT_TIMEOUT);
 			}
 		}
 	}
