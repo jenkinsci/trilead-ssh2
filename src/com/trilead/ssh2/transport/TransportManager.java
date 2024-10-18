@@ -6,6 +6,7 @@ import java.io.InterruptedIOException;
 import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.security.SecureRandom;
@@ -133,7 +134,7 @@ public class TransportManager
 	final private String sourceAddress;
 	String hostname;
 	int port;
-	final Socket sock = new Socket();
+	Socket sock = new Socket();
 
 	final Object connectionSemaphore = new Object();
 
@@ -151,6 +152,9 @@ public class TransportManager
 	Vector connectionMonitors = new Vector();
 	boolean monitorsWereInformed = false;
 	private ClientServerHello versions;
+	private boolean enabledCallHomeSSH = false;
+
+	
 
 	/**
 	 * There were reports that there are JDKs which use
@@ -365,6 +369,10 @@ public class TransportManager
 
 		if (proxyData == null)
 		{
+			if(enabledCallHomeSSH){
+				establishCallHomeConnection(connectTimeout,readTimeout);
+				return;
+			}
 
 			if (sourceAddress != null)
 			{
@@ -473,6 +481,27 @@ public class TransportManager
 		}
 
 		throw new IOException("Unsupported ProxyData");
+	}
+	
+	private void establishCallHomeConnection(int connectTimeout,int readTimeout) {
+		Socket socket = null;
+		try (ServerSocket serverSocket = new ServerSocket()){
+            // Create a ServerSocket bound to a specific hostname and port
+            serverSocket.bind(new InetSocketAddress(port));
+			serverSocket.setSoTimeout(connectTimeout);
+
+            log.log(50,"SSH Call Home Server listen on " + hostname + " at port " + port);
+
+            // Accept a client connection (blocks until a connection is made)
+             socket = serverSocket.accept();
+			log.log(100,"Call Home SSH accepted connection on host "+sock.getLocalAddress().getHostAddress()+" on port "+port);
+			if(socket != null){
+				socket.setSoTimeout(readTimeout);
+			}
+		}catch (Exception e){
+			log.log(100,"Could not create client socket "+sock.getLocalAddress().getHostAddress()+" on port "+port,e);
+		}
+		sock = socket;
 	}
 
     public void initialize(CryptoWishList cwl, ServerHostKeyVerifier verifier, DHGexParameters dhgex,
@@ -818,6 +847,23 @@ public class TransportManager
 
 			mh.handleMessage(msg, msglen);
 		}
+	}
+
+	/**
+	 * Get the value for SSH Call Home enaled.
+	 * 
+	 * @return true if SSH Call Home enabled.
+	 */
+	public boolean isEnabledCallHomeSSH() {
+		return enabledCallHomeSSH;
+	}
+	/**
+	 * Set SSH Call Home 
+	 * 
+	 * @param enabledCallHomeSSH if set to true it will enable SSH Call Home.
+	 */
+	public void setEnabledCallHomeSSH(boolean enabledCallHomeSSH) {
+		this.enabledCallHomeSSH = enabledCallHomeSSH;
 	}
 
     /**
