@@ -11,7 +11,7 @@ import org.testcontainers.DockerClientFactory;
 import org.testcontainers.containers.Container;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.wait.strategy.LogMessageWaitStrategy;
-import org.testcontainers.images.builder.ImageFromDockerfile;
+import org.testcontainers.utility.DockerImageName;
 import org.testcontainers.utility.MountableFile;
 
 import com.trilead.ssh2.log.Logger;
@@ -24,11 +24,10 @@ import com.trilead.ssh2.log.Logger;
  class Netopeer2TestContainer {
 
     private static final Logger LOGGER = Logger.getLogger(Netopeer2TestContainer.class);
-    private static final String DOCKER_RESORCES = "docker";
     private static final String SSH_AUTH_CONFIG_FILE = "docker/ssh_listen.xml";
     private static final String SSH_CALL_HOME_CONFIG_FILE = "docker/ssh_callhome.xml";
     private static final String NACM_FILE = "docker/nacm.xml";
-    private static final String DOCKER_IMAGE_NAME = "netopeer2";
+    private static final String DOCKER_IMAGE_NAME = "ghcr.io/jenkinsci/trilead-ssh2:netopeer-3.5.1";
     private static final int SSH_CALL_HOME_PORT = 4334;
     public static final String TESTCONTAINERS_HOST_NAME = "host.testcontainers.internal";
     private final Integer [] exposedPorts =  {830,4334};
@@ -49,8 +48,8 @@ import com.trilead.ssh2.log.Logger;
      * @throws Exception if we fail to create and start server.
      */
     private void initialize() throws Exception {
-        ImageFromDockerfile netopeer2Image = createDockerImage();
-        netopeer2 = createContainer(netopeer2Image).withNetworkAliases(DOCKER_IMAGE_NAME);
+        
+        netopeer2 = createContainer().withNetworkAliases(DOCKER_IMAGE_NAME);
         netopeer2.start();
 
         disableNacm(netopeer2);
@@ -69,19 +68,15 @@ import com.trilead.ssh2.log.Logger;
         return netopeer2;
     }
 
-    private ImageFromDockerfile createDockerImage() {
-        assertTrue("Docker is not installed or docker client cannot be created!",DockerClientFactory.instance().isDockerAvailable());
-        return new ImageFromDockerfile(DOCKER_IMAGE_NAME, false).withFileFromClasspath(".", DOCKER_RESORCES);
-    }
-
     @SuppressWarnings("resource")
-    private GenericContainer<?> createContainer(ImageFromDockerfile netopeer2Image) {
+    private GenericContainer<?> createContainer() {
+        assertTrue("Docker is not installed or docker client cannot be created!",DockerClientFactory.instance().isDockerAvailable());
+
         final JulLogConsumer julLogConsumer = new JulLogConsumer(LOGGER);
-        return new GenericContainer<>(netopeer2Image).withNetwork(null).withLogConsumer(julLogConsumer)
+        return new GenericContainer<>(DockerImageName.parse(DOCKER_IMAGE_NAME)).withNetwork(null).withLogConsumer(julLogConsumer)
                 .withExposedPorts(exposedPorts).withAccessToHost(true)
                 .waitingFor(new LogMessageWaitStrategy().withRegEx(".*Listening on 0.0.0.0:830 for SSH connections.*"));
     }
-
   
     private void disableNacm(GenericContainer<?> netopeer2)
             throws InterruptedException, UnsupportedOperationException, IOException {

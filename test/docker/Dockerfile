@@ -1,5 +1,9 @@
 FROM ubuntu:22.04
 
+# This Docker image is build and push to the repository it takes about 6 min to build
+# The reason to pre-build it is because it compiles five libraries and an application everytime we run the test
+#  docker build -t ghcr.io/jenkinsci/trilead-ssh2:netopeer-3.5.1 .
+
 
 # defaults
 RUN \
@@ -35,7 +39,8 @@ RUN \
       gcc \
       libpsl-dev \ 
 	supervisor \
-      libpam0g-dev
+      libpam0g-dev \
+      && rm -rf /var/lib/apt/lists/*
 
       
 
@@ -124,11 +129,14 @@ RUN \
       make -j2 && \
       make install
 
+      RUN rm -fr /opt/dev
       ENV EDITOR vim
       EXPOSE 830 
       EXPOSE 4334
 
-      # start netopeer2 server.
-      CMD ["/usr/sbin/netopeer2-server", "-d", "-v2 3"]
-      #CMD ["/usr/sbin/netopeer2-server", "-d", "-c", "SSH"]
+# start netopeer2 server.
+CMD ["/usr/sbin/netopeer2-server", "-d", "-v2 3"]
+      
+#Comment above and uncomment below if you want to debug SSH specifc actions on Netopeer2 when running.
+#CMD ["/usr/sbin/netopeer2-server", "-d", "-c", "SSH"]
      
