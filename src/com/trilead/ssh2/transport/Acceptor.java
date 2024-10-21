@@ -2,6 +2,8 @@ package com.trilead.ssh2.transport;
 
 import java.io.IOException;
 import java.net.SocketTimeoutException;
+import java.net.Socket;
+import java.net.ServerSocket;
 
 import com.trilead.ssh2.Connection;
 import com.trilead.ssh2.ConnectionInfo;
@@ -27,8 +29,8 @@ public class Acceptor extends Connection{
     /**
      * This method reuses most of methods for {@link Connection#connect(ServerHostKeyVerifier, int, int, int)}. Parameters and descriptions applies here too.
      * The main difference between 
-     * this class and {@Connection} is that we use {@ServerSocket} and we bind with the port specified in constructor. The {@link ServerSocket#accept()}
-     * will wait (blocks) for an incoming connection for max {@param connectTimeout} . If connection is completed a {@Socket} is returned and we set a timeout of this socket using 
+     * this class and {@link Connection} is that we use {@link ServerSocket} and we bind with the port specified in constructor. The {@link ServerSocket#accept()}
+     * will wait (blocks) for an incoming connection for max {@param connectTimeout} . If connection is completed a {@link Socket} is returned and we set a timeout of this socket using 
      * {@param readTimeout}.
      * 
      * @throws SocketTimeoutException If there is no incoming connection within  {@param connectTimeout}.
