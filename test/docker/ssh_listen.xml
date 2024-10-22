@@ -1,0 +1,33 @@
+<netconf-server xmlns="urn:ietf:params:xml:ns:yang:ietf-netconf-server">
+    <listen>
+        <endpoints>
+            <endpoint>
+                <name>default-ssh</name>
+                <ssh>
+                    <tcp-server-parameters>
+                        <local-address>0.0.0.0</local-address>
+                    </tcp-server-parameters>
+                    <ssh-server-parameters>
+                        <server-identity>
+                            <host-key>
+                                <name>default-key</name>
+                                <public-key>
+                                    <central-keystore-reference>genkey</central-keystore-reference>
+                                </public-key>
+                            </host-key>
+                        </server-identity>
+                        <client-authentication>
+                            <users>
+                                <user>
+                                    <name>netconf</name>
+                                    <password>$0$netconf</password>
+
+                                </user>
+                            </users>
+                        </client-authentication>
+                    </ssh-server-parameters>
+                </ssh>
+            </endpoint>
+        </endpoints>
+    </listen>
+</netconf-server>

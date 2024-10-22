@@ -92,22 +92,22 @@ public class Connection
 	private boolean authenticated = false;
 	private ChannelManager cm;
 
-	private CryptoWishList cryptoWishList = new CryptoWishList();
+	protected CryptoWishList cryptoWishList = new CryptoWishList();
 
-	private DHGexParameters dhgexpara = new DHGexParameters();
+	protected DHGexParameters dhgexpara = new DHGexParameters();
 
-	private final String hostname;
+	protected final String hostname;
 	private final String sourceAddress;
 
-	private final int port;
+	protected final int port;
 
-	private TransportManager tm;
+	protected TransportManager tm;
 
-	private boolean tcpNoDelay = false;
+	protected boolean tcpNoDelay = false;
 
-	private ProxyData proxyData = null;
+	protected ProxyData proxyData = null;
 
-	private Vector connectionMonitors = new Vector();
+	protected Vector connectionMonitors = new Vector();
 
 	/**
 	 * Prepares a fresh <code>Connection</code> object which can then be used
@@ -148,7 +148,7 @@ public class Connection
 		this.port = port;
 		this.sourceAddress = sourceAddress;
 	}
-
+	
 	/**
 	 * After a successful connect, one has to authenticate oneself. This method
 	 * is based on DSA (it uses DSA to sign a challenge sent by the server).
@@ -1056,7 +1056,7 @@ public class Connection
 		return false;
 	}
 
-	private final SecureRandom getOrCreateSecureRND()
+	protected final SecureRandom getOrCreateSecureRND()
 	{
 		if (generator == null)
             generator = RandomFactory.create();
