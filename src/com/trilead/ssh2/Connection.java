@@ -23,6 +23,8 @@ import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.net.SocketTimeoutException;
 import java.security.SecureRandom;
+import java.util.Collections;
+import java.util.List;
 import java.util.Vector;
 
 /**
@@ -514,6 +516,17 @@ public class Connection
 		fr.close();
 
 		return authenticateWithPublicKey(user, cw.toCharArray(), password);
+	}
+	/**
+	 * Method will return the banners provided by the server.
+	 * {@link AuthenticationManager#getBanners()}
+	 * @return a list of banner strings or empty if no banners is sent.
+	 */
+	public List<String> getBanners(){
+		if(am != null ){
+			return am.getBanners();
+		}
+		return Collections.emptyList();
 	}
 
 	/**
