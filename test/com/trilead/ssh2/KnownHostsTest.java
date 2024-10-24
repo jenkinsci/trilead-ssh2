@@ -43,6 +43,7 @@ public class KnownHostsTest {
     public void testKnownHostsPreferredAlgorithmsEcdsaOnly() throws IOException, NoSuchAlgorithmException {
         KnownHosts testCase = new KnownHosts();
         KeyPairGenerator ecGenerator = KeyPairGenerator.getInstance("EC");
+        ecGenerator.initialize(256);
         testCase.addHostkey(new String[]{"localhost"}, "ecdsa-sha2-nistp256", new ECDSAKeyAlgorithm.ECDSASha2Nistp256().encodePublicKey((ECPublicKey) ecGenerator.generateKeyPair().getPublic()));
         assertArrayEquals(new String[]{"ecdsa-sha2-nistp256", "ssh-ed25519", "ecdsa-sha2-nistp521", "ecdsa-sha2-nistp384","rsa-sha2-256", "rsa-sha2-512","ssh-rsa", "ssh-dss"}, testCase.getPreferredServerHostkeyAlgorithmOrder("localhost"));
     }

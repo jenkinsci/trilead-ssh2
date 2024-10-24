@@ -45,6 +45,8 @@ import com.trilead.ssh2.signature.KeyAlgorithmManager;
 public class KexManager implements MessageHandler
 {
 	private static final Logger log = Logger.getLogger(KexManager.class);
+	private static final String PROPERTY_TIMEOUT = KexManager.class.getName() + ".timeout";
+	private static long DEFAULT_WAIT_TIMEOUT = Long.parseLong(System.getProperty(PROPERTY_TIMEOUT,"1200000"));
 
 	private static final List<String> DEFAULT_KEY_ALGORITHMS = buildDefaultKeyAlgorithms();
 
@@ -98,7 +100,7 @@ public class KexManager implements MessageHandler
 
 				try
 				{
-					accessLock.wait();
+					accessLock.wait(DEFAULT_WAIT_TIMEOUT);
 				}
 				catch (InterruptedException e)
 				{
@@ -375,6 +377,7 @@ public class KexManager implements MessageHandler
 				"diffie-hellman-group14-sha1", "diffie-hellman-group1-sha1","ecdh-sha2-nistp256","ecdh-sha2-nistp384","ecdh-sha2-nistp521","curve25519-sha256","curve25519-sha256@libssh.org" };
 	}
 
+	// FIXME this code is not used, the check it makes does not match the implementation in other places.
 	public static void checkKexAlgorithmList(String[] algos)
 	{
 		for (String algo : algos) {
@@ -658,7 +661,7 @@ public class KexManager implements MessageHandler
 						throw new IOException("The server hostkey was not accepted by the verifier callback");
 				}
 
-				kxs.dhx.setF(dhr.getF().toByteArray());
+				kxs.dhx.setF(dhr.getF());
 
 				try
 				{

@@ -18,6 +18,10 @@ import java.io.OutputStream;
  * @author Kohsuke Kawaguchi
  */
 class FifoBuffer {
+
+	private static final String PROPERTY_TIMEOUT = FifoBuffer.class.getName() + ".timeout";
+	private static long DEFAULT_WAIT_TIMEOUT = Long.parseLong(System.getProperty(PROPERTY_TIMEOUT,"1200000"));
+
     /**
      * Unit of buffer, singly linked and lazy created as needed.
      */
@@ -153,7 +157,7 @@ class FifoBuffer {
 
             synchronized (lock) {
                 while ((chunk = Math.min(len,writable()))==0)
-                    lock.wait();
+                    lock.wait(DEFAULT_WAIT_TIMEOUT);
 
                 w.write(buf, start, chunk);
 
@@ -209,7 +213,7 @@ class FifoBuffer {
                         releaseRing();
                         return -1;  // no more data
                     }
-                    lock.wait(); // wait until the writer gives us something
+                    lock.wait(DEFAULT_WAIT_TIMEOUT); // wait until the writer gives us something
                 }
 
                 r.read(buf,start,chunk);

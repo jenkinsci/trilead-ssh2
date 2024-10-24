@@ -28,7 +28,7 @@ import java.util.stream.Collectors;
 public class AuthenticationManager implements MessageHandler
 {
 	public static final String PROPERTY_TIMEOUT = AuthenticationManager.class.getName() + ".timeout";
-	public static final long TIMEOUT = Long.valueOf(System.getProperty(PROPERTY_TIMEOUT,"120000"));
+	public static final long TIMEOUT = Long.parseLong(System.getProperty(PROPERTY_TIMEOUT,"1200000"));
 	TransportManager tm;
 
 	Vector packets = new Vector();

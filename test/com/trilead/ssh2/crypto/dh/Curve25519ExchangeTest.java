@@ -1,14 +1,19 @@
 package com.trilead.ssh2.crypto.dh;
 
 import com.google.crypto.tink.subtle.X25519;
+import com.trilead.ssh2.packets.PacketKexDHReply;
+import java.io.IOException;
 
 import org.junit.Test;
 
 import java.math.BigInteger;
+import java.security.InvalidKeyException;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
 
 /**
  * Created by Kenny Root on 1/23/16.
@@ -76,4 +81,65 @@ public class Curve25519ExchangeTest {
 		ex.setF(ALICE_PUBLIC);
 		assertEquals(KNOWN_SHARED_SECRET_BI, ex.sharedSecret);
 	}
+        
+        @Test
+	public void testBigIntegerRemovesLeadingZero() throws Exception {
+              
+               BigInteger bigIntegerWithoutLeadingZero = new BigInteger(1, toByteArray("4a5d9d5ba4ce2de1728e3bf480350f25e07e21c947d19e3376f09b3c1e161742"));
+               
+               BigInteger bigIntegerWithLeadingZero = new BigInteger(1, toByteArray("015d9d5ba4ce2de1728e3bf480350f25e07e21c947d19e3376f09b3c1e161742"));
+               //The key with same length does not become the same when using BigInteger when a key has leading zeros. This is because BigInteger has stripLeadingZeroBytes method.
+               assertNotEquals(Integer.valueOf(bigIntegerWithoutLeadingZero.bitLength()),Integer.valueOf(bigIntegerWithLeadingZero.bitLength()));
+               
+               
+		
+	}
+        
+        
+    @Test
+    public void testKeyWithLeadingZeros() throws InvalidKeyException{
+        
+        //When the message contains leading 0 then the BigInteger class
+        //will remove the leading zero since it has a function to do so internally.
+        Curve25519Exchange curve25519Exchange = new Curve25519Exchange(ALICE_PRIVATE);
+        
+        //public Diffie-Hellman key and other parameters in message. This one has
+        //leading zero.0, 0, 0, 2, 2, 2, 2, 2
+        byte[] msg = new byte[]{
+            31,
+
+            0, 0, 0, 32,
+            1, 1, 1, 1, 1, 1, 1, 1,
+            1, 1, 1, 1, 1, 1, 1, 1,
+            1, 1, 1, 1, 1, 1, 1, 1,
+            1, 1, 1, 1, 1, 1, 1, 1,
+
+            0, 0, 0, 32,
+            0, 0, 0, 2, 2, 2, 2, 2,
+            2, 2, 2, 2, 2, 2, 2, 2,
+            2, 2, 2, 2, 2, 2, 2, 2,
+            2, 2, 2, 2, 2, 2, 2, 2,
+
+            0, 0, 0, 32,
+            3, 3, 3, 3, 3, 3, 3, 3,
+            3, 3, 3, 3, 3, 3, 3, 3,
+            3, 3, 3, 3, 3, 3, 3, 3,
+            3, 3, 3, 3, 3, 3, 3, 3
+            };
+        PacketKexDHReply dhr = null;
+        
+        try {
+            dhr = new PacketKexDHReply(msg, 0, msg.length);
+        } catch (IOException ioex) {
+             fail("We should not get exception when creating the PacketKexDHReply "+ioex.getMessage());
+        }
+        try {
+            curve25519Exchange.setF(dhr.getF());
+        } catch (IOException ioex) {
+           fail("We should not get exception while setting curve key "+ioex.getMessage());
+
+        }
+    }
+
 }
+
