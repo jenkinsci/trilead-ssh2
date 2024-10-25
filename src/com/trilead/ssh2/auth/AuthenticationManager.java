@@ -14,6 +14,7 @@ import java.security.KeyPair;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.SecureRandom;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Vector;
@@ -34,7 +35,7 @@ public class AuthenticationManager implements MessageHandler
 	Vector packets = new Vector();
 	boolean connectionClosed = false;
 
-	String banner;
+	List<String> banners = new ArrayList<>();
 
 	String[] remainingMethods = new String[0];
 	boolean isPartialSuccess = false;
@@ -104,8 +105,20 @@ public class AuthenticationManager implements MessageHandler
 
 			PacketUserauthBanner sb = new PacketUserauthBanner(msg, 0, msg.length);
 
-			banner = sb.getBanner();
+			banners.add(sb.getBanner()); 
 		}
+	}
+	/**
+	 * This method contains the SSH_MSG_USERAUTH_BANNER messages 
+	 * sent by the server. Messages can be sent at any time before
+	 * SSH protocol starts and the authentication is complete.
+	 * The purpose of the message is to display info to the user
+	 * before authentication starts. 
+	 * Note: If there are messages sent make sure authentication
+	 * is complete before using this method.
+	 */
+	public List<String> getBanners(){
+		return banners;
 	}
 
 	public String[] getRemainingMethods(String user) throws IOException
