@@ -90,7 +90,7 @@ public class TransportManager
 
 						try
 						{
-							asynchronousQueue.wait(DEFAULT_WAIT_TIMEOUT);
+							asynchronousQueue.wait(2000);
 						}
 						catch (InterruptedException e)
 						{
