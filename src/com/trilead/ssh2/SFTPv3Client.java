@@ -1088,7 +1088,7 @@ public class SFTPv3Client
 	}
 
 	/**
-	 * reate a file (truncate it if it already exists) and open it for reading and writing.
+	 * Create a file (truncate it if it already exists) and open it for reading and writing.
 	 * You can specify the default attributes of the file (the server may or may
 	 * not respect your wishes).
 	 * 
@@ -1154,7 +1154,25 @@ public class SFTPv3Client
 		return tw.getBytes();
 	}
 
-	private SFTPv3FileHandle openFile(String fileName, int flags, SFTPv3FileAttributes attr) throws IOException
+
+	/**
+	 * Prefer usage of createFileTruncate,openFileRO,openFileRW and similar.  
+         * Only use this method when you need full control over what should happen.
+         * This method allows Or(|) together SSH_FXF_READ,SSH_FXF_WRITE,SSH_FXF_APPEND,SSH_FXF_CREAT,
+	 * SSH_FXF_TRUNC,SSH_FXF_EXCL found at: https://www.ietf.org/proceedings/50/I-D/secsh-filexfer-00.txt
+	 * 
+	 * @param fileName See the {@link SFTPv3Client comment} for the class for more details.
+         * @param int flags SSH_FXF_READ,SSH_FXF_WRITE,SSH_FXF_APPEND,SSH_FXF_CREAT,
+	 *                  SSH_FXF_TRUNC,SSH_FXF_EXCL
+	 * @param attr may be <code>null</code> to use server defaults. Probably only
+	 *             the <code>uid</code>, <code>gid</code> and <code>permissions</code>
+	 *             (remember the server may apply a umask) entries of the {@link SFTPv3FileHandle}
+	 *             structure make sense. You need only to set those fields where you want
+	 *             to override the server's defaults.
+	 * @return a SFTPv3FileHandle handle
+	 * @throws IOException the io exception
+	 */
+	public SFTPv3FileHandle openFile(String fileName, int flags, SFTPv3FileAttributes attr) throws IOException
 	{
 		int req_id = generateNextRequestID();
 
