@@ -1162,7 +1162,7 @@ public class SFTPv3Client
 	 * SSH_FXF_TRUNC,SSH_FXF_EXCL found at: https://www.ietf.org/proceedings/50/I-D/secsh-filexfer-00.txt
 	 * 
 	 * @param fileName See the {@link SFTPv3Client comment} for the class for more details.
-         * @param int flags SSH_FXF_READ,SSH_FXF_WRITE,SSH_FXF_APPEND,SSH_FXF_CREAT,
+         * @param flags SSH_FXF_READ,SSH_FXF_WRITE,SSH_FXF_APPEND,SSH_FXF_CREAT,
 	 *                  SSH_FXF_TRUNC,SSH_FXF_EXCL
 	 * @param attr may be <code>null</code> to use server defaults. Probably only
 	 *             the <code>uid</code>, <code>gid</code> and <code>permissions</code>
