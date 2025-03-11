@@ -7,6 +7,7 @@ import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.SecureRandom;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import com.trilead.ssh2.ConnectionInfo;
@@ -124,7 +125,16 @@ public class KexManager implements MessageHandler
 					return aClient;
 			}
 		}
-		throw new NegotiateException();
+		throw new NegotiateException("No matching algorithm found. "+"Client: " + Arrays.toString(sortedArray(client)) + ", Server: " + Arrays.toString(sortedArray(server)));
+	}
+
+	private static String[] sortedArray(String[] array) 
+	{
+    if (array == null) {
+        return new String[]{"<empty>"};
+    }
+    Arrays.sort(array);
+    return array;
 	}
 
 	private boolean compareFirstOfNameList(String[] a, String[] b)
