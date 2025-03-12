@@ -19,8 +19,8 @@ import org.testcontainers.shaded.com.trilead.ssh2.packets.Packets;
 import java.io.IOException;
 import java.security.SecureRandom;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.contains;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -119,4 +119,87 @@ public class KexManagerTest {
 		// If this weren't ignored, it would throw an exception
 		kexManager.handleMessage(new byte[] { Packets.SSH_MSG_NEWKEYS }, 1);
 	}
+
+	@Test
+    public void testMergeKexParameters() throws NegotiateException {
+        // Arrange: Create sample KexParameters for client and server
+        KexParameters client = new KexParameters();
+        client.kex_algorithms = new String[]{"algo1", "algo2"};
+        client.server_host_key_algorithms = new String[]{"key1", "key2"};
+        client.encryption_algorithms_client_to_server = new String[]{"enc1", "enc2"};
+        client.encryption_algorithms_server_to_client = new String[]{"enc2", "enc3"};
+        client.mac_algorithms_client_to_server = new String[]{"mac1", "mac2"};
+        client.mac_algorithms_server_to_client = new String[]{"mac2", "mac3"};
+        client.compression_algorithms_client_to_server = new String[]{"comp1"};
+        client.compression_algorithms_server_to_client = new String[]{"comp1", "comp2"};
+        client.languages_client_to_server = new String[]{"lang1"};
+        client.languages_server_to_client = new String[]{"lang2"};
+
+        KexParameters server = new KexParameters();
+        server.kex_algorithms = new String[]{"algo2", "algo3"};
+        server.server_host_key_algorithms = new String[]{"key2", "key3"};
+        server.encryption_algorithms_client_to_server = new String[]{"enc2", "enc3"};
+        server.encryption_algorithms_server_to_client = new String[]{"enc1", "enc2"};
+        server.mac_algorithms_client_to_server = new String[]{"mac2", "mac3"};
+        server.mac_algorithms_server_to_client = new String[]{"mac1", "mac2"};
+        server.compression_algorithms_client_to_server = new String[]{"comp1", "comp2"};
+        server.compression_algorithms_server_to_client = new String[]{"comp1"};
+        server.languages_client_to_server = new String[]{"lang1", "lang3"};
+        server.languages_server_to_client = new String[]{"lang2", "lang4"};
+
+        // Act: Call the method under test
+        NegotiatedParameters result = kexManager.mergeKexParameters(client, server);
+
+        // Assert: Validate results
+        assertEquals("algo2", result.kex_algo);
+        assertEquals("key2", result.server_host_key_algo);
+        assertEquals("enc2", result.enc_algo_client_to_server);
+        assertEquals("enc2", result.enc_algo_server_to_client);
+        assertEquals("mac2", result.mac_algo_client_to_server);
+        assertEquals("mac2", result.mac_algo_server_to_client);
+        assertEquals("comp1", result.comp_algo_client_to_server);
+        assertEquals("comp1", result.comp_algo_server_to_client);
+        assertEquals("lang1", result.lang_client_to_server);
+        assertEquals("lang2", result.lang_server_to_client);
+    }
+
+	 @Test
+    public void testMergeKexParametersMismatch() {
+        // Arrange: Create client and server parameters with no common algorithms
+        KexParameters client = new KexParameters();
+        client.kex_algorithms = new String[]{"algoX"};
+        client.server_host_key_algorithms = new String[]{"keyX"};
+        client.encryption_algorithms_client_to_server = new String[]{"encX"};
+        client.encryption_algorithms_server_to_client = new String[]{"encY"};
+        client.mac_algorithms_client_to_server = new String[]{"macX"};
+        client.mac_algorithms_server_to_client = new String[]{"macY"};
+        client.compression_algorithms_client_to_server = new String[]{"compX"};
+        client.compression_algorithms_server_to_client = new String[]{"compY"};
+        client.languages_client_to_server = new String[]{"langX"};
+        client.languages_server_to_client = new String[]{"langY"};
+
+        KexParameters server = new KexParameters();
+        server.kex_algorithms = new String[]{"algoY"};
+        server.server_host_key_algorithms = new String[]{"keyY"};
+        server.encryption_algorithms_client_to_server = new String[]{"encY"};
+        server.encryption_algorithms_server_to_client = new String[]{"encZ"};
+        server.mac_algorithms_client_to_server = new String[]{"macY"};
+        server.mac_algorithms_server_to_client = new String[]{"macZ"};
+        server.compression_algorithms_client_to_server = new String[]{"compY"};
+        server.compression_algorithms_server_to_client = new String[]{"compZ"};
+        server.languages_client_to_server = new String[]{"langY"};
+        server.languages_server_to_client = new String[]{"langZ"};
+
+
+        try {
+            // Act: This should throw an exception due to no common algorithms
+            kexManager.mergeKexParameters(client, server);
+            fail("Expected NegotiateException was not thrown.");
+        } catch (NegotiateException e) {
+            // Print exception content
+            System.out.println("NegotiateException occurred: " + e.getMessage());
+        }
+    }
+
+
 }
