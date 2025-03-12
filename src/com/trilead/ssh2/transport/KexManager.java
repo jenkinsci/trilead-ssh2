@@ -175,12 +175,11 @@ public class KexManager implements MessageHandler
 		return true;
 	}
 
-	private NegotiatedParameters mergeKexParameters(KexParameters client, KexParameters server)
+	NegotiatedParameters mergeKexParameters(KexParameters client, KexParameters server) throws NegotiateException
 	{
 		NegotiatedParameters np = new NegotiatedParameters();
 
-		try
-		{
+		
 			np.kex_algo = getFirstMatch(client.kex_algorithms, server.kex_algorithms);
 
 			log.log(30, "kex_algo=" + np.kex_algo);
@@ -214,31 +213,15 @@ public class KexManager implements MessageHandler
 			log.log(30, "comp_algo_client_to_server=" + np.comp_algo_client_to_server);
 			log.log(30, "comp_algo_server_to_client=" + np.comp_algo_server_to_client);
 
-		}
-		catch (NegotiateException e)
-		{
-			return null;
-		}
+		
 
-		try
-		{
+	
 			np.lang_client_to_server = getFirstMatch(client.languages_client_to_server,
 					server.languages_client_to_server);
-		}
-		catch (NegotiateException e1)
-		{
-			np.lang_client_to_server = null;
-		}
-
-		try
-		{
+		
 			np.lang_server_to_client = getFirstMatch(client.languages_server_to_client,
 					server.languages_server_to_client);
-		}
-		catch (NegotiateException e2)
-		{
-			np.lang_server_to_client = null;
-		}
+		
 
 		if (isGuessOK(client, server))
 			np.guessOK = true;
@@ -461,11 +444,12 @@ public class KexManager implements MessageHandler
 
 			kip = new PacketKexInit(msg, 0, msglen);
 			kxs.remoteKEX = kip;
-
+			try{
 			kxs.np = mergeKexParameters(kxs.localKEX.getKexParameters(), kxs.remoteKEX.getKexParameters());
-
-			if (kxs.np == null)
-				throw new IOException("Cannot negotiate, proposals do not match.");
+			}catch(NegotiateException ne){
+				throw new IOException("Cannot negotiate algorithms, proposals do not match.", ne);
+			}
+			
 
 			if (kxs.remoteKEX.isFirst_kex_packet_follows() && !kxs.np.guessOK)
 			{
