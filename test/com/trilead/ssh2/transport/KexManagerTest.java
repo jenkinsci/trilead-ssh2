@@ -18,8 +18,8 @@ import org.testcontainers.shaded.com.trilead.ssh2.packets.Packets;
 
 import java.io.IOException;
 import java.security.SecureRandom;
-
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.times;
@@ -121,85 +121,173 @@ public class KexManagerTest {
 	}
 
 	@Test
-    public void testMergeKexParameters() throws NegotiateException {
-        // Arrange: Create sample KexParameters for client and server
+    public void testSuccessfulNegotiation() {
         KexParameters client = new KexParameters();
-        client.kex_algorithms = new String[]{"algo1", "algo2"};
-        client.server_host_key_algorithms = new String[]{"key1", "key2"};
-        client.encryption_algorithms_client_to_server = new String[]{"enc1", "enc2"};
-        client.encryption_algorithms_server_to_client = new String[]{"enc2", "enc3"};
-        client.mac_algorithms_client_to_server = new String[]{"mac1", "mac2"};
-        client.mac_algorithms_server_to_client = new String[]{"mac2", "mac3"};
-        client.compression_algorithms_client_to_server = new String[]{"comp1"};
-        client.compression_algorithms_server_to_client = new String[]{"comp1", "comp2"};
-        client.languages_client_to_server = new String[]{"lang1"};
-        client.languages_server_to_client = new String[]{"lang2"};
+        client.kex_algorithms = new String[]{"ecdh-sha2-nistp256", "diffie-hellman-group14-sha1"};
+        client.server_host_key_algorithms = new String[]{"ssh-rsa", "ssh-ed25519"};
+        client.encryption_algorithms_client_to_server = new String[]{"aes128-ctr", "aes256-ctr"};
+        client.encryption_algorithms_server_to_client = new String[]{"aes128-ctr", "aes256-ctr"};
+        client.mac_algorithms_client_to_server = new String[]{"hmac-sha2-256", "hmac-sha1"};
+        client.mac_algorithms_server_to_client = new String[]{"hmac-sha2-256", "hmac-sha1"};
+        client.compression_algorithms_client_to_server = new String[]{"none", "zlib"};
+        client.compression_algorithms_server_to_client = new String[]{"none", "zlib"};
+        client.languages_client_to_server = new String[]{"en-US", "fr-FR"};
+        client.languages_server_to_client = new String[]{"en-US", "fr-FR"};
 
         KexParameters server = new KexParameters();
-        server.kex_algorithms = new String[]{"algo2", "algo3"};
-        server.server_host_key_algorithms = new String[]{"key2", "key3"};
-        server.encryption_algorithms_client_to_server = new String[]{"enc2", "enc3"};
-        server.encryption_algorithms_server_to_client = new String[]{"enc1", "enc2"};
-        server.mac_algorithms_client_to_server = new String[]{"mac2", "mac3"};
-        server.mac_algorithms_server_to_client = new String[]{"mac1", "mac2"};
-        server.compression_algorithms_client_to_server = new String[]{"comp1", "comp2"};
-        server.compression_algorithms_server_to_client = new String[]{"comp1"};
-        server.languages_client_to_server = new String[]{"lang1", "lang3"};
-        server.languages_server_to_client = new String[]{"lang2", "lang4"};
-
-        // Act: Call the method under test
-        NegotiatedParameters result = kexManager.mergeKexParameters(client, server);
-
-        // Assert: Validate results
-        assertEquals("algo2", result.kex_algo);
-        assertEquals("key2", result.server_host_key_algo);
-        assertEquals("enc2", result.enc_algo_client_to_server);
-        assertEquals("enc2", result.enc_algo_server_to_client);
-        assertEquals("mac2", result.mac_algo_client_to_server);
-        assertEquals("mac2", result.mac_algo_server_to_client);
-        assertEquals("comp1", result.comp_algo_client_to_server);
-        assertEquals("comp1", result.comp_algo_server_to_client);
-        assertEquals("lang1", result.lang_client_to_server);
-        assertEquals("lang2", result.lang_server_to_client);
-    }
-
-	 @Test
-    public void testMergeKexParametersMismatch() {
-        // Arrange: Create client and server parameters with no common algorithms
-        KexParameters client = new KexParameters();
-        client.kex_algorithms = new String[]{"algoX"};
-        client.server_host_key_algorithms = new String[]{"keyX"};
-        client.encryption_algorithms_client_to_server = new String[]{"encX"};
-        client.encryption_algorithms_server_to_client = new String[]{"encY"};
-        client.mac_algorithms_client_to_server = new String[]{"macX"};
-        client.mac_algorithms_server_to_client = new String[]{"macY"};
-        client.compression_algorithms_client_to_server = new String[]{"compX"};
-        client.compression_algorithms_server_to_client = new String[]{"compY"};
-        client.languages_client_to_server = new String[]{"langX"};
-        client.languages_server_to_client = new String[]{"langY"};
-
-        KexParameters server = new KexParameters();
-        server.kex_algorithms = new String[]{"algoY"};
-        server.server_host_key_algorithms = new String[]{"keyY"};
-        server.encryption_algorithms_client_to_server = new String[]{"encY"};
-        server.encryption_algorithms_server_to_client = new String[]{"encZ"};
-        server.mac_algorithms_client_to_server = new String[]{"macY"};
-        server.mac_algorithms_server_to_client = new String[]{"macZ"};
-        server.compression_algorithms_client_to_server = new String[]{"compY"};
-        server.compression_algorithms_server_to_client = new String[]{"compZ"};
-        server.languages_client_to_server = new String[]{"langY"};
-        server.languages_server_to_client = new String[]{"langZ"};
-
+        server.kex_algorithms = new String[]{"ecdh-sha2-nistp256", "curve25519-sha256"};
+        server.server_host_key_algorithms = new String[]{"ssh-ed25519", "ssh-rsa"};
+        server.encryption_algorithms_client_to_server = new String[]{"aes256-ctr", "aes128-ctr"};
+        server.encryption_algorithms_server_to_client = new String[]{"aes256-ctr", "aes128-ctr"};
+        server.mac_algorithms_client_to_server = new String[]{"hmac-sha2-256", "hmac-sha1"};
+        server.mac_algorithms_server_to_client = new String[]{"hmac-sha2-256", "hmac-sha1"};
+        server.compression_algorithms_client_to_server = new String[]{"zlib", "none"};
+        server.compression_algorithms_server_to_client = new String[]{"zlib", "none"};
+        server.languages_client_to_server = new String[]{"fr-FR", "en-US"};
+        server.languages_server_to_client = new String[]{"fr-FR", "en-US"};
 
         try {
-            // Act: This should throw an exception due to no common algorithms
-            kexManager.mergeKexParameters(client, server);
-            fail("Expected NegotiateException was not thrown.");
+            NegotiatedParameters np = kexManager.mergeKexParameters(client, server);
+
+            assertEquals("ecdh-sha2-nistp256", np.kex_algo);
+            assertEquals("ssh-rsa", np.server_host_key_algo);//getFirstMatch will select first client that matches any of the server ones.
+            assertEquals("aes128-ctr", np.enc_algo_client_to_server);
+            assertEquals("aes128-ctr", np.enc_algo_server_to_client);
+            assertEquals("hmac-sha2-256", np.mac_algo_client_to_server);
+            assertEquals("hmac-sha2-256", np.mac_algo_server_to_client);
+            assertEquals("none", np.comp_algo_client_to_server);
+            assertEquals("none", np.comp_algo_server_to_client);
+            assertEquals("en-US", np.lang_client_to_server);
+            assertEquals("en-US", np.lang_server_to_client);
+
         } catch (NegotiateException e) {
-            // Print exception content
-            System.out.println("NegotiateException occurred: " + e.getMessage());
+            fail("Negotiation should not fail: " + e.getMessage());
         }
     }
 
+    @Test
+    public void testNoMatchingKexAlgorithm() {
+        KexParameters client = new KexParameters();
+        client.kex_algorithms = new String[]{"diffie-hellman-group1-sha1"};
+
+        KexParameters server = new KexParameters();
+        server.kex_algorithms = new String[]{"ecdh-sha2-nistp256"};
+
+        try {
+            kexManager.mergeKexParameters(client, server);
+            fail("Expected NegotiateException due to no matching key exchange algorithm.");
+        } catch (NegotiateException e) {
+            // Expected exception
+        }
+    }
+
+    @Test
+public void testNoMatchingEncryptionAlgorithms() {
+    KexParameters client = new KexParameters();
+    client.kex_algorithms = new String[]{"curve25519-sha256"}; 
+    client.server_host_key_algorithms = new String[]{"rsa-sha2-256"};  
+    client.encryption_algorithms_client_to_server = new String[]{"aes192-cbc"}; //No match (Failure expected here)
+      
+
+    KexParameters server = new KexParameters();
+    server.kex_algorithms = new String[]{"curve25519-sha256"};  
+    server.server_host_key_algorithms = new String[]{"rsa-sha2-256"}; 
+    server.encryption_algorithms_client_to_server = new String[]{"aes256-ctr"};  //No match (Failure expected here)
+
+    try {
+        kexManager.mergeKexParameters(client, server);
+        fail("Expected NegotiateException due to no matching encryption algorithm.");
+    } catch (NegotiateException e) {
+        // Expected exception
+    }
+}
+
+
+@Test
+public void testNoMatchingMACAlgorithms() {
+    KexParameters client = new KexParameters();
+    client.kex_algorithms = new String[]{"curve25519-sha256"};  
+    client.server_host_key_algorithms = new String[]{"rsa-sha2-256"};  
+    client.encryption_algorithms_client_to_server = new String[]{"aes256-ctr"}; 
+    client.encryption_algorithms_server_to_client = new String[]{"aes256-ctr"}; 
+    client.mac_algorithms_client_to_server = new String[]{"hmac-md5"}; //No match (Failure expected here)
+
+    KexParameters server = new KexParameters();
+    server.kex_algorithms = new String[]{"curve25519-sha256"}; 
+    server.server_host_key_algorithms = new String[]{"rsa-sha2-256"};  
+    server.encryption_algorithms_client_to_server = new String[]{"aes256-ctr"};  
+    server.encryption_algorithms_server_to_client = new String[]{"aes256-ctr"}; 
+    server.mac_algorithms_client_to_server = new String[]{"hmac-sha2-256"};//No match (Failure expected here)
+
+    try {
+        kexManager.mergeKexParameters(client, server);
+        fail("Expected NegotiateException due to no matching MAC algorithm.");
+    } catch (NegotiateException e) {
+          // Expected exception
+    }
+}
+
+
+@Test
+public void testNoMatchingCompressionAlgorithms() {
+    KexParameters client = new KexParameters();
+    client.kex_algorithms = new String[]{"curve25519-sha256"}; 
+    client.server_host_key_algorithms = new String[]{"rsa-sha2-256"};  
+    client.encryption_algorithms_client_to_server = new String[]{"aes256-ctr"}; 
+    client.encryption_algorithms_server_to_client = new String[]{"aes256-ctr"};  
+    client.mac_algorithms_client_to_server = new String[]{"hmac-sha2-256"}; 
+    client.mac_algorithms_server_to_client = new String[]{"hmac-sha2-256"}; 
+    client.compression_algorithms_client_to_server = new String[]{"zlib"};  //No match (Failure expected here)
+
+    KexParameters server = new KexParameters();
+    server.kex_algorithms = new String[]{"curve25519-sha256"};  
+    server.server_host_key_algorithms = new String[]{"rsa-sha2-256"}; 
+    server.encryption_algorithms_client_to_server = new String[]{"aes256-ctr"};  
+    server.encryption_algorithms_server_to_client = new String[]{"aes256-ctr"};  
+    server.mac_algorithms_client_to_server = new String[]{"hmac-sha2-256"};  
+    server.mac_algorithms_server_to_client = new String[]{"hmac-sha2-256"};
+    server.compression_algorithms_client_to_server = new String[]{"none"};  //No match (Failure expected here)
+   
+
+    try {
+        kexManager.mergeKexParameters(client, server);
+        fail("Expected NegotiateException due to no matching compression algorithm.");
+    } catch (NegotiateException e) {
+          // Expected exception
+    }
+}
+
+@Test
+public void testNoMatchingLanguages() throws NegotiateException {
+	KexParameters client = new KexParameters();
+	client.kex_algorithms = new String[] { "curve25519-sha256" };
+	client.server_host_key_algorithms = new String[] { "rsa-sha2-256" };
+	client.encryption_algorithms_client_to_server = new String[] { "aes256-ctr" };
+	client.encryption_algorithms_server_to_client = new String[] { "aes256-ctr" };
+	client.mac_algorithms_client_to_server = new String[] { "hmac-sha2-256" };
+	client.mac_algorithms_server_to_client = new String[] { "hmac-sha2-256" };
+	client.compression_algorithms_client_to_server = new String[] { "none" };
+	client.compression_algorithms_server_to_client = new String[] { "none" };
+	client.languages_client_to_server = new String[] { "es-ES" }; // No match
+	client.languages_server_to_client = new String[] { "es-ES" }; // No match
+
+	KexParameters server = new KexParameters();
+	server.kex_algorithms = new String[] { "curve25519-sha256" };
+	server.server_host_key_algorithms = new String[] { "rsa-sha2-256" };
+	server.encryption_algorithms_client_to_server = new String[] { "aes256-ctr" };
+	server.encryption_algorithms_server_to_client = new String[] { "aes256-ctr" };
+	server.mac_algorithms_client_to_server = new String[] { "hmac-sha2-256" };
+	server.mac_algorithms_server_to_client = new String[] { "hmac-sha2-256" };
+	server.compression_algorithms_client_to_server = new String[] { "none" };
+	server.compression_algorithms_server_to_client = new String[] { "none" };
+	server.languages_client_to_server = new String[] { "fr-FR" }; // No match
+	server.languages_server_to_client = new String[] { "fr-FR" }; // No match
+
+	NegotiatedParameters np = kexManager.mergeKexParameters(client, server);
+
+	// Verify that the negotiated language is null instead of throwing an exception
+	assertNull("Expected lang_client_to_server to be null", np.lang_client_to_server);
+	assertNull("Expected lang_server_to_client to be null", np.lang_server_to_client);
+}
 
 }
