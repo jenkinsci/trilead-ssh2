@@ -215,12 +215,20 @@ public class KexManager implements MessageHandler
 
 		
 
-	
-			np.lang_client_to_server = getFirstMatch(client.languages_client_to_server,
-					server.languages_client_to_server);
-		
-			np.lang_server_to_client = getFirstMatch(client.languages_server_to_client,
-					server.languages_server_to_client);
+			try {
+				np.lang_client_to_server = getFirstMatch(client.languages_client_to_server,
+						server.languages_client_to_server);
+			} catch (NegotiateException ne1) {
+				np.lang_client_to_server = null;
+			}
+
+			try {
+				np.lang_server_to_client = getFirstMatch(client.languages_server_to_client,
+						server.languages_server_to_client);
+			} catch (NegotiateException ne2) {
+				np.lang_server_to_client = null;
+			}
+			
 		
 
 		if (isGuessOK(client, server))
