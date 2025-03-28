@@ -54,8 +54,8 @@ public class Channel
 	static final int STATE_CLOSED = 4;
 
 	private static final int CHANNEL_BUFFER_SIZE = Integer.getInteger(
-			Channel.class.getName()+".bufferSize",
-			1024*1024 + 16*1024).intValue();
+            Channel.class.getName() + ".bufferSize",
+            1024 * 1024 + 16 * 1024);
 
     /**
      * This channel's session size.
@@ -312,6 +312,7 @@ public class Channel
      * @return the reason closed
      * @deprecated Use       {@link #getReasonClosedCause()}
      */
+    @Deprecated
     public String getReasonClosed()
 	{
 		synchronized (reasonClosedLock)

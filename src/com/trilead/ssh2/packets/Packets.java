@@ -120,7 +120,7 @@ public class Packets
 		reverseNames[100] = "SSH_MSG_CHANNEL_FAILURE";
 	}
 
-	public static final String getMessageName(int type)
+	public static String getMessageName(int type)
 	{
 		String res = null;
 

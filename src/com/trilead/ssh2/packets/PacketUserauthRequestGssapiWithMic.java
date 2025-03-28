@@ -32,8 +32,7 @@ public class PacketUserauthRequestGssapiWithMic {
 			tw.writeString(SSH_CONNECTION);
 			tw.writeString(GSSAPI_WITH_MIC);
 			tw.writeUINT32(supported_oid.length);
-			for(int i=0; i<supported_oid.length; i++)
-				tw.writeString(supported_oid[i], 0, supported_oid[i].length);
+            for (byte[] bytes : supported_oid) tw.writeString(bytes, 0, bytes.length);
 
 			payload = tw.getBytes();
 		}

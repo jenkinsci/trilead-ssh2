@@ -25,8 +25,7 @@ public class PacketUserauthInfoResponse
 			TypesWriter tw = new TypesWriter();
 			tw.writeByte(Packets.SSH_MSG_USERAUTH_INFO_RESPONSE);
 			tw.writeUINT32(responses.length);
-			for (int i = 0; i < responses.length; i++)
-				tw.writeString(responses[i]);
+            for (String respons : responses) tw.writeString(respons);
 
 			payload = tw.getBytes();
 		}

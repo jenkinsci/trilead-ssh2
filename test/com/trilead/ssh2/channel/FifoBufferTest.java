@@ -69,17 +69,15 @@ public class FifoBufferTest {
     public void bigAccess() throws Exception {
         ExecutorService es = Executors.newFixedThreadPool(1);
 
-        Future<byte[]> reader = es.submit(new Callable<byte[]>() {
-            public byte[] call() throws Exception {
-                final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        Future<byte[]> reader = es.submit(() -> {
+            final ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
-                byte[] buf = new byte[1024];
-                while (true) {
-                    int len = rb.read(buf, 0, buf.length);
-                    if (len < 0) return baos.toByteArray();
-                    assertTrue(len > 0);
-                    baos.write(buf, 0, len);
-                }
+            byte[] buf = new byte[1024];
+            while (true) {
+                int len = rb.read(buf, 0, buf.length);
+                if (len < 0) return baos.toByteArray();
+                assertTrue(len > 0);
+                baos.write(buf, 0, len);
             }
         });
 

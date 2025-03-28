@@ -1,5 +1,7 @@
 package com.trilead.ssh2.transport;
 
+import java.io.Serial;
+
 /**
  * NegotiateException.
  * 
@@ -12,5 +14,6 @@ public class NegotiateException extends Exception
         super(message);
     }
 
-	private static final long serialVersionUID = 3689910669428143157L;
+	@Serial
+    private static final long serialVersionUID = 3689910669428143157L;
 }

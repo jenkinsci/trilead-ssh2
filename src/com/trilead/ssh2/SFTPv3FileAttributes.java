@@ -84,7 +84,7 @@ public class SFTPv3FileAttributes
 		if (permissions == null)
 			return false;
 		
-		return ((permissions.intValue() & 0040000) != 0);
+		return ((permissions & 0040000) != 0);
 	}
 	
 	/**
@@ -98,7 +98,7 @@ public class SFTPv3FileAttributes
 		if (permissions == null)
 			return false;
 		
-		return ((permissions.intValue() & 0100000) != 0);
+		return ((permissions & 0100000) != 0);
 	}
 	
 	/**
@@ -112,7 +112,7 @@ public class SFTPv3FileAttributes
 		if (permissions == null)
 			return false;
 		
-		return ((permissions.intValue() & 0120000) != 0);
+		return ((permissions & 0120000) != 0);
 	}
 	
 	/**
@@ -126,7 +126,7 @@ public class SFTPv3FileAttributes
 		if (permissions == null)
 			return null;
 
-		String res = Integer.toString(permissions.intValue() & 0177777, 8);
+		String res = Integer.toString(permissions & 0177777, 8);
 
 		StringBuffer sb = new StringBuffer();
 

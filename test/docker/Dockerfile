@@ -89,7 +89,7 @@ RUN \
 #libssh (for libnetconf2)
 RUN \
       cd /opt/dev && \
-      git clone http://git.libssh.org/projects/libssh.git && cd libssh && git checkout tags/libssh-0.11.1  &&\
+      git clone https://git.libssh.org/projects/libssh.git && cd libssh && git checkout tags/libssh-0.11.1  &&\
       mkdir build && cd build && \
       cmake -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE="Release" -DWITH_ZLIB=ON -DWITH_NACL=OFF -DWITH_PCAP=OFF .. && \
       make -j2 && \

@@ -19,7 +19,7 @@ import com.trilead.ssh2.ServerHostKeyVerifier;
 public class Acceptor extends Connection{
 
     /**
-     * Constuctor
+     * Constructor
      * @param hostname is the hostname that this class is running on.
      * @param port is the port that is used for incoming connections.
      */

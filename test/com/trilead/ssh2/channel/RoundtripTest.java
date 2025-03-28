@@ -28,12 +28,10 @@ public class RoundtripTest {
         s.getStderr().close();
 
         ExecutorService es = Executors.newFixedThreadPool(1);
-        Future<byte[]> reader = es.submit(new Callable<byte[]>() {
-            public byte[] call() throws Exception {
-                ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                IOUtils.copy(s.getStdout(), baos);
-                return baos.toByteArray();
-            }
+        Future<byte[]> reader = es.submit(() -> {
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            IOUtils.copy(s.getStdout(), baos);
+            return baos.toByteArray();
         });
 
         byte[] data = new byte[10*1024*1024];

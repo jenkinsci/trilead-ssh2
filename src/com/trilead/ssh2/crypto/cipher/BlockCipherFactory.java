@@ -14,54 +14,55 @@ public class BlockCipherFactory
 	static class CipherEntry
 	{
 		String type;
-		int blocksize;
-		int keysize;
-		String cipherClass;
+		int blockSize;
+		int keySize;
+		Class<?> cipherClass;
 
-		public CipherEntry(String type, int blockSize, int keySize, String cipherClass)
+		public CipherEntry(String type, int blockSize, int keySize, Class<?> cipherClass)
 		{
 			this.type = type;
-			this.blocksize = blockSize;
-			this.keysize = keySize;
+			this.blockSize = blockSize;
+			this.keySize = keySize;
 			this.cipherClass = cipherClass;
 		}
 	}
 
-	static Vector ciphers = new Vector();
+	static Vector<CipherEntry> ciphers = new Vector<>();
 
 	static
 	{
 		/* Higher Priority First */
 
-		ciphers.addElement(new CipherEntry("aes256-ctr", 16, 32, "com.trilead.ssh2.crypto.cipher.AES"));
-		ciphers.addElement(new CipherEntry("aes192-ctr", 16, 24, "com.trilead.ssh2.crypto.cipher.AES"));
-		ciphers.addElement(new CipherEntry("aes128-ctr", 16, 16, "com.trilead.ssh2.crypto.cipher.AES"));
-		ciphers.addElement(new CipherEntry("blowfish-ctr", 8, 16, "com.trilead.ssh2.crypto.cipher.BlowFish"));
+		ciphers.addElement(new CipherEntry("aes256-ctr", 16, 32, com.trilead.ssh2.crypto.cipher.AES.class));
+		ciphers.addElement(new CipherEntry("aes192-ctr", 16, 24, com.trilead.ssh2.crypto.cipher.AES.class));
+		ciphers.addElement(new CipherEntry("aes128-ctr", 16, 16, com.trilead.ssh2.crypto.cipher.AES.class));
+		ciphers.addElement(new CipherEntry("blowfish-ctr", 8, 16, com.trilead.ssh2.crypto.cipher.BlowFish.class));
 
-		ciphers.addElement(new CipherEntry("aes256-cbc", 16, 32, "com.trilead.ssh2.crypto.cipher.AES"));
-		ciphers.addElement(new CipherEntry("aes192-cbc", 16, 24, "com.trilead.ssh2.crypto.cipher.AES"));
-		ciphers.addElement(new CipherEntry("aes128-cbc", 16, 16, "com.trilead.ssh2.crypto.cipher.AES"));
-		ciphers.addElement(new CipherEntry("blowfish-cbc", 8, 16, "com.trilead.ssh2.crypto.cipher.BlowFish"));
+		ciphers.addElement(new CipherEntry("aes256-cbc", 16, 32, com.trilead.ssh2.crypto.cipher.AES.class));
+		ciphers.addElement(new CipherEntry("aes192-cbc", 16, 24, com.trilead.ssh2.crypto.cipher.AES.class));
+		ciphers.addElement(new CipherEntry("aes128-cbc", 16, 16, com.trilead.ssh2.crypto.cipher.AES.class));
+		ciphers.addElement(new CipherEntry("blowfish-cbc", 8, 16, com.trilead.ssh2.crypto.cipher.BlowFish.class));
 		
-		ciphers.addElement(new CipherEntry("3des-ctr", 8, 24, "com.trilead.ssh2.crypto.cipher.DESede"));
-		ciphers.addElement(new CipherEntry("3des-cbc", 8, 24, "com.trilead.ssh2.crypto.cipher.DESede"));
+		ciphers.addElement(new CipherEntry("3des-ctr", 8, 24, com.trilead.ssh2.crypto.cipher.DESede.class));
+		ciphers.addElement(new CipherEntry("3des-cbc", 8, 24, com.trilead.ssh2.crypto.cipher.DESede.class));
 	}
 
 	public static String[] getDefaultCipherList()
 	{
-		String list[] = new String[ciphers.size()];
+		String[] list = new String[ciphers.size()];
 		for (int i = 0; i < ciphers.size(); i++)
 		{
-			CipherEntry ce = (CipherEntry) ciphers.elementAt(i);
-			list[i] = new String(ce.type);
+			CipherEntry ce = ciphers.elementAt(i);
+			list[i] = ce.type;
 		}
 		return list;
 	}
 
 	public static void checkCipherList(String[] cipherCandidates)
 	{
-		for (int i = 0; i < cipherCandidates.length; i++)
-			getEntry(cipherCandidates[i]);
+        for (String cipherCandidate : cipherCandidates) {
+			getEntry(cipherCandidate);
+		}
 	}
 
 	public static BlockCipher createCipher(String type, boolean encrypt, byte[] key, byte[] iv)
@@ -69,8 +70,8 @@ public class BlockCipherFactory
 		try
 		{
 			CipherEntry ce = getEntry(type);
-			Class cc = Class.forName(ce.cipherClass);
-			BlockCipher bc = (BlockCipher) cc.newInstance();
+			Class<?> cc = ce.cipherClass;
+			BlockCipher bc = (BlockCipher) cc.getDeclaredConstructor().newInstance();
 
 			if (type.endsWith("-cbc"))
 			{
@@ -94,22 +95,22 @@ public class BlockCipherFactory
 	{
 		for (int i = 0; i < ciphers.size(); i++)
 		{
-			CipherEntry ce = (CipherEntry) ciphers.elementAt(i);
+			CipherEntry ce = ciphers.elementAt(i);
 			if (ce.type.equals(type))
 				return ce;
 		}
-		throw new IllegalArgumentException("Unkown algorithm " + type);
+		throw new IllegalArgumentException("Unknown algorithm " + type);
 	}
 
 	public static int getBlockSize(String type)
 	{
 		CipherEntry ce = getEntry(type);
-		return ce.blocksize;
+		return ce.blockSize;
 	}
 
 	public static int getKeySize(String type)
 	{
 		CipherEntry ce = getEntry(type);
-		return ce.keysize;
+		return ce.keySize;
 	}
 }

@@ -259,16 +259,12 @@ public abstract class ECDSAKeyAlgorithm extends KeyAlgorithm<ECPublicKey, ECPriv
     }
     
     public static ECDSAKeyAlgorithm getVerifierForKey(ECKey key) {
-        switch (key.getParams().getCurve().getField().getFieldSize()) {
-            case 256:
-                return new ECDSAKeyAlgorithm.ECDSASha2Nistp256();
-            case 384:
-                return new ECDSAKeyAlgorithm.ECDSASha2Nistp384();
-            case 521:
-                return new ECDSAKeyAlgorithm.ECDSASha2Nistp521();
-            default:
-                return null;
-        }
+        return switch (key.getParams().getCurve().getField().getFieldSize()) {
+            case 256 -> new ECDSASha2Nistp256();
+            case 384 -> new ECDSASha2Nistp384();
+            case 521 -> new ECDSASha2Nistp521();
+            default -> null;
+        };
     }
 
     public abstract String getDigestAlgorithm();

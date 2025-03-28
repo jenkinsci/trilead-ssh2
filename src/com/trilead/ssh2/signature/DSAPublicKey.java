@@ -10,6 +10,7 @@ import java.math.BigInteger;
  * @deprecated use {@link java.security.interfaces.DSAPublicKey}
  * @see java.security.interfaces.DSAPublicKey
  */
+@Deprecated
 public class DSAPublicKey
 {
 	private BigInteger p;

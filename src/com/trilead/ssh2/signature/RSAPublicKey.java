@@ -10,6 +10,7 @@ import java.math.BigInteger;
  * @deprecated use {@link java.security.interfaces.RSAPublicKey}
  * @see java.security.interfaces.RSAPublicKey
  */
+@Deprecated
 public class RSAPublicKey
 {
 	BigInteger e;

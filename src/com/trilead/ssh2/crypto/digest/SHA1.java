@@ -183,7 +183,7 @@ public final class SHA1 implements Digest
 		}
 	}
 
-	private final void putInt(byte[] b, int pos, int val)
+	private void putInt(byte[] b, int pos, int val)
 	{
 		b[pos] = (byte) (val >> 24);
 		b[pos + 1] = (byte) (val >> 16);
@@ -239,7 +239,7 @@ public final class SHA1 implements Digest
 		reset();
 	}
 
-	private final void perform()
+	private void perform()
 	{
 		for (int t = 16; t < 80; t++)
 		{
@@ -595,16 +595,15 @@ public final class SHA1 implements Digest
 		// debug(80, H0, H1, H2, H3, H4);
 	}
 
-	private static final String toHexString(byte[] b)
+	private static String toHexString(byte[] b)
 	{
 		final String hexChar = "0123456789ABCDEF";
 
 		StringBuffer sb = new StringBuffer();
-		for (int i = 0; i < b.length; i++)
-		{
-			sb.append(hexChar.charAt((b[i] >> 4) & 0x0f));
-			sb.append(hexChar.charAt(b[i] & 0x0f));
-		}
+        for (byte value : b) {
+            sb.append(hexChar.charAt((value >> 4) & 0x0f));
+            sb.append(hexChar.charAt(value & 0x0f));
+        }
 		return sb.toString();
 	}
 

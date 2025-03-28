@@ -38,21 +38,21 @@ public class ChannelManager implements MessageHandler
 {
 	private static final Logger log = Logger.getLogger(ChannelManager.class);
 	private static final String PROPERTY_TIMEOUT = ChannelManager.class.getName() + ".timeout";
-	private static long DEFAULT_WAIT_TIMEOUT = Long.parseLong(System.getProperty(PROPERTY_TIMEOUT,"1200000"));
+	private static final long DEFAULT_WAIT_TIMEOUT = Long.parseLong(System.getProperty(PROPERTY_TIMEOUT,"1200000"));
 
-	private HashMap x11_magic_cookies = new HashMap();
+	private final HashMap<String, X11ServerData> x11_magic_cookies = new HashMap<>();
 
 	/*package*/ TransportManager tm;
 
-	private Vector channels = new Vector();
+	private final Vector<Channel> channels = new Vector<>();
 	private int nextLocalChannel = 100;
 	private boolean shutdown = false;
 	private int globalSuccessCounter = 0;
 	private int globalFailedCounter = 0;
 
-	private HashMap remoteForwardings = new HashMap();
+	private final HashMap<Integer, RemoteForwardingData> remoteForwardings = new HashMap<>();
 
-	private Vector listenerThreads = new Vector();
+	private Vector<IChannelWorkerThread> listenerThreads = new Vector<>();
 
 	private boolean listenerThreadsAllowed = true;
 
@@ -126,7 +126,7 @@ public class ChannelManager implements MessageHandler
 		}
 	}
 
-	private final boolean waitForGlobalRequestResult() throws IOException
+	private boolean waitForGlobalRequestResult() throws IOException
 	{
 		synchronized (channels)
 		{
@@ -158,7 +158,7 @@ public class ChannelManager implements MessageHandler
 		}
 	}
 
-	private final boolean waitForChannelRequestResult(Channel c) throws IOException
+	private boolean waitForChannelRequestResult(Channel c) throws IOException
 	{
 		synchronized (c)
 		{
@@ -208,17 +208,17 @@ public class ChannelManager implements MessageHandler
 			x11_magic_cookies.remove(hexFakeCookie);
 		}
 
-		if (killChannels == false)
+		if (!killChannels)
 			return;
 
 		if (log.isEnabled())
 			log.log(50, "Closing all X11 channels for the given fake cookie");
 
-		Vector channel_copy;
+		Vector<Channel> channel_copy;
 
 		synchronized (channels)
 		{
-			channel_copy = (Vector) channels.clone();
+			channel_copy = new Vector<>(channels);
 		}
 
 		for (int i = 0; i < channel_copy.size(); i++)
@@ -256,11 +256,11 @@ public class ChannelManager implements MessageHandler
 		if (log.isEnabled())
 			log.log(50, "Closing all channels");
 
-		Vector channel_copy;
+		Vector<Channel> channel_copy;
 
 		synchronized (channels)
 		{
-			channel_copy = (Vector) channels.clone();
+			channel_copy = new Vector<>(channels);
 		}
 
 		for (int i = 0; i < channel_copy.size(); i++)
@@ -448,7 +448,7 @@ public class ChannelManager implements MessageHandler
 
 		synchronized (remoteForwardings)
 		{
-			Integer key = new Integer(bindPort);
+			Integer key = bindPort;
 
 			if (remoteForwardings.get(key) != null)
 			{
@@ -492,7 +492,7 @@ public class ChannelManager implements MessageHandler
 
 		synchronized (remoteForwardings)
 		{
-			rfd = (RemoteForwardingData) remoteForwardings.get(new Integer(bindPort));
+			rfd = (RemoteForwardingData) remoteForwardings.get(bindPort);
 
 			if (rfd == null)
 				throw new IOException("Sorry, there is no known remote forwarding for remote port " + bindPort);
@@ -1077,7 +1077,7 @@ public class ChannelManager implements MessageHandler
 
 			synchronized (remoteForwardings)
 			{
-				rfd = (RemoteForwardingData) remoteForwardings.get(new Integer(remoteConnectedPort));
+				rfd = (RemoteForwardingData) remoteForwardings.get(remoteConnectedPort);
 			}
 
 			if (rfd == null)
@@ -1160,7 +1160,7 @@ public class ChannelManager implements MessageHandler
 
 			synchronized (c)
 			{
-				c.exit_status = new Integer(exit_status);
+				c.exit_status = exit_status;
 				c.notifyAll();
 			}
 
@@ -1352,27 +1352,15 @@ public class ChannelManager implements MessageHandler
 		int reasonCode = tr.readUINT32();
 		String description = tr.readString("UTF-8");
 
-		String reasonCodeSymbolicName = null;
+		String reasonCodeSymbolicName = switch (reasonCode) {
+            case 1 -> "SSH_OPEN_ADMINISTRATIVELY_PROHIBITED";
+            case 2 -> "SSH_OPEN_CONNECT_FAILED";
+            case 3 -> "SSH_OPEN_UNKNOWN_CHANNEL_TYPE";
+            case 4 -> "SSH_OPEN_RESOURCE_SHORTAGE";
+            default -> "UNKNOWN REASON CODE (" + reasonCode + ")";
+        };
 
-		switch (reasonCode)
-		{
-		case 1:
-			reasonCodeSymbolicName = "SSH_OPEN_ADMINISTRATIVELY_PROHIBITED";
-			break;
-		case 2:
-			reasonCodeSymbolicName = "SSH_OPEN_CONNECT_FAILED";
-			break;
-		case 3:
-			reasonCodeSymbolicName = "SSH_OPEN_UNKNOWN_CHANNEL_TYPE";
-			break;
-		case 4:
-			reasonCodeSymbolicName = "SSH_OPEN_RESOURCE_SHORTAGE";
-			break;
-		default:
-			reasonCodeSymbolicName = "UNKNOWN REASON CODE (" + reasonCode + ")";
-		}
-
-		StringBuffer descriptionBuffer = new StringBuffer();
+        StringBuffer descriptionBuffer = new StringBuffer();
 		descriptionBuffer.append(description);
 
 		for (int i = 0; i < descriptionBuffer.length(); i++)

@@ -35,27 +35,24 @@ public class EcDhExchange extends GenericDhExchange {
 
 	@Override
 	public void init(String name) throws IOException {
-		final ECParameterSpec spec;
-		
-		switch (name) {
-      case "ecdh-sha2-nistp256":
-          ecdsKeyAlgorithm = new ECDSAKeyAlgorithm.ECDSASha2Nistp256();
-          spec = ecdsKeyAlgorithm.getEcParameterSpec();
-        break;
-      case "ecdh-sha2-nistp384":
-          ecdsKeyAlgorithm = new ECDSAKeyAlgorithm.ECDSASha2Nistp384();
-          spec = ecdsKeyAlgorithm.getEcParameterSpec();
-          break;
-      case "ecdh-sha2-nistp521":
-          ecdsKeyAlgorithm = new ECDSAKeyAlgorithm.ECDSASha2Nistp521();
-          spec = ecdsKeyAlgorithm.getEcParameterSpec();
-          break;    
-      default:
-          throw new IllegalArgumentException("Unknown EC curve " + name);
-		}
-		
-		
-		KeyPairGenerator kpg;
+		final ECParameterSpec spec = switch (name) {
+            case "ecdh-sha2-nistp256" -> {
+                ecdsKeyAlgorithm = new ECDSAKeyAlgorithm.ECDSASha2Nistp256();
+                yield ecdsKeyAlgorithm.getEcParameterSpec();
+            }
+            case "ecdh-sha2-nistp384" -> {
+                ecdsKeyAlgorithm = new ECDSAKeyAlgorithm.ECDSASha2Nistp384();
+                yield ecdsKeyAlgorithm.getEcParameterSpec();
+            }
+            case "ecdh-sha2-nistp521" -> {
+                ecdsKeyAlgorithm = new ECDSAKeyAlgorithm.ECDSASha2Nistp521();
+                yield ecdsKeyAlgorithm.getEcParameterSpec();
+            }
+            default -> throw new IllegalArgumentException("Unknown EC curve " + name);
+        };
+
+
+        KeyPairGenerator kpg;
 		try {
 			kpg = KeyPairGenerator.getInstance("EC");
 			kpg.initialize(spec);
@@ -117,16 +114,12 @@ public class EcDhExchange extends GenericDhExchange {
 	
 	
 	public static ECDSAKeyAlgorithm getVerifierForKey(ECKey key) {
-        switch (key.getParams().getCurve().getField().getFieldSize()) {
-            case 256:
-                return new ECDSAKeyAlgorithm.ECDSASha2Nistp256();
-            case 384:
-                return new ECDSAKeyAlgorithm.ECDSASha2Nistp384();
-            case 521:
-                return new ECDSAKeyAlgorithm.ECDSASha2Nistp521();
-            default:
-                return null;
-        }
+        return switch (key.getParams().getCurve().getField().getFieldSize()) {
+            case 256 -> new ECDSAKeyAlgorithm.ECDSASha2Nistp256();
+            case 384 -> new ECDSAKeyAlgorithm.ECDSASha2Nistp384();
+            case 521 -> new ECDSAKeyAlgorithm.ECDSASha2Nistp521();
+            default -> null;
+        };
     }
 
 	@Override

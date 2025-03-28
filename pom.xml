@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="https://maven.apache.org/POM/4.0.0" xmlns:xsi="https://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="https://maven.apache.org/POM/4.0.0 https://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
@@ -15,9 +15,19 @@
 
     <name>Ganymed SSH2 for Java</name>
     <description>Ganymed SSH2 for Java is a library which implements the SSH-2 protocol in pure Java</description>
+
+    <url>https://github.com/jenkinsci/trilead-ssh2/tree/main</url>
+    <!-- Retained for historical purposes, this is maintained at the above URL
     <url>http://svn.svnkit.com/repos/3rdparty/com.trilead.ssh2/tags/1.0.0-build217/trilead-ssh2/</url>
+    -->
     <licenses>
+        <!-- Current source and license location -->
         <license>
+            <name>BSD Style license</name>
+            <url>https://github.com/jenkinsci/trilead-ssh2/blob/main/LICENSE.txt</url>
+        </license>
+        <license>
+            <!-- This is no longer maintained at the below url -->
             <name>BSD style license</name>
             <url>http://www.ganymed.ethz.ch/ssh2/LICENSE.txt</url>
         </license>
@@ -33,6 +43,11 @@
             <id>kuisathaverat</id>
             <name>Ivan Fernandez</name>
             <email>kuisathaverat@gmail.com</email>
+        </developer>
+        <developer>
+            <id>speedythesnail</id>
+            <name>Steven Jubb</name>
+            <email>steven.jubb@shelltech.net</email>
         </developer>
     </developers>
 
@@ -181,6 +196,8 @@
         <gitHubRepo>jenkinsci/trilead-ssh2</gitHubRepo>
         <!-- TODO fix medium-threshold violations -->
         <spotbugs.threshold>High</spotbugs.threshold>
+        <source>17</source>
+        <target>17</target>
     </properties>
 
 </project>

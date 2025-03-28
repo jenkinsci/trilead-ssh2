@@ -69,7 +69,7 @@ public class SFTPv3Client
 	OutputStream os;
 
 	int protocol_version = 0;
-	HashMap server_extensions = new HashMap();
+	HashMap<String, byte[]> server_extensions = new HashMap<>();
 
 	int next_request_id = 1000;
 
@@ -85,6 +85,7 @@ public class SFTPv3Client
 	 * @deprecated this constructor (debug version) will disappear in the future,
 	 *             use {@link #SFTPv3Client(Connection)} instead.
 	 */
+	@Deprecated
 	public SFTPv3Client(Connection conn, PrintStream debug) throws IOException
 	{
 		if (conn == null)
@@ -169,7 +170,7 @@ public class SFTPv3Client
 		return charsetName;
 	}
 
-	private final void checkHandleValidAndOpen(SFTPv3FileHandle handle) throws IOException
+	private void checkHandleValidAndOpen(SFTPv3FileHandle handle) throws IOException
 	{
 		if (handle.client != this)
 			throw new IOException("The file handle was created with another SFTPv3FileHandle instance.");
@@ -178,7 +179,7 @@ public class SFTPv3Client
 			throw new IOException("The file handle is closed.");
 	}
 
-	private final void sendMessage(int type, int requestId, byte[] msg, int off, int len) throws IOException
+	private void sendMessage(int type, int requestId, byte[] msg, int off, int len) throws IOException
 	{
 		int msglen = len + 1;
 
@@ -203,12 +204,12 @@ public class SFTPv3Client
 		os.flush();
 	}
 
-	private final void sendMessage(int type, int requestId, byte[] msg) throws IOException
+	private void sendMessage(int type, int requestId, byte[] msg) throws IOException
 	{
 		sendMessage(type, requestId, msg, 0, msg.length);
 	}
 
-	private final void readBytes(byte[] buff, int pos, int len) throws IOException
+	private void readBytes(byte[] buff, int pos, int len) throws IOException
 	{
 		while (len > 0)
 		{
@@ -233,7 +234,7 @@ public class SFTPv3Client
 	 * @return the message contents
 	 * @throws IOException the io exception
 	 */
-	private final byte[] receiveMessage(int maxlen) throws IOException
+	private byte[] receiveMessage(int maxlen) throws IOException
 	{
 		byte[] msglen = new byte[4];
 
@@ -251,7 +252,7 @@ public class SFTPv3Client
 		return msg;
 	}
 
-	private final int generateNextRequestID()
+	private int generateNextRequestID()
 	{
 		synchronized (this)
 		{
@@ -259,7 +260,7 @@ public class SFTPv3Client
 		}
 	}
 
-	private final void closeHandle(byte[] handle) throws IOException
+	private void closeHandle(byte[] handle) throws IOException
 	{
 		int req_id = generateNextRequestID();
 
@@ -296,30 +297,30 @@ public class SFTPv3Client
 		{
 			if (debug != null)
 				debug.println("SSH_FILEXFER_ATTR_SIZE");
-			fa.size = new Long(tr.readUINT64());
+			fa.size = tr.readUINT64();
 		}
 
 		if ((flags & AttribFlags.SSH_FILEXFER_ATTR_V3_UIDGID) != 0)
 		{
 			if (debug != null)
 				debug.println("SSH_FILEXFER_ATTR_V3_UIDGID");
-			fa.uid = new Integer(tr.readUINT32());
-			fa.gid = new Integer(tr.readUINT32());
+			fa.uid = tr.readUINT32();
+			fa.gid = tr.readUINT32();
 		}
 
 		if ((flags & AttribFlags.SSH_FILEXFER_ATTR_PERMISSIONS) != 0)
 		{
 			if (debug != null)
 				debug.println("SSH_FILEXFER_ATTR_PERMISSIONS");
-			fa.permissions = new Integer(tr.readUINT32());
+			fa.permissions = tr.readUINT32();
 		}
 
 		if ((flags & AttribFlags.SSH_FILEXFER_ATTR_V3_ACMODTIME) != 0)
 		{
 			if (debug != null)
 				debug.println("SSH_FILEXFER_ATTR_V3_ACMODTIME");
-			fa.atime = new Long(((long)tr.readUINT32()) & 0xffffffffl);
-			fa.mtime = new Long(((long)tr.readUINT32()) & 0xffffffffl);
+			fa.atime = ((long) tr.readUINT32()) & 0xffffffffL;
+			fa.mtime = ((long) tr.readUINT32()) & 0xffffffffL;
 
 		}
 
@@ -702,9 +703,9 @@ public class SFTPv3Client
 		throw new SFTPException(tr.readString(), errorCode);
 	}
 
-	private final Vector scanDirectory(byte[] handle) throws IOException
+	private Vector<SFTPv3DirectoryEntry> scanDirectory(byte[] handle) throws IOException
 	{
-		Vector files = new Vector();
+		Vector<SFTPv3DirectoryEntry> files = new Vector<>();
 
 		while (true)
 		{
@@ -776,7 +777,7 @@ public class SFTPv3Client
 		}
 	}
 
-	private final byte[] openDirectory(String path) throws IOException
+	private byte[] openDirectory(String path) throws IOException
 	{
 		int req_id = generateNextRequestID();
 
@@ -822,7 +823,7 @@ public class SFTPv3Client
 		throw new SFTPException(errorMessage, errorCode);
 	}
 
-	private final String expandString(byte[] b, int off, int len)
+	private String expandString(byte[] b, int off, int len)
 	{
 		StringBuffer sb = new StringBuffer();
 
@@ -924,10 +925,10 @@ public class SFTPv3Client
 	 * @return A Vector containing {@link SFTPv3DirectoryEntry} objects.
 	 * @throws IOException the io exception
 	 */
-	public Vector ls(String dirName) throws IOException
+	public Vector<SFTPv3DirectoryEntry> ls(String dirName) throws IOException
 	{
 		byte[] handle = openDirectory(dirName);
-		Vector result = scanDirectory(handle);
+		Vector<SFTPv3DirectoryEntry> result = scanDirectory(handle);
 		closeHandle(handle);
 		return result;
 	}
@@ -1133,16 +1134,16 @@ public class SFTPv3Client
 			tw.writeUINT32(attrFlags);
 
 			if (attr.size != null)
-				tw.writeUINT64(attr.size.longValue());
+				tw.writeUINT64(attr.size);
 
 			if ((attr.uid != null) && (attr.gid != null))
 			{
-				tw.writeUINT32(attr.uid.intValue());
-				tw.writeUINT32(attr.gid.intValue());
+				tw.writeUINT32(attr.uid);
+				tw.writeUINT32(attr.gid);
 			}
 
 			if (attr.permissions != null)
-				tw.writeUINT32(attr.permissions.intValue());
+				tw.writeUINT32(attr.permissions);
 
 			if ((attr.atime != null) && (attr.mtime != null))
 			{
@@ -1528,7 +1529,7 @@ public class SFTPv3Client
 	 */
 	public void chmod(String path, int permissions) throws IOException {
         SFTPv3FileAttributes atts = new SFTPv3FileAttributes();
-        atts.permissions = Integer.valueOf(permissions);
+        atts.permissions = permissions;
         setstat(path, atts);
     }
 }

@@ -26,12 +26,12 @@ public class Logger
 	
 	private java.util.logging.Logger log;
 
-	public final static Logger getLogger(Class x)
+	public static Logger getLogger(Class<?> x)
 	{
 		return new Logger(x);
 	}
 
-	public Logger(Class x)
+	public Logger(Class<?> x)
 	{
 		this.log = java.util.logging.Logger.getLogger(x.getName());
 	}

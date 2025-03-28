@@ -11,6 +11,7 @@ package com.trilead.ssh2;
  * @deprecated
  *      Logging all goes to JDK java.util.logging
  */
+@Deprecated
 public interface DebugLogger
 {
 

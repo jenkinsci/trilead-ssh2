@@ -109,7 +109,7 @@ public class Connection
 
 	protected ProxyData proxyData = null;
 
-	protected Vector connectionMonitors = new Vector();
+	protected Vector<ConnectionMonitor> connectionMonitors = new Vector<>();
 
 	/**
 	 * Prepares a fresh <code>Connection</code> object which can then be used
@@ -711,19 +711,15 @@ public class Connection
 			{
 				if (kexTimeout > 0)
 				{
-					final Runnable timeoutHandler = new Runnable()
-					{
-						public void run()
-						{
-							synchronized (state)
-							{
-								if (state.isCancelled)
-									return;
-								state.timeoutSocketClosed = true;
-								close(new SocketTimeoutException("The connect timeout expired"), false);
-							}
-						}
-					};
+					final Runnable timeoutHandler = () -> {
+                        synchronized (state)
+                        {
+                            if (state.isCancelled)
+                                return;
+                            state.timeoutSocketClosed = true;
+                            close(new SocketTimeoutException("The connect timeout expired"), false);
+                        }
+                    };
 
 					long timeoutHorizont = System.currentTimeMillis() + kexTimeout;
 
@@ -1060,11 +1056,10 @@ public class Connection
 
 		String methods[] = getRemainingAuthMethods(user);
 
-		for (int i = 0; i < methods.length; i++)
-		{
-			if (methods[i].compareTo(method) == 0)
-				return true;
-		}
+        for (String s : methods) {
+            if (s.compareTo(method) == 0)
+                return true;
+        }
 
 		return false;
 	}
@@ -1156,26 +1151,23 @@ public class Connection
 
 		int count = 0;
 
-		for (int i = 0; i < list.length; i++)
-		{
-			boolean duplicate = false;
+        for (String s : list) {
+            boolean duplicate = false;
 
-			String element = list[i];
+            String element = s;
 
-			for (int j = 0; j < count; j++)
-			{
-				if (((element == null) && (list2[j] == null)) || ((element != null) && (element.equals(list2[j]))))
-				{
-					duplicate = true;
-					break;
-				}
-			}
+            for (int j = 0; j < count; j++) {
+                if (((element == null) && (list2[j] == null)) || ((element != null) && (element.equals(list2[j])))) {
+                    duplicate = true;
+                    break;
+                }
+            }
 
-			if (duplicate)
-				continue;
+            if (duplicate)
+                continue;
 
-			list2[count++] = list[i];
-		}
+            list2[count++] = s;
+        }
 
 		if (count == list2.length)
 			return list2;
@@ -1409,6 +1401,7 @@ public class Connection
 	 * @param logger a {@link DebugLogger DebugLogger} instance, <code>null</code>            means logging using the simple logger which logs all messages            to to stderr. Ignored if enabled is <code>false</code>
 	 * @deprecated Logging       is now sent automatically to java.util.logging, and never to the {@link DebugLogger}.
 	 */
+	@Deprecated
 	public synchronized void enableDebugging(boolean enable, DebugLogger logger)
 	{
 		Logger.enabled = enable;
@@ -1421,15 +1414,10 @@ public class Connection
 		{
 			if (logger == null)
 			{
-				Logger.logger = new DebugLogger()
-				{
-
-					public void log(int level, String className, String message)
-					{
-						long now = System.currentTimeMillis();
-						System.err.println(now + " : " + className + ": " + message);
-					}
-				};
+				Logger.logger = (level, className, message) -> {
+                    long now = System.currentTimeMillis();
+                    System.err.println(now + " : " + className + ": " + message);
+                };
 			} else {
 				Logger.logger = logger;
 			}
@@ -1498,7 +1486,7 @@ public class Connection
             // wait for some time since the delivery of the exit status often gets delayed
             session.waitForCondition(ChannelCondition.EXIT_STATUS,3000);
             Integer r = session.getExitStatus();
-            if(r!=null) return r.intValue();
+            if(r!=null) return r;
             return -1;
         } finally {
             session.close();

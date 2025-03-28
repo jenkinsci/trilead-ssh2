@@ -94,7 +94,7 @@ public class ErrorCodes
 
 	};
 
-	public static final String[] getDescription(int errorCode)
+	public static String[] getDescription(int errorCode)
 	{
 		if ((errorCode < 0) || (errorCode >= messages.length))
 			return null;

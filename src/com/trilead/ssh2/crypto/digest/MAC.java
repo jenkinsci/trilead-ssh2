@@ -49,8 +49,7 @@ public class MAC
 	@Deprecated
 	public static void checkMacList(String[] macs)
 	{
-		for (int i = 0; i < macs.length; i++)
-			getKeyLen(macs[i]);
+        for (String s : macs) getKeyLen(s);
 	}
 
 
@@ -64,42 +63,30 @@ public class MAC
 	@Deprecated
 	public static int getKeyLen(String type)
 	{
-		if (type.equals("hmac-sha1"))
-			return 20;
-		if (type.equals("hmac-sha1-96"))
-			return 20;
-		if (type.equals("hmac-md5"))
-			return 16;
-		if (type.equals("hmac-md5-96"))
-			return 16;
-		throw new IllegalArgumentException("Unkown algorithm " + type);
-	}
+        return switch (type) {
+            case "hmac-sha1", "hmac-sha1-96" -> 20;
+            case "hmac-md5", "hmac-md5-96" -> 16;
+            default -> throw new IllegalArgumentException("Unknown algorithm " + type);
+        };
+    }
 
 	/**
 	 * @param type the MAC algorithm to use
 	 * @param key the key to use in the MAC
 	 * @deprecated use {@link MessageMac#MessageMac(String, byte[])}
 	 */
+	@Deprecated
 	public MAC(String type, byte[] key)
 	{
-		if (type.equals("hmac-sha1"))
-		{
-			mac = new HMAC(new SHA1(), key, 20);
-		}
-		else if (type.equals("hmac-sha1-96"))
-		{
-			mac = new HMAC(new SHA1(), key, 12);
-		}
-		else if (type.equals("hmac-md5"))
-		{
-			mac = new HMAC(new MD5(), key, 16);
-		}
-		else if (type.equals("hmac-md5-96"))
-		{
-			mac = new HMAC(new MD5(), key, 12);
-		}
-		else
-			return;
+        switch (type) {
+            case "hmac-sha1" -> mac = new HMAC(new SHA1(), key, 20);
+            case "hmac-sha1-96" -> mac = new HMAC(new SHA1(), key, 12);
+            case "hmac-md5" -> mac = new HMAC(new MD5(), key, 16);
+            case "hmac-md5-96" -> mac = new HMAC(new MD5(), key, 12);
+            default -> {
+                return;
+            }
+        }
 
 		size = mac.getDigestLength();
 	}

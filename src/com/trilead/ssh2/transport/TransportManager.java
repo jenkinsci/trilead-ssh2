@@ -65,7 +65,7 @@ public class TransportManager
 		int high;
 	}
 
-	private final Vector asynchronousQueue = new Vector();
+	private final Vector<byte[]> asynchronousQueue = new Vector<>();
 	private Thread asynchronousThread = null;
 	
 	/* For auto numbering threads. */
@@ -145,11 +145,11 @@ public class TransportManager
 	TransportConnection tc;
 	KexManager km;
 
-	Vector messageHandlers = new Vector();
+	Vector<HandlerEntry> messageHandlers = new Vector<>();
 
 	Thread receiveThread;
 
-	Vector connectionMonitors = new Vector();
+	Vector<ConnectionMonitor> connectionMonitors = new Vector<>();
 	boolean monitorsWereInformed = false;
 	private ClientServerHello versions;
 	private boolean enabledCallHomeSSH = false;
@@ -331,7 +331,7 @@ public class TransportManager
 
 		/* No check if we need to inform the monitors */
 
-		Vector monitors = null;
+		Vector<ConnectionMonitor> monitors = null;
 
 		synchronized (this)
 		{
@@ -343,7 +343,7 @@ public class TransportManager
 			if (monitorsWereInformed == false)
 			{
 				monitorsWereInformed = true;
-				monitors = (Vector) connectionMonitors.clone();
+				monitors = new Vector<>(connectionMonitors);
 			}
 		}
 
@@ -353,7 +353,7 @@ public class TransportManager
 			{
 				try
 				{
-					ConnectionMonitor cmon = (ConnectionMonitor) monitors.elementAt(i);
+					ConnectionMonitor cmon = monitors.elementAt(i);
 					cmon.connectionLost(reasonClosedCause);
 				}
 				catch (Exception ignore)
@@ -529,54 +529,50 @@ public class TransportManager
 		km = new KexManager(this, csh, cwl, hostname, port, verifier, rnd);
 		km.initiateKEX(cwl, dhgex);
 
-		receiveThread = new Thread(new Runnable()
-		{
-			public void run()
-			{
-                Throwable cause;
-				try
-				{
-					receiveLoop();
-                    cause = new AssertionError();   // receiveLoop never returns normally
-				}
-				catch (IOException e)
-				{
-                    if (log.isEnabled() && !isConnectionClosed())
-                        log.log(10, "Receive thread: error in receiveLoop",e);
+		receiveThread = new Thread(() -> {
+Throwable cause;
+            try
+            {
+                receiveLoop();
+cause = new AssertionError();   // receiveLoop never returns normally
+            }
+            catch (IOException e)
+            {
+if (log.isEnabled() && !isConnectionClosed())
+log.log(10, "Receive thread: error in receiveLoop",e);
 
-                    cause = e;
-					close(e, false);
-				}
+cause = e;
+                close(e, false);
+            }
 
-				if (log.isEnabled())
-					log.log(50, "Receive thread: back from receiveLoop");
+            if (log.isEnabled())
+                log.log(50, "Receive thread: back from receiveLoop");
 
-				/* Tell all handlers that it is time to say goodbye */
+            /* Tell all handlers that it is time to say goodbye */
 
-				if (km != null)
-				{
-					try
-					{
-						km.handleEndMessage(cause);
-					}
-					catch (IOException e)
-					{
-					}
-				}
+            if (km != null)
+            {
+                try
+                {
+                    km.handleEndMessage(cause);
+                }
+                catch (IOException e)
+                {
+                }
+            }
 
-				for (int i = 0; i < messageHandlers.size(); i++)
-				{
-					HandlerEntry he = (HandlerEntry) messageHandlers.elementAt(i);
-					try
-					{
-						he.mh.handleEndMessage(cause);
-					}
-					catch (Exception ignore)
-					{
-					}
-				}
-			}
-		});
+            for (int i = 0; i < messageHandlers.size(); i++)
+            {
+                HandlerEntry he = (HandlerEntry) messageHandlers.elementAt(i);
+                try
+                {
+                    he.mh.handleEndMessage(cause);
+                }
+                catch (Exception ignore)
+                {
+                }
+            }
+        });
 
 		receiveThread.setDaemon(true);
 		receiveThread.setName(nextThreadName("receiveThread"));
@@ -692,11 +688,11 @@ public class TransportManager
 		}
 	}
 
-	public void setConnectionMonitors(Vector monitors)
+	public void setConnectionMonitors(Vector<ConnectionMonitor> monitors)
 	{
 		synchronized (this)
 		{
-			connectionMonitors = (Vector) monitors.clone();
+			connectionMonitors = new Vector<>(monitors);
 		}
 	}
 

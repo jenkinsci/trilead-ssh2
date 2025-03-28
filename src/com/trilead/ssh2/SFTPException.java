@@ -2,6 +2,7 @@
 package com.trilead.ssh2;
 
 import java.io.IOException;
+import java.io.Serial;
 
 import com.trilead.ssh2.sftp.ErrorCodes;
 
@@ -16,6 +17,7 @@ import com.trilead.ssh2.sftp.ErrorCodes;
 
 public class SFTPException extends IOException
 {
+	@Serial
 	private static final long serialVersionUID = 578654644222421811L;
 
 	private final String sftpErrorMessage;

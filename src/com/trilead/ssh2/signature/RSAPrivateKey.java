@@ -17,6 +17,7 @@ import java.security.spec.InvalidKeySpecException;
  * @deprecated use {@link java.security.interfaces.RSAPrivateKey}
  * @see java.security.interfaces.RSAPrivateKey
  */
+@Deprecated
 public class RSAPrivateKey
 {
 	private BigInteger d;

@@ -254,11 +254,10 @@ public class Session
 			/* Generate also hex representation of fake cookie */
 
 			StringBuffer tmp = new StringBuffer(32);
-			for (int i = 0; i < fakeCookie.length; i++)
-			{
-				String digit2 = Integer.toHexString(fakeCookie[i] & 0xff);
-				tmp.append((digit2.length() == 2) ? digit2 : "0" + digit2);
-			}
+            for (byte b : fakeCookie) {
+                String digit2 = Integer.toHexString(b & 0xff);
+                tmp.append((digit2.length() == 2) ? digit2 : "0" + digit2);
+            }
 			hexEncodedFakeCookie = tmp.toString();
 
 			/* Well, yes, chances are low, but we want to be on the safe side */
@@ -472,6 +471,7 @@ public class Session
 	 *             interface and therefore acts only as a wrapper.
 	 * 
 	 */
+	@Deprecated
 	public int waitUntilDataAvailable(long timeout) throws IOException, InterruptedException {
 		if (timeout < 0)
 			throw new IllegalArgumentException("timeout must not be negative!");

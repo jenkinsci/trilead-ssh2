@@ -478,8 +478,8 @@ public class PEMDecoder
 		}
 		throw new IOException("PEM problem: it is of unknown type. Supported algorithms are :"
 		                      + KeyAlgorithmManager.getSupportedAlgorithms().stream()
-	                               .map(c -> c.getKeyFormat())
-	                               .collect(Collectors.toList()).toString());
+	                               .map(KeyAlgorithm::getKeyFormat)
+	                               .toList().toString());
 	}
 
 }

@@ -130,11 +130,10 @@ public class RemoteX11AcceptThread extends Thread
 				throw new IOException("Wrong data length for X11 authorization data!");
 
 			StringBuffer tmp = new StringBuffer(32);
-			for (int i = 0; i < authProtocolData.length; i++)
-			{
-				String digit2 = Integer.toHexString(authProtocolData[i] & 0xff);
-				tmp.append((digit2.length() == 2) ? digit2 : "0" + digit2);
-			}
+            for (byte authProtocolDatum : authProtocolData) {
+                String digit2 = Integer.toHexString(authProtocolDatum & 0xff);
+                tmp.append((digit2.length() == 2) ? digit2 : "0" + digit2);
+            }
 			String hexEncodedFakeCookie = tmp.toString();
 
 			/* Order is very important here - it may be that a certain x11 forwarding

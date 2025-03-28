@@ -49,31 +49,31 @@ public final class MD5 implements Digest
 		reset();
 	}
 
-	private static final int FF(int a, int b, int c, int d, int x, int s, int ac)
+	private static int FF(int a, int b, int c, int d, int x, int s, int ac)
 	{
 		a += ((b & c) | ((~b) & d)) + x + ac;
 		return ((a << s) | (a >>> (32 - s))) + b;
 	}
 
-	private static final int GG(int a, int b, int c, int d, int x, int s, int ac)
+	private static int GG(int a, int b, int c, int d, int x, int s, int ac)
 	{
 		a += ((b & d) | (c & (~d))) + x + ac;
 		return ((a << s) | (a >>> (32 - s))) + b;
 	}
 
-	private static final int HH(int a, int b, int c, int d, int x, int s, int ac)
+	private static int HH(int a, int b, int c, int d, int x, int s, int ac)
 	{
 		a += (b ^ c ^ d) + x + ac;
 		return ((a << s) | (a >>> (32 - s))) + b;
 	}
 
-	private static final int II(int a, int b, int c, int d, int x, int s, int ac)
+	private static int II(int a, int b, int c, int d, int x, int s, int ac)
 	{
 		a += (c ^ (b | (~d))) + x + ac;
 		return ((a << s) | (a >>> (32 - s))) + b;
 	}
 
-	private static final void encode(byte[] dst, int dstoff, int word)
+	private static void encode(byte[] dst, int dstoff, int word)
 	{
 		dst[dstoff] = (byte) (word);
 		dst[dstoff + 1] = (byte) (word >> 8);
@@ -81,7 +81,7 @@ public final class MD5 implements Digest
 		dst[dstoff + 3] = (byte) (word >> 24);
 	}
 
-	private final void transform(byte[] src, int pos)
+	private void transform(byte[] src, int pos)
 	{
 		int a = state0;
 		int b = state1;

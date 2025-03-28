@@ -107,7 +107,7 @@ public class TypesReader
 		long low = ((arr[pos++] & 0xff) << 24) | ((arr[pos++] & 0xff) << 16) | ((arr[pos++] & 0xff) << 8)
 				| (arr[pos++] & 0xff); /* sign extension may take place - handle below */
 
-		return (high << 32) | (low & 0xffffffffl); /* see Java language spec (15.22.1, 5.6.2) */
+		return (high << 32) | (low & 0xffffffffL); /* see Java language spec (15.22.1, 5.6.2) */
 	}
 
 	public BigInteger readMPINT() throws IOException
