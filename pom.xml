@@ -181,6 +181,8 @@
         <gitHubRepo>jenkinsci/trilead-ssh2</gitHubRepo>
         <!-- TODO fix medium-threshold violations -->
         <spotbugs.threshold>High</spotbugs.threshold>
+        <source>17</source>
+        <target>17</target> <!-- This is in the parent pom -->
     </properties>
 
 </project>
