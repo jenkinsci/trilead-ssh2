@@ -18,16 +18,19 @@ public class NullCipher implements BlockCipher
 	{
 		this.blockSize = blockSize;
 	}
-	
+
+	@Override
 	public void init(boolean forEncryption, byte[] key)
 	{
 	}
 
+	@Override
 	public int getBlockSize()
 	{
 		return blockSize;
 	}
 
+	@Override
 	public void transformBlock(byte[] src, int srcoff, byte[] dst, int dstoff)
 	{
 		System.arraycopy(src, srcoff, dst, dstoff, blockSize);
