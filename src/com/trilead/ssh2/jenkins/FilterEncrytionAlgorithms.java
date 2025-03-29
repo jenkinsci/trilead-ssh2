@@ -1,11 +1,7 @@
 package com.trilead.ssh2.jenkins;
 
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-
-import com.trilead.ssh2.log.Logger;
 
 /**
  * Filter encryption algorithms.

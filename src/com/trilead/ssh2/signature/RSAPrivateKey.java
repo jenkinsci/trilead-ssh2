@@ -3,11 +3,9 @@ package com.trilead.ssh2.signature;
 import java.math.BigInteger;
 import java.security.KeyPair;
 import java.security.KeyFactory;
-import java.security.NoSuchAlgorithmException;
 import java.security.GeneralSecurityException;
 import java.security.spec.RSAPublicKeySpec;
 import java.security.spec.RSAPrivateKeySpec;
-import java.security.spec.InvalidKeySpecException;
 
 /**
  * RSAPrivateKey.

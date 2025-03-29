@@ -17,7 +17,6 @@ import java.security.spec.ECPublicKeySpec;
 import java.security.spec.InvalidKeySpecException;
 
 import javax.crypto.KeyAgreement;
-import javax.management.RuntimeErrorException;
 
 import com.trilead.ssh2.signature.ECDSAKeyAlgorithm;
 

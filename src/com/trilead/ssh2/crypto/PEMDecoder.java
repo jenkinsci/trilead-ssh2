@@ -1,11 +1,6 @@
 
 package com.trilead.ssh2.crypto;
 
-import com.trilead.ssh2.signature.DSAPrivateKey;
-import com.trilead.ssh2.signature.KeyAlgorithm;
-import com.trilead.ssh2.signature.KeyAlgorithmManager;
-import com.trilead.ssh2.signature.RSAPrivateKey;
-
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
@@ -25,14 +20,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
 
-import com.trilead.ssh2.crypto.cipher.AES;
-import com.trilead.ssh2.crypto.cipher.BlockCipher;
-import com.trilead.ssh2.crypto.cipher.CBCMode;
-import com.trilead.ssh2.crypto.cipher.DES;
-import com.trilead.ssh2.crypto.cipher.DESede;
-import com.trilead.ssh2.crypto.digest.MD5;
 import com.trilead.ssh2.signature.DSAPrivateKey;
 import com.trilead.ssh2.signature.KeyAlgorithm;
 import com.trilead.ssh2.signature.KeyAlgorithmManager;

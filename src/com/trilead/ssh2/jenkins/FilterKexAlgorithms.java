@@ -3,8 +3,6 @@ package com.trilead.ssh2.jenkins;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.trilead.ssh2.log.Logger;
-
 /**
  * Filter KEX algorithms.
  * The reason for this filter is that some algorithms have security issues.
