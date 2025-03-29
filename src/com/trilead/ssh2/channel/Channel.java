@@ -403,7 +403,7 @@ public class Channel
                 msg[7] = (byte) (increment >> 8);
                 msg[8] = (byte) (increment);
 
-                if (closeMessageSent == false) {
+                if (!closeMessageSent) {
                     if (sendAsync) {
                         cm.tm.sendAsynchronousMessage(msg);
                     } else {

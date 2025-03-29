@@ -43,7 +43,7 @@ public class ClientServerHello
 			if (c == 10)
 				break;
 
-			if (need10 == true)
+			if (need10)
 				throw new IOException("Malformed line sent by the server, the line does not end correctly.");
 
 			len++;
@@ -73,7 +73,7 @@ public class ClientServerHello
 				break;
 		}
 
-		if (server_line.startsWith("SSH-") == false)
+		if (!server_line.startsWith("SSH-"))
 			throw new IOException(
 					"Malformed server identification string. There was no line starting with 'SSH-' amongst the first 50 lines.");
 

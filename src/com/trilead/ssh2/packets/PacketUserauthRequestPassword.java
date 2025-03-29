@@ -40,7 +40,7 @@ public class PacketUserauthRequestPassword
 
 		String method = tr.readString();
 
-		if (method.equals("password") == false)
+		if (!method.equals("password"))
 			throw new IOException("This is not a SSH_MSG_USERAUTH_REQUEST with type password!");
 
 		/* ... */

@@ -276,7 +276,7 @@ public class TransportManager
 
 	public void close(Throwable cause, boolean useDisconnectPacket)
 	{
-		if (useDisconnectPacket == false)
+		if (!useDisconnectPacket)
 		{
 			/* OK, hard shutdown - do not aquire the semaphore,
 			 * perhaps somebody is inside (and waits until the remote
@@ -300,7 +300,7 @@ public class TransportManager
 		{
 			if (reasonClosedCause==null)
 			{
-				if (useDisconnectPacket == true)
+				if (useDisconnectPacket)
 				{
 					try
 					{
@@ -340,7 +340,7 @@ public class TransportManager
 			 * (they may be modified concurrently)
 			 */
 
-			if (monitorsWereInformed == false)
+			if (!monitorsWereInformed)
 			{
 				monitorsWereInformed = true;
 				monitors = new Vector<>(connectionMonitors);
@@ -442,7 +442,7 @@ public class TransportManager
 
 			String httpReponse = new String(buffer, 0, len, "ISO-8859-1");
 
-			if (httpReponse.startsWith("HTTP/") == false)
+			if (!httpReponse.startsWith("HTTP/"))
 				throw new IOException("The proxy did not send back a valid HTTP response.");
 
 			/* "HTTP/1.X XYZ X" => 14 characters minimum */
@@ -707,7 +707,7 @@ cause = e;
 			{
                 ensureConnected();
 
-                if (flagKexOngoing == false)
+                if (!flagKexOngoing)
 					break;
 
 				try

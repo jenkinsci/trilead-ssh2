@@ -175,7 +175,7 @@ public class SFTPv3Client
 		if (handle.client != this)
 			throw new IOException("The file handle was created with another SFTPv3FileHandle instance.");
 
-		if (handle.isClosed == true)
+		if (handle.isClosed)
 			throw new IOException("The file handle is closed.");
 	}
 
@@ -1393,7 +1393,7 @@ public class SFTPv3Client
 
 		try
 		{
-			if (handle.isClosed == false)
+			if (!handle.isClosed)
 			{
 				closeHandle(handle.fileHandle);
 			}

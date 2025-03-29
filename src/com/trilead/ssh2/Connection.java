@@ -571,7 +571,7 @@ public class Connection
 
 		if (tm != null)
 		{
-			tm.close(t, hard == false);
+			tm.close(t, !hard);
 			tm = null;
 		}
 		am = null;
@@ -1406,7 +1406,7 @@ public class Connection
 	{
 		Logger.enabled = enable;
 
-		if (enable == false)
+		if (!enable)
 		{
 			Logger.logger = null;
 		}

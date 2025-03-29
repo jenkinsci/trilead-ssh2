@@ -275,7 +275,7 @@ public class Session
 
 		synchronized (this)
 		{
-			if (flag_closed == false)
+			if (!flag_closed)
 			{
 				this.x11FakeCookie = hexEncodedFakeCookie;
 				cm.registerX11Cookie(hexEncodedFakeCookie, x11data);

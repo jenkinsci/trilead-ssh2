@@ -87,7 +87,7 @@ public class TransportConnection
 
 	public void changeSendCipher(BlockCipher bc, MessageMac mac)
 	{
-		if ((bc instanceof NullCipher) == false)
+		if (!(bc instanceof NullCipher))
 		{
 			/* Only use zero byte padding for the first few packets */
 			useRandomPadding = true;
@@ -219,7 +219,7 @@ public class TransportConnection
 
 	public int peekNextMessageLength() throws IOException
 	{
-		if (recv_packet_header_present == false)
+		if (!recv_packet_header_present)
 		{
 			cis.read(recv_packet_header_buffer, 0, 5);
 			recv_packet_header_present = true;

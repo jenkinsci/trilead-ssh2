@@ -31,7 +31,7 @@ public final class ChannelOutputStream extends OutputStream
 
 	public void close() throws IOException
 	{
-		if (isClosed == false)
+		if (!isClosed)
 		{
 			isClosed = true;
 			c.cm.sendEOF(c);

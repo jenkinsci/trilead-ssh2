@@ -38,7 +38,7 @@ public class PacketUserauthRequestNone
 
 		String method = tr.readString();
 
-		if (method.equals("none") == false)
+		if (!method.equals("none"))
 			throw new IOException("This is not a SSH_MSG_USERAUTH_REQUEST with type none!");
 
 		if (tr.remain() != 0)

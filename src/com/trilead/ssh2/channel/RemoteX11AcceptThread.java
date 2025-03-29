@@ -123,7 +123,7 @@ public class RemoteX11AcceptThread extends Thread
 			if (remote_is.read(paddingBuffer, 0, authProtocolDataPadding) != authProtocolDataPadding)
 				throw new IOException("Unexpected EOF on X11 startup! (authProtocolDataPadding)");
 
-			if ("MIT-MAGIC-COOKIE-1".equals(new String(authProtocolName, "ISO-8859-1")) == false)
+			if (!"MIT-MAGIC-COOKIE-1".equals(new String(authProtocolName, "ISO-8859-1")))
 				throw new IOException("Unknown X11 authorization protocol!");
 
 			if (authProtocolDataLength != 16)
