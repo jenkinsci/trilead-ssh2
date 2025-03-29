@@ -45,12 +45,12 @@ public final class SHA1 implements Digest
 		 * information contained in the w[] array */
 	}
 
-	public final void update(byte b[])
+	public final void update(byte[] b)
 	{
 		update(b, 0, b.length);
 	}
 
-	public final void update(byte b[], int off, int len)
+	public final void update(byte[] b, int off, int len)
 	{
 		if (len >= 4)
 		{

@@ -21,7 +21,7 @@ public class PacketChannelWindowAdjust
 		this.windowChange = windowChange;
 	}
 
-	public PacketChannelWindowAdjust(byte payload[], int off, int len) throws IOException
+	public PacketChannelWindowAdjust(byte[] payload, int off, int len) throws IOException
 	{
 		this.payload = new byte[len];
 		System.arraycopy(payload, off, this.payload, 0, len);

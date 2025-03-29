@@ -598,7 +598,7 @@ public class SCPClient
 		get(new String[] { remoteFile }, new OutputStream[] { target });
 	}
 
-	private void get(String remoteFiles[], OutputStream[] targets) throws IOException
+	private void get(String[] remoteFiles, OutputStream[] targets) throws IOException
 	{
 		Session sess = null;
 
@@ -652,7 +652,7 @@ public class SCPClient
 	 * 
 	 * @throws IOException the io exception
 	 */
-	public void get(String remoteFiles[], String localTargetDirectory) throws IOException
+	public void get(String[] remoteFiles, String localTargetDirectory) throws IOException
 	{
 		Session sess = null;
 

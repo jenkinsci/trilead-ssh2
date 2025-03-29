@@ -27,7 +27,7 @@ public class Tokenizer
 				numtoken++;
 		}
 
-		String list[] = new String[numtoken];
+		String[] list = new String[numtoken];
 		int nextfield = 0;
 
 		for (int i = 0; i < numtoken; i++)

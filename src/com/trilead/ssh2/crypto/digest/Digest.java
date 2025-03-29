@@ -15,7 +15,7 @@ public interface Digest
 
 	public void update(byte[] b);
 
-	public void update(byte b[], int off, int len);
+	public void update(byte[] b, int off, int len);
 
 	public void reset();
 

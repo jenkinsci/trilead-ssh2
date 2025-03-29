@@ -63,8 +63,8 @@ public class Base64
 
 	public static byte[] decode(char[] message) throws IOException
 	{
-		byte buff[] = new byte[4];
-		byte dest[] = new byte[message.length];
+		byte[] buff = new byte[4];
+		byte[] dest = new byte[message.length];
 
 		int bpos = 0;
 		int destpos = 0;

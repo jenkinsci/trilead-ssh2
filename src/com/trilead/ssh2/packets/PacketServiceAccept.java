@@ -20,7 +20,7 @@ public class PacketServiceAccept
 		this.serviceName = serviceName;
 	}
 
-	public PacketServiceAccept(byte payload[], int off, int len) throws IOException
+	public PacketServiceAccept(byte[] payload, int off, int len) throws IOException
 	{
 		this.payload = new byte[len];
 		System.arraycopy(payload, off, this.payload, 0, len);

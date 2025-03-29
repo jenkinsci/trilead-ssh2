@@ -17,7 +17,7 @@ public class PacketKexDHReply
         byte [] publicKey;
 	byte[] signature;
 	
-	public PacketKexDHReply(byte payload[], int off, int len) throws IOException
+	public PacketKexDHReply(byte[] payload, int off, int len) throws IOException
 	{
 		this.payload = new byte[len];
 		System.arraycopy(payload, off, this.payload, 0, len);

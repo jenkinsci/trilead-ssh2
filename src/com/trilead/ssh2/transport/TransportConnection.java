@@ -242,7 +242,7 @@ public class TransportConnection
 		return payload_length;
 	}
 
-	public int receiveMessage(byte buffer[], int off, int len) throws IOException
+	public int receiveMessage(byte[] buffer, int off, int len) throws IOException
 	{
 		final int packetLength;
 		final int payloadLength;

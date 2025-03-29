@@ -76,7 +76,7 @@ public class PEMDecoder
 		if ((hex.length() % 2) != 0)
 			throw new IllegalArgumentException("Uneven string length in hex encoding.");
 
-		byte decoded[] = new byte[hex.length() / 2];
+		byte[] decoded = new byte[hex.length() / 2];
 
 		for (int i = 0; i < decoded.length; i++)
 		{
@@ -203,7 +203,7 @@ public class PEMDecoder
 			String name = line.substring(0, sem_idx + 1);
 			String value = line.substring(sem_idx + 1);
 
-			String values[] = value.split(",");
+			String[] values = value.split(",");
 
 			for (int i = 0; i < values.length; i++)
 				values[i] = values[i].trim();

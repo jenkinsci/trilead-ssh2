@@ -38,7 +38,7 @@ public final class MD5 implements Digest
 	private int state0, state1, state2, state3;
 	private long count;
 	private final byte[] block = new byte[64];
-	private final int x[] = new int[16];
+	private final int[] x = new int[16];
 
 	private static final byte[] padding = new byte[] { (byte) 128, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 			0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,

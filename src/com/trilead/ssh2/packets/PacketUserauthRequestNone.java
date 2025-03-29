@@ -21,7 +21,7 @@ public class PacketUserauthRequestNone
 		this.userName = user;
 	}
 
-	public PacketUserauthRequestNone(byte payload[], int off, int len) throws IOException
+	public PacketUserauthRequestNone(byte[] payload, int off, int len) throws IOException
 	{
 		this.payload = new byte[len];
 		System.arraycopy(payload, off, this.payload, 0, len);

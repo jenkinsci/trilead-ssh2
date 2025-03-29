@@ -74,7 +74,7 @@ public final class ChannelInputStream extends InputStream
 	{
 		/* Yes, this stream is pure and unbuffered, a single byte read() is slow */
 
-		final byte b[] = new byte[1];
+		final byte[] b = new byte[1];
 
 		int ret = read(b, 0, 1);
 

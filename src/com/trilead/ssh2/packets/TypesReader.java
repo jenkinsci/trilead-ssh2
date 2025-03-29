@@ -114,7 +114,7 @@ public class TypesReader
 	{
 		BigInteger b;
 
-		byte raw[] = readByteString();
+		byte[] raw = readByteString();
 
 		if (raw.length == 0)
 			b = BigInteger.ZERO;

@@ -12,7 +12,7 @@ import java.math.BigInteger;
  */
 public class TypesWriter
 {
-	byte arr[];
+	byte[] arr;
 	int pos;
 
 	public TypesWriter()
@@ -23,7 +23,7 @@ public class TypesWriter
 
 	private void resize(int len)
 	{
-		byte new_arr[] = new byte[len];
+		byte[] new_arr = new byte[len];
 		System.arraycopy(arr, 0, new_arr, 0, arr.length);
 		arr = new_arr;
 	}
@@ -40,7 +40,7 @@ public class TypesWriter
 		return dst;
 	}
 
-	public void getBytes(byte dst[])
+	public void getBytes(byte[] dst)
 	{
 		System.arraycopy(arr, 0, dst, 0, pos);
 	}
@@ -101,7 +101,7 @@ public class TypesWriter
 
 	public void writeMPInt(BigInteger b)
 	{
-		byte raw[] = b.toByteArray();
+		byte[] raw = b.toByteArray();
 
 		if ((raw.length == 1) && (raw[0] == 0))
 			writeUINT32(0); /* String with zero bytes of data */
@@ -155,7 +155,7 @@ public class TypesWriter
 		writeBytes(b, 0, b.length);
 	}
 
-	public void writeNameList(String v[])
+	public void writeNameList(String[] v)
 	{
 		StringBuffer sb = new StringBuffer();
 		for (int i = 0; i < v.length; i++)

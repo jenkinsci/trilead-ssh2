@@ -39,7 +39,7 @@ public class PacketKexInit
 		kp.reserved_field1 = 0;
 	}
 
-	public PacketKexInit(byte payload[], int off, int len) throws IOException
+	public PacketKexInit(byte[] payload, int off, int len) throws IOException
 	{
 		this.payload = new byte[len];
 		System.arraycopy(payload, off, this.payload, 0, len);

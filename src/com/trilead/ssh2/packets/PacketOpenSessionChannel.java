@@ -24,7 +24,7 @@ public class PacketOpenSessionChannel
 		this.maxPacketSize = maxPacketSize;
 	}
 
-	public PacketOpenSessionChannel(byte payload[], int off, int len) throws IOException
+	public PacketOpenSessionChannel(byte[] payload, int off, int len) throws IOException
 	{
 		this.payload = new byte[len];
 		System.arraycopy(payload, off, this.payload, 0, len);

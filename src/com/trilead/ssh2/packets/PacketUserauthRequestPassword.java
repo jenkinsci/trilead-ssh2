@@ -23,7 +23,7 @@ public class PacketUserauthRequestPassword
 		this.password = pass;
 	}
 
-	public PacketUserauthRequestPassword(byte payload[], int off, int len) throws IOException
+	public PacketUserauthRequestPassword(byte[] payload, int off, int len) throws IOException
 	{
 		this.payload = new byte[len];
 		System.arraycopy(payload, off, this.payload, 0, len);

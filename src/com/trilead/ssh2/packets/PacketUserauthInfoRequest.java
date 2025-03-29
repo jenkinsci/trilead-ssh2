@@ -18,10 +18,10 @@ public class PacketUserauthInfoRequest
 	String languageTag;
 	int numPrompts;
 
-	String prompt[];
-	boolean echo[];
+	String[] prompt;
+	boolean[] echo;
 
-	public PacketUserauthInfoRequest(byte payload[], int off, int len) throws IOException
+	public PacketUserauthInfoRequest(byte[] payload, int off, int len) throws IOException
 	{
 		this.payload = new byte[len];
 		System.arraycopy(payload, off, this.payload, 0, len);

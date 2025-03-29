@@ -246,7 +246,7 @@ public class RSASHA1Verify
 
 		/* Read digestAlgorithm */
 
-		byte digestAlgorithm[] = dr.readSequenceAsByteArray();
+		byte[] digestAlgorithm = dr.readSequenceAsByteArray();
 
 		/* Inspired by RFC 3347, however, ignoring the comment regarding old BER based implementations */
 

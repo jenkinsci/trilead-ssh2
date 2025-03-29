@@ -1054,7 +1054,7 @@ public class Connection
 		if (method == null)
 			throw new IllegalArgumentException("method argument may not be NULL!");
 
-		String methods[] = getRemainingAuthMethods(user);
+		String[] methods = getRemainingAuthMethods(user);
 
         for (String s : methods) {
             if (s.compareTo(method) == 0)
