@@ -696,7 +696,7 @@ public class TransportManager
 	{
 		synchronized (this)
 		{
-			connectionMonitors =new Vector<>(monitors);
+			connectionMonitors = new Vector<>(monitors);
 		}
 	}
 
