@@ -69,7 +69,7 @@ public class SFTPv3Client
 	OutputStream os;
 
 	int protocol_version = 0;
-	HashMap server_extensions = new HashMap();
+	HashMap<String, byte[]> server_extensions = new HashMap<>();
 
 	int next_request_id = 1000;
 
@@ -702,9 +702,22 @@ public class SFTPv3Client
 		throw new SFTPException(tr.readString(), errorCode);
 	}
 
-	private final Vector scanDirectory(byte[] handle) throws IOException
+	/**
+	 * Scans a directory on an SFTP server using a handle to list its contents.
+	 * The method communicates with the server and retrieves directory entries,
+	 * including filenames, attributes, and long directory information.
+	 *
+	 * @param handle the byte array that represents the handle to the open directory on the SFTP server
+	 * @return a vector containing the directory entries, each represented by an instance of SFTPv3DirectoryEntry
+	 * @throws IOException if there is an error in communication with the SFTP server or processing the response
+	 * <p>
+	 * 2025-03-19: Steven Jubb: Original method signature did not use a parameterized Vector. For the sake of
+	 * strict-tying, it has been updated from below:
+	 * private final Vector scanDirectory(byte[] handle) throws IOException
+	 */
+	private final Vector<SFTPv3DirectoryEntry> scanDirectory(byte[] handle) throws IOException
 	{
-		Vector files = new Vector();
+		Vector<SFTPv3DirectoryEntry> files = new Vector<>();
 
 		while (true)
 		{
@@ -923,11 +936,15 @@ public class SFTPv3Client
 	 * @param dirName See the {@link SFTPv3Client comment} for the class for more details.
 	 * @return A Vector containing {@link SFTPv3DirectoryEntry} objects.
 	 * @throws IOException the io exception
+	 * <p>
+	 * 2025-03-19: Steven Jubb: Original method signature did not use a parameterized Vector. For the sake of
+	 * strict-tying, it has been updated from below:
+	 * private final Vector scanDirectory(byte[] handle) throws IOException
 	 */
-	public Vector ls(String dirName) throws IOException
+	public Vector<SFTPv3DirectoryEntry> ls(String dirName) throws IOException
 	{
 		byte[] handle = openDirectory(dirName);
-		Vector result = scanDirectory(handle);
+		Vector<SFTPv3DirectoryEntry> result = scanDirectory(handle);
 		closeHandle(handle);
 		return result;
 	}
