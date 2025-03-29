@@ -32,7 +32,7 @@ public class AuthenticationManager implements MessageHandler
 	public static final long TIMEOUT = Long.parseLong(System.getProperty(PROPERTY_TIMEOUT,"1200000"));
 	TransportManager tm;
 
-	Vector packets = new Vector();
+	Vector<byte[]> packets = new Vector<>();
 	boolean connectionClosed = false;
 
 	List<String> banners = new ArrayList<>();
