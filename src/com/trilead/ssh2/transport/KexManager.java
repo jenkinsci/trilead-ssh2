@@ -349,7 +349,7 @@ public class KexManager implements MessageHandler
 			ExtendedServerHostKeyVerifier extendedVerifier = (ExtendedServerHostKeyVerifier) verifier;
 
 			List<String> knownAlgorithms = extendedVerifier.getKnownKeyAlgorithmsForHost(hostname, port);
-			if (knownAlgorithms != null && knownAlgorithms.size() > 0) {
+			if (knownAlgorithms != null && !knownAlgorithms.isEmpty()) {
 				ArrayList<String> filteredAlgorithms = new ArrayList<>(knownAlgorithms.size());
 
 				/*
@@ -364,7 +364,7 @@ public class KexManager implements MessageHandler
 					}
 				}
 
-				if (filteredAlgorithms.size() > 0) {
+				if (!filteredAlgorithms.isEmpty()) {
 					cwl.serverHostKeyAlgorithms = filteredAlgorithms.toArray(new String[0]);
 				}
 			}

@@ -477,7 +477,7 @@ public class SCPClient
 				throw new IllegalArgumentException("Invalid mode.");
 
 		remoteTargetDirectory = remoteTargetDirectory.trim();
-		remoteTargetDirectory = (remoteTargetDirectory.length() > 0) ? remoteTargetDirectory : ".";
+		remoteTargetDirectory = (!remoteTargetDirectory.isEmpty()) ? remoteTargetDirectory : ".";
 
 		String cmd = "scp -t -d " + remoteTargetDirectory;
 
@@ -540,7 +540,7 @@ public class SCPClient
 			return;
 
 		remoteTargetDirectory = remoteTargetDirectory.trim();
-		remoteTargetDirectory = (remoteTargetDirectory.length() > 0) ? remoteTargetDirectory : ".";
+		remoteTargetDirectory = (!remoteTargetDirectory.isEmpty()) ? remoteTargetDirectory : ".";
 
 		String cmd = "scp -t -d " + remoteTargetDirectory;
 
@@ -619,7 +619,7 @@ public class SCPClient
 
             String tmp = remoteFile.trim();
 
-            if (tmp.length() == 0)
+            if (tmp.isEmpty())
                 throw new IllegalArgumentException("Cannot accept empty filename.");
 
             cmd += (" " + tmp);
@@ -670,7 +670,7 @@ public class SCPClient
 
             String tmp = remoteFile.trim();
 
-            if (tmp.length() == 0)
+            if (tmp.isEmpty())
                 throw new IllegalArgumentException("Cannot accept empty filename.");
 
             cmd += (" " + tmp);

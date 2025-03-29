@@ -67,7 +67,7 @@ public class AuthenticationManager implements MessageHandler
 			long waitUntil = System.currentTimeMillis() + TIMEOUT;
 			long now = System.currentTimeMillis();
 
-			while (packets.size() == 0 && now < waitUntil)
+			while (packets.isEmpty() && now < waitUntil)
 			{
 				if (connectionClosed)
 					throw new IOException("The connection is closed.", tm.getReasonClosedCause());
@@ -83,7 +83,7 @@ public class AuthenticationManager implements MessageHandler
 				now = System.currentTimeMillis();
 			}
 			
-			if(packets.size()==0){
+			if(packets.isEmpty()){
 				throw new IOException("No valid packets after " + TIMEOUT + " milliseconds, " +
 						"you can increase the timeout by setting the property -D" + PROPERTY_TIMEOUT + "=<MILLISECONDS>");
 			}

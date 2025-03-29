@@ -322,7 +322,7 @@ public class KnownHosts
 			 * entries in lines with multiple entries).
 			 */
 
-			if ((hostpattern.length() > 0) && (hostpattern.charAt(0) == '!')) {
+			if ((!hostpattern.isEmpty()) && (hostpattern.charAt(0) == '!')) {
 				pattern = hostpattern.substring(1);
 				negate = true;
 			} else {

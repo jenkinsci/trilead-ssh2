@@ -84,7 +84,7 @@ public class TransportManager
 
 				synchronized (asynchronousQueue)
 				{
-					if (asynchronousQueue.size() == 0)
+					if (asynchronousQueue.isEmpty())
 					{
 						/* After the queue is empty for about 2 seconds, stop this thread */
 
@@ -97,7 +97,7 @@ public class TransportManager
 							/* OKOK, if somebody interrupts us, then we may die earlier. */
 						}
 
-						if (asynchronousQueue.size() == 0)
+						if (asynchronousQueue.isEmpty())
 						{
 							asynchronousThread = null;
 							return;
@@ -194,7 +194,7 @@ public class TransportManager
 		{
 			int part = 0;
 
-			if ((quad[i].length() == 0) || (quad[i].length() > 3))
+			if ((quad[i].isEmpty()) || (quad[i].length() > 3))
 				return null;
 
 			for (int k = 0; k < quad[i].length(); k++)
