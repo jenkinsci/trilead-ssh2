@@ -296,30 +296,30 @@ public class SFTPv3Client
 		{
 			if (debug != null)
 				debug.println("SSH_FILEXFER_ATTR_SIZE");
-			fa.size = new Long(tr.readUINT64());
+			fa.size = tr.readUINT64();
 		}
 
 		if ((flags & AttribFlags.SSH_FILEXFER_ATTR_V3_UIDGID) != 0)
 		{
 			if (debug != null)
 				debug.println("SSH_FILEXFER_ATTR_V3_UIDGID");
-			fa.uid = new Integer(tr.readUINT32());
-			fa.gid = new Integer(tr.readUINT32());
+			fa.uid = tr.readUINT32();
+			fa.gid = tr.readUINT32();
 		}
 
 		if ((flags & AttribFlags.SSH_FILEXFER_ATTR_PERMISSIONS) != 0)
 		{
 			if (debug != null)
 				debug.println("SSH_FILEXFER_ATTR_PERMISSIONS");
-			fa.permissions = new Integer(tr.readUINT32());
+			fa.permissions = tr.readUINT32();
 		}
 
 		if ((flags & AttribFlags.SSH_FILEXFER_ATTR_V3_ACMODTIME) != 0)
 		{
 			if (debug != null)
 				debug.println("SSH_FILEXFER_ATTR_V3_ACMODTIME");
-			fa.atime = new Long(((long)tr.readUINT32()) & 0xffffffffl);
-			fa.mtime = new Long(((long)tr.readUINT32()) & 0xffffffffl);
+			fa.atime = (((long)tr.readUINT32()) & 0xffffffffL);
+			fa.mtime = ((long) tr.readUINT32()) & 0xffffffffL;
 
 		}
 
