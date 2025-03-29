@@ -764,7 +764,7 @@ cause = e;
 						debugMessageBuffer.setCharAt(i, '\uFFFD');
 					}
 
-					log.log(50, "DEBUG Message from remote: '" + debugMessageBuffer.toString() + "'");
+					log.log(50, "DEBUG Message from remote: '" + debugMessageBuffer + "'");
 				}
 				continue;
 			}
@@ -812,7 +812,7 @@ cause = e;
 				}
 
 				throw new IOException("Peer sent DISCONNECT message (reason code " + reason_code + "): "
-						+ reasonBuffer.toString());
+						+ reasonBuffer);
 			}
 
 			/*
