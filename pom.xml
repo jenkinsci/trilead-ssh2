@@ -80,9 +80,9 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>net.i2p.crypto</groupId>
-            <artifactId>eddsa</artifactId>
-            <version>0.3.0</version>
+            <groupId>io.jenkins.plugins</groupId>
+            <artifactId>eddsa-api</artifactId>
+            <version>0.3.0.1-19.vc432d923e5ee</version>
         </dependency>
         <dependency>
             <groupId>org.connectbot</groupId>
