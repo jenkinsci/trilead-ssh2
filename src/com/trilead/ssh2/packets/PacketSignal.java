@@ -39,7 +39,7 @@ public class PacketSignal {
    		return payload;
    	}
 
-    private static final Map<Integer,String> SIGNALS = new HashMap<Integer, String>();
+    private static final Map<Integer,String> SIGNALS = new HashMap<>();
 
     public static String strsignal(int i) {
         return SIGNALS.get(i);
