@@ -15,6 +15,7 @@ public class CBCMode implements BlockCipher
 	byte[] cbc_vector;
 	byte[] tmp_vector;
 
+	@Override
 	public void init(boolean forEncryption, byte[] key)
 	{
 	}
@@ -35,6 +36,7 @@ public class CBCMode implements BlockCipher
 		System.arraycopy(iv, 0, cbc_vector, 0, blockSize);
 	}
 
+	@Override
 	public int getBlockSize()
 	{
 		return blockSize;
@@ -68,6 +70,7 @@ public class CBCMode implements BlockCipher
 		tmp_vector = swap;
 	}
 
+	@Override
 	public void transformBlock(byte[] src, int srcoff, byte[] dst, int dstoff)
 	{
 		if (doEncrypt)
