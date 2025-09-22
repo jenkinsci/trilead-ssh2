@@ -28,7 +28,7 @@ public class RoundtripTest {
         s.getStderr().close();
 
         ExecutorService es = Executors.newFixedThreadPool(1);
-        Future<byte[]> reader = es.submit(new Callable<byte[]>() {
+        Future<byte[]> reader = es.submit(new Callable<>() {
             public byte[] call() throws Exception {
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
                 IOUtils.copy(s.getStdout(), baos);
