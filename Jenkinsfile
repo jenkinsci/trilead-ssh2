@@ -36,7 +36,7 @@ pipeline {
                          keepLongStdio: true,
                          testResults: "**/target/surefire-reports/**/*.xml")
                      script {
-                        archiveArtifacts artifacts: 'target/trilead-ssh2*.jar', fingerprint: true
+                        archiveArtifacts artifacts: 'target/trilead-ssh2*', fingerprint: true
                         infra.maybePublishIncrementals()
                      }
                  }
