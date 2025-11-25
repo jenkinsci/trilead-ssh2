@@ -197,6 +197,7 @@ public class BlowFish implements BlockCipher
 	 * @exception IllegalArgumentException
 	 *                if the params argument is inappropriate.
 	 */
+	@Override
 	public void init(boolean encrypting, byte[] key)
 	{
 		this.doEncrypt = encrypting;
@@ -209,6 +210,7 @@ public class BlowFish implements BlockCipher
 		return "Blowfish";
 	}
 
+	@Override
 	public final void transformBlock(byte[] in, int inOff, byte[] out, int outOff)
 	{
 		if (workingKey == null)
@@ -230,6 +232,7 @@ public class BlowFish implements BlockCipher
 	{
 	}
 
+	@Override
 	public int getBlockSize()
 	{
 		return BLOCK_SIZE;
