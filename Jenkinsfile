@@ -36,13 +36,7 @@ pipeline {
                          keepLongStdio: true,
                          testResults: "**/target/surefire-reports/**/*.xml")
                      script {
-                        def m2repo = "${pwd tmp: true}/m2repo"
-                        // No easy way to load both of these in one command: https://stackoverflow.com/q/23521889/12916
-                        String version = sh script: 'mvn -Dset.changelist -Dexpression=project.version -q -DforceStdout help:evaluate', returnStdout: true
-                        echo "Collecting $version from $m2repo for possible Incrementals publishing"
-                        dir(m2repo) {
-                            archiveArtifacts "org/jenkins-ci/trilead-ssh2/$version/*$version*"
-                        }
+                        archiveArtifacts artifacts: 'target/trilead-ssh2*', fingerprint: true
                         infra.maybePublishIncrementals()
                      }
                  }
