@@ -33,6 +33,7 @@ import com.trilead.ssh2.sftp.ErrorCodes;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.InputStream;
+import java.util.Objects;
 
 /**
  * This Class adds file manage capabilities to the SFTPv3Client class.
@@ -169,7 +170,11 @@ public class SFTPClient extends SFTPv3Client {
 
         @Override
         public int read(byte[] b, int off, int len) throws IOException {
-            int r = SFTPClient.this.read(h,offset,b,off,len);
+            Objects.checkFromIndexSize(off, len, b.length);
+            if (len == 0) {
+                return 0;
+            }
+            int r = SFTPClient.this.read(h,offset, b, off, Math.min(len, SFTP_MAX_READ_LENGTH));
             if (r<0)    return -1;
             offset += r;
             return r;

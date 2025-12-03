@@ -59,6 +59,22 @@ import com.trilead.ssh2.sftp.Packet;
  */
 public class SFTPv3Client
 {
+    /**
+     * Maximum size of SSH_FXP_READ requests.
+     * <p>
+     * The SFTP protocol allows read requests up to {@code 2^32 - 1} bytes, but in practice
+     * servers impose much smaller limits and will clamp requests that exceed their
+     * advertised maximum.
+     * </p>
+     * <p>
+     * OpenSSH, for example, communicates its limit via the {@code limits@openssh.com}
+     * extension and has used a default maximum of 64 KiB for over 20 years.
+     * </p>
+     *
+     * @see <a href="https://github.com/openssh/openssh-portable/blob/master/sftp-server.c">SFTP_MAX_READ_LENGTH in sftp-server.c</a>
+     */
+    public static final int SFTP_MAX_READ_LENGTH = 32768;
+
 	final Connection conn;
 	final Session sess;
 	final PrintStream debug;
@@ -1220,7 +1236,7 @@ public class SFTPv3Client
 	}
 
 	/**
-	 * Read bytes from a file. No more than 32768 bytes may be read at once.
+	 * Read bytes from a file. No more than {@value SFTP_MAX_READ_LENGTH} bytes may be read at once.
 	 * Be aware that the semantics of read() are different than for Java streams.
 	 *
 	 * <ul>
@@ -1237,7 +1253,7 @@ public class SFTPv3Client
 	 * @param fileOffset offset (in bytes) in the file
 	 * @param dst the destination byte array
 	 * @param dstoff offset in the destination byte array
-	 * @param len how many bytes to read, 0 &lt; len &lt;= 32768 bytes
+	 * @param len how many bytes to read, 0 &lt; len &lt;= {@value SFTP_MAX_READ_LENGTH} bytes
 	 * @return the number of bytes that could be read, may be less than requested if
 	 *         the end of the file is reached, -1 is returned in case of <code>EOF</code>
 	 * @throws IOException the io exception
@@ -1246,7 +1262,7 @@ public class SFTPv3Client
 	{
 		checkHandleValidAndOpen(handle);
 
-		if ((len > 32768) || (len <= 0))
+		if ((len > SFTP_MAX_READ_LENGTH) || (len <= 0))
 			throw new IllegalArgumentException("invalid len argument");
 
 		int req_id = generateNextRequestID();
@@ -1264,7 +1280,7 @@ public class SFTPv3Client
 
 		sendMessage(Packet.SSH_FXP_READ, req_id, tw.getBytes());
 
-		byte[] resp = receiveMessage(34000);
+		byte[] resp = receiveMessage(SFTP_MAX_READ_LENGTH + 1024); // Some overhead for headers
 
 		TypesReader tr = new TypesReader(resp);
 
