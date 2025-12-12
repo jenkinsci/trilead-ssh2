@@ -109,7 +109,7 @@ public class Connection
 
 	protected ProxyData proxyData = null;
 
-	protected Vector connectionMonitors = new Vector();
+	protected Vector<ConnectionMonitor> connectionMonitors = new Vector<>();
 
 	/**
 	 * Prepares a fresh <code>Connection</code> object which can then be used

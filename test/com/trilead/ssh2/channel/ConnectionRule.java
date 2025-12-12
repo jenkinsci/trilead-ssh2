@@ -18,7 +18,7 @@ public class ConnectionRule extends ExternalResource {
     public static final int SSH_PORT = 22;
 
     @Rule
-    public GenericContainer sshContainer = new GenericContainer("jenkins/ssh-agent");
+    public GenericContainer<?> sshContainer = new GenericContainer<>("jenkins/ssh-agent");
 
     private Connection connection;
 
