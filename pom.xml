@@ -82,7 +82,7 @@
         <dependency>
             <groupId>io.jenkins.plugins</groupId>
             <artifactId>eddsa-api</artifactId>
-            <version>0.3.0.1-19.vc432d923e5ee</version>
+            <version>0.3.0.1-27.v6ea_07b_e90d1a_</version>
         </dependency>
         <dependency>
             <groupId>org.connectbot</groupId>
