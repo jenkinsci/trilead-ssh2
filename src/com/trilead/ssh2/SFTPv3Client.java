@@ -91,6 +91,38 @@ public class SFTPv3Client
 
 	String charsetName = null;
 
+ /**
+     * Create a SFTP v3 client.
+     *
+     * @param conn The underlying SSH-2 connection to be used.
+     * @param debug debug
+     * @param bufferSize 8-32KB recommended. 64KB typically fine.
+     * @throws IOException the io exception
+     * @deprecated this constructor (debug version) will disappear in the future, use {@link #SFTPv3Client(Connection)}
+     * instead.
+     */
+    public SFTPv3Client(Connection conn, PrintStream debug, int bufferSize) throws IOException {
+        if (conn == null)
+            throw new IllegalArgumentException("Cannot accept null argument!");
+
+        this.conn = conn;
+        this.debug = debug;
+
+        if (debug != null)
+            debug.println("Opening session and starting SFTP subsystem.");
+
+        sess = conn.openSession();
+        sess.startSubSystem("sftp");
+
+        is = sess.getStdout();
+        os = new BufferedOutputStream(sess.getStdin(), bufferSize);
+
+        if ((is == null) || (os == null))
+            throw new IOException("There is a problem with the streams of the underlying channel.");
+
+        init();
+    }
+
 	/**
 	 * Create a SFTP v3 client.
 	 * 
@@ -103,25 +135,7 @@ public class SFTPv3Client
 	 */
 	public SFTPv3Client(Connection conn, PrintStream debug) throws IOException
 	{
-		if (conn == null)
-			throw new IllegalArgumentException("Cannot accept null argument!");
-
-		this.conn = conn;
-		this.debug = debug;
-
-		if (debug != null)
-			debug.println("Opening session and starting SFTP subsystem.");
-
-		sess = conn.openSession();
-		sess.startSubSystem("sftp");
-
-		is = sess.getStdout();
-		os = new BufferedOutputStream(sess.getStdin(), 2048);
-
-		if ((is == null) || (os == null))
-			throw new IOException("There is a problem with the streams of the underlying channel.");
-
-		init();
+        this(conn, debug, 2048);
 	}
 
 	/**
@@ -1394,6 +1408,74 @@ public class SFTPv3Client
 			throw new SFTPException(errorMessage, errorCode);
 		}
 	}
+
+	 /**
+     * Write bytes to a file. If <code>len</code> &gt; 32768, then the write operation will be split into multiple
+     * writes. this version of the method is pipelined to increase performance which means it will do multiple writes
+     * and then wait for the acknowledgments that they succeeded. This increases performance a lot especially if network
+     * latency is high.
+     *
+     * @param handle a SFTPv3FileHandle handle.
+     * @param fileOffset offset (in bytes) in the file.
+     * @param src the source byte array.
+     * @param srcoff offset in the source byte array.
+     * @param len how many bytes to write.
+     * @param maxOutstandingRequests how many parallel write request to do before waiting for acknowledgements,
+     * recommended 8-64, higher ping better utilize request count
+     * @throws IOException the io exception
+     */
+    public void writePipelined(SFTPv3FileHandle handle, long fileOffset, byte[] src, int srcoff, int len,
+            int maxOutstandingRequests)
+            throws IOException {
+        checkHandleValidAndOpen(handle);
+
+        List<Integer> pendingRequests = new ArrayList<>();
+        int bytesSent = 0;
+        int bytesAcked = 0;
+
+        while (bytesAcked < len) {
+            // 1. Fill the pipeline: Send requests until we hit the limit or run out of data
+            while (pendingRequests.size() < maxOutstandingRequests && bytesSent < len) {
+                int writeRequestLen = Math.min(len - bytesSent, SFTP_MAX_READ_LENGTH);
+                int req_id = generateNextRequestID();
+
+                TypesWriter tw = new TypesWriter();
+                tw.writeString(handle.fileHandle, 0, handle.fileHandle.length);
+                tw.writeUINT64(fileOffset + bytesSent);
+                tw.writeString(src, srcoff + bytesSent, writeRequestLen);
+
+                sendMessage(Packet.SSH_FXP_WRITE, req_id, tw.getBytes());
+
+                pendingRequests.add(req_id);
+                bytesSent += writeRequestLen;
+            }
+
+            // 2. Drain the pipeline: Read one response
+            if (!pendingRequests.isEmpty()) {
+                byte[] resp = receiveMessage(34000);
+                TypesReader tr = new TypesReader(resp);
+
+                int t = tr.readByte();
+                int rep_id = tr.readUINT32();
+
+                //  match rep_id to the specific one pending request
+                if (!pendingRequests.remove((Integer) rep_id)) {
+                    throw new IOException("The server sent an unexpected ID: " + rep_id);
+                }
+
+                if (t != Packet.SSH_FXP_STATUS) {
+                    throw new IOException("The SFTP server sent an unexpected packet type (" + t + ")");
+                }
+                int errorCode = tr.readUINT32();
+                if (errorCode != ErrorCodes.SSH_FX_OK) {
+                    throw new SFTPException(tr.readString(), errorCode);
+                }
+
+                //technically less bytes can hae been acked if its the last packet. but it only matters that "bytesAcked" becomes larger than "len"
+                bytesAcked += SFTP_MAX_READ_LENGTH;
+            }
+        }
+    }
 
 	/**
 	 * Close a file.
