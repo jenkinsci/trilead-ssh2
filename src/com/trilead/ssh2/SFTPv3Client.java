@@ -81,8 +81,6 @@ public class SFTPv3Client
 	final Session sess;
 	final PrintStream debug;
 
-	boolean flag_closed = false;
-
 	InputStream is;
 	OutputStream os;
 
@@ -119,7 +117,7 @@ public class SFTPv3Client
         is = sess.getStdout();
         os = new BufferedOutputStream(sess.getStdin(), bufferSize);
 
-        if ((is == null) || (os == null))
+        if (is == null) 
             throw new IOException("There is a problem with the streams of the underlying channel.");
 
         init();
@@ -1411,9 +1409,9 @@ public class SFTPv3Client
 		}
 	}
 
-	 /**
+	/**
      * Write bytes to a file. If <code>len</code> &gt; 32768, then the write operation will be split into multiple
-     * writes. this version of the method is pipelined to increase performance which means it will do multiple writes
+     * writes. This version of the method is pipelined to increase performance which means it will do multiple writes
      * and then wait for the acknowledgments that they succeeded. This increases performance a lot especially if network
      * latency is high.
      *
@@ -1423,13 +1421,16 @@ public class SFTPv3Client
      * @param srcoff offset in the source byte array.
      * @param len how many bytes to write.
      * @param maxOutstandingRequests how many parallel write request to do before waiting for acknowledgements,
-     * recommended 8-64, higher ping better utilize request count
+     * recommended 8-64; higher ping values benefit more from increased request count
      * @throws IOException the io exception
      */
     public void writePipelined(SFTPv3FileHandle handle, long fileOffset, byte[] src, int srcoff, int len,
             int maxOutstandingRequests)
             throws IOException {
         checkHandleValidAndOpen(handle);
+        if (maxOutstandingRequests <= 0) {
+            throw new IllegalArgumentException("maxOutstandingRequests must be positive");
+        }
 
         List<Integer> pendingRequests = new ArrayList<>();
         int bytesSent = 0;
@@ -1462,23 +1463,38 @@ public class SFTPv3Client
 
                 //  match rep_id to the specific one pending request
                 if (!pendingRequests.remove((Integer) rep_id)) {
+                    //draining request here would be hard as the server is responding with non matching IDs
                     throw new IOException("The server sent an unexpected ID: " + rep_id);
                 }
 
                 if (t != Packet.SSH_FXP_STATUS) {
+                    drainPendingRequests(pendingRequests);
                     throw new IOException("The SFTP server sent an unexpected packet type (" + t + ")");
                 }
                 int errorCode = tr.readUINT32();
                 if (errorCode != ErrorCodes.SSH_FX_OK) {
+                    drainPendingRequests(pendingRequests);
                     throw new SFTPException(tr.readString(), errorCode);
                 }
 
-                //technically less bytes can hae been acked if its the last packet. but it only matters that "bytesAcked" becomes larger than "len"
+                //technically less bytes can have been acked if its the last packet. but it only matters that "bytesAcked" becomes larger than "len"
                 bytesAcked += SFTP_MAX_READ_LENGTH;
             }
         }
     }
 
+    private void drainPendingRequests(List<Integer> pendingRequests) throws IOException {
+        while (!pendingRequests.isEmpty()) {
+            byte[] resp = receiveMessage(34000);
+            TypesReader tr = new TypesReader(resp);
+            int t = tr.readByte(); // packet type not needed. still needs to be read.
+            int rep_id = tr.readUINT32();
+            if (!pendingRequests.remove((Integer) rep_id)) {
+                throw new IOException("The server sent an unexpected ID: " + rep_id);
+            }
+        }
+    }
+	
 	/**
 	 * Close a file.
 	 * 
