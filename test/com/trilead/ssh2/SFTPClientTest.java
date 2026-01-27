@@ -16,6 +16,7 @@ import static org.junit.Assert.*;
 public class SFTPClientTest {
     public static final String TMP_TEST = "/tmp/test";
     public static final String PATH_FILE = TMP_TEST + "/file";
+    public static final String PATH_FILE2 = TMP_TEST + "/file2";
     public static final int POSIX_PERMISSION = 0700;
     public static final String FILE_CONTENT = "test";
     public static final int sftpPacketSize = 32 * 1024; // 32 KiB
@@ -87,6 +88,35 @@ public class SFTPClientTest {
             assertArrayEquals("Data written and read back via SFTP must match",
                     largeBuffer, readBuffer);
         }
+    }
+
+    @Test
+    public void writePipelineTest() throws Exception {
+        SFTPClient sftpClient = new SFTPClient(con.getConnection());
+        sftpClient.mkdirs(TMP_TEST, POSIX_PERMISSION);
+
+        final byte[] buf = new byte[largeBufferSize];
+        buf[0] = 1;
+        buf[sftpPacketSize] = 2; //in second packet
+        buf[largeBufferSize - 1] = 3; //last byte
+
+        SFTPv3FileHandle destinationFile = sftpClient.openFile(PATH_FILE2, 0x00000018 | 0x00000002,
+                null); // SSH_FXF_CREAT | SSH_FXF_TRUNC | SSH_FXF_WRITE
+
+        //file is 4 packets but pipeline only 3
+        sftpClient.writePipelined(destinationFile, 0, buf, 0, largeBufferSize, 3);
+        sftpClient.closeFile(destinationFile);
+
+        byte[] readBuffer = new byte[largeBufferSize];
+        try (InputStream in = sftpClient.read(PATH_FILE2)) {
+            IOUtils.readFully(in, readBuffer);
+        }
+
+        assertEquals("First byte must be 1", 1, readBuffer[0]);
+        assertEquals("Byte at packet boundary must be 2", 2, readBuffer[sftpPacketSize]);
+        assertEquals("Last byte must be 3", 3, readBuffer[largeBufferSize - 1]);
+
+        sftpClient.close();
     }
 
 }
