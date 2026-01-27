@@ -40,7 +40,7 @@ public final class MessageMac extends MAC {
 
 
 	public static String[] getMacs() {
-		List<String> macList = new ArrayList<String>();
+		List<String> macList = new ArrayList<>();
 		for (Hmac hmac : Hmac.values()) {
 			macList.add(0, hmac.getType());
 		}
