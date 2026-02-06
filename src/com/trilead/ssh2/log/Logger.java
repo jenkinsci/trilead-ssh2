@@ -26,12 +26,22 @@ public class Logger
 	
 	private java.util.logging.Logger log;
 
-	public final static Logger getLogger(Class x)
+	/*
+	 * 2025-03-29 Steven Jubb: Changed method signature to parameterize the Class type for stronger typing.
+	 * Original method signature:
+	 * public final static Logger getLogger(Class x)
+	 */
+	public final static Logger getLogger(Class<?> x)
 	{
 		return new Logger(x);
 	}
 
-	public Logger(Class x)
+	/*
+	 * 2025-03-29 Steven Jubb: Changed method signature to parameterize the Class type for stronger typing.
+	 * Original method signature:
+	 * public Logger(Class x)
+	 */
+	public Logger(Class<?> x)
 	{
 		this.log = java.util.logging.Logger.getLogger(x.getName());
 	}
