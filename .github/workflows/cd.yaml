@@ -9,7 +9,7 @@ on:
 
 jobs:
   maven-cd:
-    uses: jenkins-infra/github-reusable-workflows/.github/workflows/maven-cd.yml@791f6a10b7e9084eb9d6742293df4a562a801a8d # v1.8.2
+    uses: jenkins-infra/github-reusable-workflows/.github/workflows/maven-cd.yml@7704ec4236e99ca271bdef1adb675b65b8e283a9 # v1.8.3
     secrets:
       MAVEN_USERNAME: ${{ secrets.MAVEN_USERNAME }}
       MAVEN_TOKEN: ${{ secrets.MAVEN_TOKEN }}
