@@ -21,6 +21,7 @@ import com.trilead.ssh2.crypto.cipher.BlockCipherFactory;
 import com.trilead.ssh2.crypto.dh.Curve25519Exchange;
 import com.trilead.ssh2.crypto.dh.DhGroupExchange;
 import com.trilead.ssh2.crypto.dh.GenericDhExchange;
+import com.trilead.ssh2.crypto.dh.Sntrup761X25519Exchange;
 import com.trilead.ssh2.crypto.digest.MessageMac;
 import com.trilead.ssh2.log.Logger;
 import com.trilead.ssh2.packets.PacketKexDHInit;
@@ -266,7 +267,8 @@ public class KexManager implements MessageHandler
 			int enc_sc_key_len = BlockCipherFactory.getKeySize(kxs.np.enc_algo_server_to_client);
 			int enc_sc_block_len = BlockCipherFactory.getBlockSize(kxs.np.enc_algo_server_to_client);
 
-			km = KeyMaterial.create(kxs.getHashAlgorithm(), kxs.H, kxs.K, sessionId, enc_cs_key_len, enc_cs_block_len, mac_cs_key_len,
+			byte[] encodedK = kxs.dhx != null ? kxs.dhx.getKeyMaterialSharedSecret() : kxs.K.toByteArray();
+			km = KeyMaterial.create(kxs.getHashAlgorithm(), kxs.H, encodedK, sessionId, enc_cs_key_len, enc_cs_block_len, mac_cs_key_len,
 					enc_sc_key_len, enc_sc_block_len, mac_sc_key_len);
 		}
 		catch (IllegalArgumentException e)
@@ -372,13 +374,24 @@ public class KexManager implements MessageHandler
 	}
 
 
+	/**
+	 * Returns the default, ordered key exchange preference list announced by this client.
+	 * <p>
+	 * Higher-priority entries should appear first. The list starts with the OpenSSH hybrid
+	 * post-quantum SNTRUP761/X25519 algorithm and then falls back to classic finite-field DH, ECDH,
+	 * and Curve25519 algorithms.
+	 * </p>
+	 *
+	 * @return ordered list of supported key exchange algorithm names.
+	 */
 	public static String[] getDefaultKexAlgorithmList()
 	{
-		return new String[] { "diffie-hellman-group-exchange-sha256", "diffie-hellman-group-exchange-sha1",
-				"diffie-hellman-group14-sha1", "diffie-hellman-group1-sha1","ecdh-sha2-nistp256","ecdh-sha2-nistp384","ecdh-sha2-nistp521","curve25519-sha256","curve25519-sha256@libssh.org" };
+		return new String[] { Sntrup761X25519Exchange.NAME, Sntrup761X25519Exchange.ALT_NAME,
+					"diffie-hellman-group-exchange-sha256", "diffie-hellman-group-exchange-sha1",
+					"diffie-hellman-group14-sha1", "diffie-hellman-group1-sha1","ecdh-sha2-nistp256","ecdh-sha2-nistp384","ecdh-sha2-nistp521","curve25519-sha256","curve25519-sha256@libssh.org" };
 	}
 
-	// FIXME this code is not used, the check it makes does not match the implementation in other places.
+	// Keep this list in sync with the KEX implementations that the transport layer can instantiate.
 	public static void checkKexAlgorithmList(String[] algos)
 	{
 		for (String algo : algos) {
@@ -402,6 +415,8 @@ public class KexManager implements MessageHandler
 			if ("ecdh-sha2-nistp521".equals(algo))
 				continue;
 			if (Curve25519Exchange.NAME.equals(algo)||Curve25519Exchange.ALT_NAME.equals(algo))
+				continue;
+			if (Sntrup761X25519Exchange.NAME.equals(algo) || Sntrup761X25519Exchange.ALT_NAME.equals(algo))
 				continue;
 			throw new IllegalArgumentException("Unknown kex algorithm '" + algo + "'");
 		}
@@ -494,6 +509,8 @@ public class KexManager implements MessageHandler
 			}
 
 			if (kxs.np.kex_algo.equals("diffie-hellman-group1-sha1")
+					|| kxs.np.kex_algo.equals(Sntrup761X25519Exchange.NAME)
+					|| kxs.np.kex_algo.equals(Sntrup761X25519Exchange.ALT_NAME)
 					|| kxs.np.kex_algo.equals(Curve25519Exchange.NAME)
 					|| kxs.np.kex_algo.equals(Curve25519Exchange.ALT_NAME)
 					|| kxs.np.kex_algo.equals("diffie-hellman-group14-sha1")
@@ -633,6 +650,8 @@ public class KexManager implements MessageHandler
 
 		if (kxs.np.kex_algo.equals("diffie-hellman-group1-sha1")
 				|| kxs.np.kex_algo.equals("diffie-hellman-group14-sha1")
+				|| kxs.np.kex_algo.equals(Sntrup761X25519Exchange.NAME)
+				|| kxs.np.kex_algo.equals(Sntrup761X25519Exchange.ALT_NAME)
 				|| kxs.np.kex_algo.equals("ecdh-sha2-nistp256")
 				|| kxs.np.kex_algo.equals("ecdh-sha2-nistp384")
 				|| kxs.np.kex_algo.equals("ecdh-sha2-nistp521")
