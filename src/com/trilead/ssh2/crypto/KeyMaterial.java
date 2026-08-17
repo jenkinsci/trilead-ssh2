@@ -24,6 +24,12 @@ public class KeyMaterial
 	private static byte[] calculateKey(HashForSSH2Types sh, BigInteger K, byte[] H, byte type, byte[] SessionID,
 			int keyLength)
 	{
+		return calculateKey(sh, K.toByteArray(), H, type, SessionID, keyLength);
+	}
+
+	private static byte[] calculateKey(HashForSSH2Types sh, byte[] encodedK, byte[] H, byte type, byte[] SessionID,
+			int keyLength)
+	{
 		byte[] res = new byte[keyLength];
 
 		int dglen = sh.getDigestLength();
@@ -32,7 +38,7 @@ public class KeyMaterial
 		byte[][] tmp = new byte[numRounds][];
 
 		sh.reset();
-		sh.updateBigInt(K);
+		sh.updateByteString(encodedK);
 		sh.updateBytes(H);
 		sh.updateByte(type);
 		sh.updateBytes(SessionID);
@@ -49,7 +55,7 @@ public class KeyMaterial
 
 		for (int i = 1; i < numRounds; i++)
 		{
-			sh.updateBigInt(K);
+			sh.updateByteString(encodedK);
 			sh.updateBytes(H);
 
 			for (int j = 0; j < i; j++)
@@ -70,21 +76,29 @@ public class KeyMaterial
 			int blockSizeCS, int macLengthCS, int keyLengthSC, int blockSizeSC, int macLengthSC)
 			throws IllegalArgumentException
 	{
+		return create(hashType, H, K.toByteArray(), SessionID, keyLengthCS, blockSizeCS, macLengthCS,
+				keyLengthSC, blockSizeSC, macLengthSC);
+	}
+
+	public static KeyMaterial create(String hashType, byte[] H, byte[] encodedK, byte[] SessionID, int keyLengthCS,
+			int blockSizeCS, int macLengthCS, int keyLengthSC, int blockSizeSC, int macLengthSC)
+			throws IllegalArgumentException
+	{
 		KeyMaterial km = new KeyMaterial();
 
 		HashForSSH2Types sh = new HashForSSH2Types(hashType);
 
-		km.initial_iv_client_to_server = calculateKey(sh, K, H, (byte) 'A', SessionID, blockSizeCS);
+		km.initial_iv_client_to_server = calculateKey(sh, encodedK, H, (byte) 'A', SessionID, blockSizeCS);
 
-		km.initial_iv_server_to_client = calculateKey(sh, K, H, (byte) 'B', SessionID, blockSizeSC);
+		km.initial_iv_server_to_client = calculateKey(sh, encodedK, H, (byte) 'B', SessionID, blockSizeSC);
 
-		km.enc_key_client_to_server = calculateKey(sh, K, H, (byte) 'C', SessionID, keyLengthCS);
+		km.enc_key_client_to_server = calculateKey(sh, encodedK, H, (byte) 'C', SessionID, keyLengthCS);
 
-		km.enc_key_server_to_client = calculateKey(sh, K, H, (byte) 'D', SessionID, keyLengthSC);
+		km.enc_key_server_to_client = calculateKey(sh, encodedK, H, (byte) 'D', SessionID, keyLengthSC);
 
-		km.integrity_key_client_to_server = calculateKey(sh, K, H, (byte) 'E', SessionID, macLengthCS);
+		km.integrity_key_client_to_server = calculateKey(sh, encodedK, H, (byte) 'E', SessionID, macLengthCS);
 
-		km.integrity_key_server_to_client = calculateKey(sh, K, H, (byte) 'F', SessionID, macLengthSC);
+		km.integrity_key_server_to_client = calculateKey(sh, encodedK, H, (byte) 'F', SessionID, macLengthSC);
 
 		return km;
 	}
