@@ -141,11 +141,12 @@ public class AuthenticationManager implements MessageHandler
 			PacketServiceRequest sr = new PacketServiceRequest("ssh-userauth");
 			tm.sendMessage(sr.getPayload());
 
+			byte[] msg = getNextMessage();
+			new PacketServiceAccept(msg, 0, msg.length);
+
 			PacketUserauthRequestNone urn = new PacketUserauthRequestNone("ssh-connection", user);
 			tm.sendMessage(urn.getPayload());
 
-			byte[] msg = getNextMessage();
-			new PacketServiceAccept(msg, 0, msg.length);
 			msg = getNextMessage();
 
 			initDone = true;
