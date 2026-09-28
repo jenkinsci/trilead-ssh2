@@ -29,6 +29,9 @@ public abstract class GenericDhExchange
 	}
 
 	public static GenericDhExchange getInstance(String algo) {
+		if (Sntrup761X25519Exchange.NAME.equals(algo) || Sntrup761X25519Exchange.ALT_NAME.equals(algo)) {
+			return new Sntrup761X25519Exchange();
+		}
 		if (Curve25519Exchange.NAME.equals(algo) || Curve25519Exchange.ALT_NAME.equals(algo)) {
 			return new Curve25519Exchange();
 		}
@@ -63,6 +66,21 @@ public abstract class GenericDhExchange
 			throw new IllegalStateException("Shared secret not yet known, need f first!");
 
 		return sharedSecret;
+	}
+
+	/**
+	 * Returns the SSH wire encoding payload for K before the surrounding string length.
+	 * <p>
+	 * Traditional DH algorithms encode K as an mpint, which is represented by
+	 * {@link BigInteger#toByteArray()}. Some hybrid KEX algorithms override this to encode K as a
+	 * fixed-length SSH string.
+	 * </p>
+	 *
+	 * @return raw K bytes to pass to {@code HashForSSH2Types.updateByteString}.
+	 */
+	public byte[] getKeyMaterialSharedSecret()
+	{
+		return getK().toByteArray();
 	}
 
 	/**
