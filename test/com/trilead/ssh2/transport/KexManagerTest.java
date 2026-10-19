@@ -4,6 +4,7 @@ import com.trilead.ssh2.DHGexParameters;
 import com.trilead.ssh2.RandomFactory;
 import com.trilead.ssh2.ServerHostKeyVerifier;
 import com.trilead.ssh2.crypto.CryptoWishList;
+import com.trilead.ssh2.crypto.dh.Sntrup761X25519Exchange;
 import com.trilead.ssh2.packets.PacketKexInit;
 import org.hamcrest.Description;
 import org.hamcrest.TypeSafeMatcher;
@@ -318,5 +319,19 @@ public void testNoMatchingLanguages() throws NegotiateException {
 	assertNull("Expected lang_client_to_server to be null", np.lang_client_to_server);
 	assertNull("Expected lang_server_to_client to be null", np.lang_server_to_client);
 }
+
+	@Test
+	public void advertisesSntrupHybridKexByDefault() {
+		assertEquals(Sntrup761X25519Exchange.NAME, KexManager.getDefaultKexAlgorithmList()[0]);
+		assertEquals(Sntrup761X25519Exchange.ALT_NAME, KexManager.getDefaultKexAlgorithmList()[1]);
+	}
+
+	@Test
+	public void checkKexAlgorithmListAcceptsSntrupHybridNames() {
+		KexManager.checkKexAlgorithmList(new String[] {
+				Sntrup761X25519Exchange.NAME,
+				Sntrup761X25519Exchange.ALT_NAME
+		});
+	}
 
 }
