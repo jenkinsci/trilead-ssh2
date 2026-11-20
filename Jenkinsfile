@@ -11,11 +11,9 @@ pipeline {
         stage('Build') {
             steps {
                 script {
-                    m2repo = "${pwd tmp: true}/m2repo"
                     String jdk = "21"
                     List<String> mavenOptions = [
                             '--update-snapshots',
-                            "-Dmaven.repo.local=$m2repo",
                             '-Dmaven.test.failure.ignore',
                             "-Dset.changelist",
                             "-Djava.security.egd=file:/dev/./urandom",
