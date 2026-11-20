@@ -1187,6 +1187,28 @@ public class Connection
 	}
 
 	/**
+	 * Define the set of allowed key exchange algorithms to be used for the following key exchange
+	 * operations.
+	 * <p>
+	 * Unless you know what you are doing, you will never need this. This method is primarily useful
+	 * for interoperability testing against servers configured to offer a single key exchange
+	 * algorithm.
+	 *
+	 * @param algos An array of allowed key exchange algorithms. The entries of the array must be
+	 *              ordered after preference, i.e., the entry at index 0 is the most preferred one.
+	 *              You must specify at least one entry.
+	 */
+	public synchronized void setKexAlgorithms(String[] algos)
+	{
+		if ((algos == null) || (algos.length == 0))
+			throw new IllegalArgumentException();
+
+		algos = removeDuplicates(algos);
+		KexManager.checkKexAlgorithmList(algos);
+		cryptoWishList.kexAlgorithms = algos;
+	}
+
+	/**
 	 * Unless you know what you are doing, you will never need this.
 	 *
 	 * @param ciphers ciphers
